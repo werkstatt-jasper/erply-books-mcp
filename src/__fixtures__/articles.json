@@ -1,0 +1,7 @@
+{
+  "list_page": {
+    "items": [{ "id": 1, "name": "Consulting", "code": "CONS", "type": "ARTICLE_SERVICE" }],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  }
+}

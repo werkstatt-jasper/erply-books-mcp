@@ -1,0 +1,15 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 100,
+        "accountId": 1,
+        "date": "2025-06-01",
+        "sum": 42.5,
+        "customerId": 10
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  }
+}

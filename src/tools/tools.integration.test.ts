@@ -64,6 +64,104 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect((error as ErplyBooksApiError).httpStatus).toBe(409);
     }
   });
+
+  it("erply_list_articles returns { totalCount, items }", async () => {
+    const result = await tools.erply_list_articles.handler({ start: 0, limit: 5 });
+    const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(typeof body.totalCount).toBe("number");
+  });
+
+  it("erply_list_projects returns { totalCount, items }", async () => {
+    const result = await tools.erply_list_projects.handler({ start: 0, limit: 5 });
+    const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+    expect(Array.isArray(body.items)).toBe(true);
+    expect(typeof body.totalCount).toBe("number");
+  });
+
+  it("erply_list_account_entries accepts dates or surfaces plan/module error", async () => {
+    try {
+      const result = await tools.erply_list_account_entries.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+        start: 0,
+        limit: 5,
+      });
+      const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+      expect(Array.isArray(body.items)).toBe(true);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_list_transaction_entries accepts dates or surfaces plan/module error", async () => {
+    try {
+      const result = await tools.erply_list_transaction_entries.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+        start: 0,
+        limit: 5,
+      });
+      const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+      expect(Array.isArray(body.items)).toBe(true);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_balance_sheet succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_balance_sheet.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_income_sheet succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_income_sheet.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_aged_receivables succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_aged_receivables.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_general_ledger succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_general_ledger.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
 });
 
 describe.skipIf(hasToken)("read tools live MVP (no token)", () => {

@@ -4,11 +4,16 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 import type { ErplyBooksClient } from "./client.js";
 import { logger } from "./logger.js";
+import { createAccountEntryTools } from "./tools/account-entries.js";
 import { createAccountTools } from "./tools/accounts.js";
+import { createArticleTools } from "./tools/articles.js";
 import { createCustomerTools } from "./tools/customers.js";
 import { createInvoiceTools } from "./tools/invoices.js";
 import { createOrganisationTools } from "./tools/organisation.js";
 import { createPaymentTools } from "./tools/payments.js";
+import { createProjectTools } from "./tools/projects.js";
+import { createReportTools } from "./tools/reports.js";
+import { createTransactionEntryTools } from "./tools/transaction-entries.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: tool handlers use per-tool param shapes
 export type ToolHandler = (params: any) => Promise<{
@@ -24,7 +29,7 @@ export type ToolRecord = Record<
   }
 >;
 
-/** Registers all Erply Books MCP tools (read MVP + later write/report groups). */
+/** Registers all Erply Books MCP tools (read MVP + later write groups). */
 export function buildAllTools(client: ErplyBooksClient): ToolRecord {
   return {
     ...createOrganisationTools(client),
@@ -32,6 +37,11 @@ export function buildAllTools(client: ErplyBooksClient): ToolRecord {
     ...createCustomerTools(client),
     ...createInvoiceTools(client),
     ...createPaymentTools(client),
+    ...createArticleTools(client),
+    ...createProjectTools(client),
+    ...createAccountEntryTools(client),
+    ...createTransactionEntryTools(client),
+    ...createReportTools(client),
   };
 }
 

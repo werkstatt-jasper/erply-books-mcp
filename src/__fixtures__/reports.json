@@ -1,0 +1,18 @@
+{
+  "balance_sheet": {
+    "reportType": "balance_sheet",
+    "rows": [{ "name": "Assets", "sum": 1000 }]
+  },
+  "income_sheet": {
+    "reportType": "income_sheet",
+    "rows": [{ "name": "Revenue", "sum": 500 }]
+  },
+  "aged": {
+    "reportType": "aged",
+    "rows": [{ "customerId": 10, "overdue": 25 }]
+  },
+  "general_ledger": {
+    "reportType": "general_ledger",
+    "rows": [{ "accountId": 1, "debit": 10, "credit": 0 }]
+  }
+}

@@ -4,8 +4,8 @@ Open-source [Model Context Protocol](https://modelcontextprotocol.io) server for
 [Erply Books accounting API](https://www.erplybooks.com/api/).
 
 > **Status: read-tools MVP.** Auth, HTTP client, and `erply_`-prefixed read tools
-> for organisation / accounts / customers / invoices / payments are available.
-> Write tools and fuller on-site docs land in later milestones.
+> for organisation, master data, invoices/payments, ledger/transactions, and core
+> reports are available. Write tools and fuller on-site docs land in later milestones.
 
 ## Quick start
 
@@ -49,10 +49,23 @@ must be on the token's allowlist.
 | `erply_list_invoices` | `GET /invoices` | Requires `dateFrom`, `dateTo`, `documentType` |
 | `erply_get_invoice` | `GET /invoices/{id}` | Requires `documentId` |
 | `erply_list_payments` | `GET /payments` | Requires `dateFrom`/`dateTo`; some price plans return 409 |
+| `erply_list_articles` | `GET /articles` | Optional keyword/type/prices |
+| `erply_list_projects` | `GET /projects` | Optional keyword/group filters |
+| `erply_list_account_entries` | `GET /account_entries` | Requires dates; may 409 `MODULE_LEDGER` |
+| `erply_list_transaction_entries` | `GET /transaction_entries` | Requires dates; optional `typeCode`; may 409 |
+| `erply_get_transaction_entry` | `GET /transaction_entries/{id}` | Optional `lang` |
+| `erply_balance_sheet` | `GET /reports/balance_sheet` | Requires dates; some orgs 500 |
+| `erply_income_sheet` | `GET /reports/income_sheet` | Requires dates; some orgs 500 |
+| `erply_aged_receivables` | `GET /reports/aged` | Requires dates; may 409 plan module |
+| `erply_general_ledger` | `GET /reports/general_ledger` | Requires dates; some orgs 500 |
 
 List tools return `{ totalCount, items }` (the repeated `organisation` blob is stripped).
-Document type codes come from the [API Dictionary](https://www.erplybooks.com/api-dictionary/)
-(e.g. `DOCUMENT_SELL`, `DOCUMENT_BUY`, `DOCUMENT_POS_SELL`).
+Report tools return the API JSON as-is. Document/transaction type codes come from the
+[API Dictionary](https://www.erplybooks.com/api-dictionary/)
+(e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`, `INVOICE_TRANSACTION`).
+
+Out of scope for this MVP: daybook, report-generator POST flows, and supplier-only
+report modules.
 
 ## Development
 

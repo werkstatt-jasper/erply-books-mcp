@@ -1,0 +1,12 @@
+{
+  "list_page": {
+    "items": [{ "id": 3, "name": "Website rebuild", "isAffirmed": true }],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "list_empty": {
+    "items": null,
+    "totalCount": 0,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  }
+}

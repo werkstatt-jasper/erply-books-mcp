@@ -1,0 +1,22 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 200,
+        "typeCode": "INVOICE_TRANSACTION",
+        "date": "2025-06-01",
+        "description": "Sale",
+        "documentId": 55
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "single": {
+    "id": 200,
+    "typeCode": "INVOICE_TRANSACTION",
+    "date": "2025-06-01",
+    "description": "Sale",
+    "rows": []
+  }
+}

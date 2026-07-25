@@ -32,6 +32,15 @@ describe("buildAllTools", () => {
     expect(tools.erply_list_invoices).toBeDefined();
     expect(tools.erply_get_invoice).toBeDefined();
     expect(tools.erply_list_payments).toBeDefined();
+    expect(tools.erply_list_articles).toBeDefined();
+    expect(tools.erply_list_projects).toBeDefined();
+    expect(tools.erply_list_account_entries).toBeDefined();
+    expect(tools.erply_list_transaction_entries).toBeDefined();
+    expect(tools.erply_get_transaction_entry).toBeDefined();
+    expect(tools.erply_balance_sheet).toBeDefined();
+    expect(tools.erply_income_sheet).toBeDefined();
+    expect(tools.erply_aged_receivables).toBeDefined();
+    expect(tools.erply_general_ledger).toBeDefined();
   });
 });
 
