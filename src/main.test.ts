@@ -32,9 +32,13 @@ vi.mock("@modelcontextprotocol/sdk/server/index.js", () => ({
   }),
 }));
 
+import { createRequire } from "node:module";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { startApp } from "./main.js";
 import * as serverSetup from "./server-setup.js";
+
+const require = createRequire(import.meta.url);
+const { version: packageVersion } = require("../package.json") as { version: string };
 
 describe("startApp", () => {
   beforeEach(() => {
@@ -57,7 +61,7 @@ describe("startApp", () => {
     spyTools.mockRestore();
 
     expect(Server).toHaveBeenCalledWith(
-      { name: "erply-books", version: "0.1.0" },
+      { name: "erply-books", version: packageVersion },
       { capabilities: { tools: {} } },
     );
     expect(mockSetRequestHandler).toHaveBeenCalled();
