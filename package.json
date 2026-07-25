@@ -11,6 +11,7 @@
     ".": "./dist/index.js",
     "./client": "./dist/client.js",
     "./auth": "./dist/auth.js",
+    "./api-error": "./dist/api-error.js",
     "./server-setup": "./dist/server-setup.js",
     "./logger": "./dist/logger.js",
     "./tools/*": "./dist/tools/*.js"
@@ -19,12 +20,13 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
-    "lint": "biome check src/ vitest.config.ts",
-    "lint:fix": "biome check --write src/ vitest.config.ts",
-    "format": "biome format --write src/ vitest.config.ts",
+    "lint": "biome check src/ vitest.config.ts vitest.integration.config.ts",
+    "lint:fix": "biome check --write src/ vitest.config.ts vitest.integration.config.ts",
+    "format": "biome format --write src/ vitest.config.ts vitest.integration.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "license": "MIT",
   "repository": {
