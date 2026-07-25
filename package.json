@@ -17,6 +17,7 @@
     ".": "./dist/index.js",
     "./client": "./dist/client.js",
     "./auth": "./dist/auth.js",
+    "./erply-credential-parse": "./dist/erply-credential-parse.js",
     "./api-error": "./dist/api-error.js",
     "./server-setup": "./dist/server-setup.js",
     "./logger": "./dist/logger.js",
