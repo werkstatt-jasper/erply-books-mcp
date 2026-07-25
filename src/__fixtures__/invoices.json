@@ -1,0 +1,22 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 55,
+        "number": "SI-1",
+        "documentType": "DOCUMENT_POS_SELL",
+        "date": "2025-06-01",
+        "customerId": 10
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "single": {
+    "id": 55,
+    "number": "SI-1",
+    "documentType": "DOCUMENT_POS_SELL",
+    "date": "2025-06-01",
+    "rows": []
+  }
+}

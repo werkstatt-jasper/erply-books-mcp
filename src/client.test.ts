@@ -352,8 +352,13 @@ describe("ErplyBooksClient", () => {
       await expect(client.getAllPages("/accounts")).rejects.toThrow(/got string/);
     });
 
-    it("throws when items is missing", async () => {
-      fetchMock.mockResolvedValue(jsonResponse({ totalCount: 0 }));
+    it("treats null or missing items as an empty page", async () => {
+      fetchMock.mockResolvedValue(jsonResponse({ items: null, totalCount: 0 }));
+      await expect(client.getAllPages("/accounts")).resolves.toEqual([]);
+    });
+
+    it("throws when items is a non-array non-null value", async () => {
+      fetchMock.mockResolvedValue(jsonResponse({ items: { bad: true }, totalCount: 1 }));
       await expect(client.getAllPages("/accounts")).rejects.toThrow(/expected \{ items/);
     });
 

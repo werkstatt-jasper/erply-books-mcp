@@ -4,6 +4,11 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 import type { ErplyBooksClient } from "./client.js";
 import { logger } from "./logger.js";
+import { createAccountTools } from "./tools/accounts.js";
+import { createCustomerTools } from "./tools/customers.js";
+import { createInvoiceTools } from "./tools/invoices.js";
+import { createOrganisationTools } from "./tools/organisation.js";
+import { createPaymentTools } from "./tools/payments.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: tool handlers use per-tool param shapes
 export type ToolHandler = (params: any) => Promise<{
@@ -19,13 +24,15 @@ export type ToolRecord = Record<
   }
 >;
 
-/**
- * Empty catalog in the scaffold. Tool factories (`src/tools/*.ts` exporting
- * `createXxxTools(client)`) are spread here as they land, starting with the
- * read-tools MVP (E3).
- */
-export function buildAllTools(_client: ErplyBooksClient): ToolRecord {
-  return {};
+/** Registers all Erply Books MCP tools (read MVP + later write/report groups). */
+export function buildAllTools(client: ErplyBooksClient): ToolRecord {
+  return {
+    ...createOrganisationTools(client),
+    ...createAccountTools(client),
+    ...createCustomerTools(client),
+    ...createInvoiceTools(client),
+    ...createPaymentTools(client),
+  };
 }
 
 export function registerMcpToolHandlers(

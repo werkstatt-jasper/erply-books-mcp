@@ -1,0 +1,15 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 77,
+        "date": "2025-06-02",
+        "sum": 12.5,
+        "customerId": 10,
+        "paymentType": "INVOICE_PAYMENT"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  }
+}

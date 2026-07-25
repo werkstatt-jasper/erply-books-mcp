@@ -1,0 +1,21 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 1,
+        "number": "1000",
+        "name": "Cash",
+        "notActive": false,
+        "typeCode": "ACCOUNT_TYPE_ASSETS",
+        "displayName": "1000 Cash"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "list_empty": {
+    "items": null,
+    "totalCount": 0,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  }
+}

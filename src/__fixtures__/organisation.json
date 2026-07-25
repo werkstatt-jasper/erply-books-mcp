@@ -1,0 +1,10 @@
+{
+  "sample": {
+    "id": 99,
+    "name": "Fixture Org",
+    "registrationCode": "12345678",
+    "legalCountryCode": "EE",
+    "mainCurrencyCode": "EUR",
+    "mainLanguageCode": "et"
+  }
+}

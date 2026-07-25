@@ -47,7 +47,13 @@ describe("startApp", () => {
     const spyTools = vi.spyOn(serverSetup, "registerMcpToolHandlers");
     await startApp();
 
-    expect(spyTools).toHaveBeenCalledWith(expect.anything(), {});
+    expect(spyTools).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        erply_get_organisation: expect.anything(),
+        erply_list_accounts: expect.anything(),
+      }),
+    );
     spyTools.mockRestore();
 
     expect(Server).toHaveBeenCalledWith(

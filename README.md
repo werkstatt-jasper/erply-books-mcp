@@ -3,9 +3,9 @@
 Open-source [Model Context Protocol](https://modelcontextprotocol.io) server for the
 [Erply Books accounting API](https://www.erplybooks.com/api/).
 
-> **Status: scaffold.** The stdio server boots with an empty tool catalog.
-> Auth + HTTP client, read/write tools, and full on-site install documentation
-> are landing incrementally.
+> **Status: read-tools MVP.** Auth, HTTP client, and `erply_`-prefixed read tools
+> for organisation / accounts / customers / invoices / payments are available.
+> Write tools and fuller on-site docs land in later milestones.
 
 ## Quick start
 
@@ -39,6 +39,21 @@ MCP client config example (Cursor / Claude Desktop):
 Erply Books API tokens may be IP-allowlisted — the machine running the server
 must be on the token's allowlist.
 
+## Tools (MVP)
+
+| Tool | API | Notes |
+|------|-----|-------|
+| `erply_get_organisation` | `GET /organisation` | Org bound to the token |
+| `erply_list_accounts` | `GET /accounts` | Optional `start`/`limit`/filters |
+| `erply_list_customers` | `GET /customers` | `/customers/v2` returns 405 |
+| `erply_list_invoices` | `GET /invoices` | Requires `dateFrom`, `dateTo`, `documentType` |
+| `erply_get_invoice` | `GET /invoices/{id}` | Requires `documentId` |
+| `erply_list_payments` | `GET /payments` | Requires `dateFrom`/`dateTo`; some price plans return 409 |
+
+List tools return `{ totalCount, items }` (the repeated `organisation` blob is stripped).
+Document type codes come from the [API Dictionary](https://www.erplybooks.com/api-dictionary/)
+(e.g. `DOCUMENT_SELL`, `DOCUMENT_BUY`, `DOCUMENT_POS_SELL`).
+
 ## Development
 
 | Command | What it does |
@@ -47,6 +62,7 @@ must be on the token's allowlist.
 | `npm run lint` | Biome check |
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:coverage` | Unit tests with 100% coverage thresholds |
+| `npm run test:integration` | Live API tests (requires `.env` token; not run in CI) |
 
 ## License
 

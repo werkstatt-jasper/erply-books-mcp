@@ -10,7 +10,14 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
-      exclude: ["**/*.test.ts", "**/node_modules/**", "dist/**"],
+      exclude: [
+        "**/*.test.ts",
+        "**/node_modules/**",
+        "dist/**",
+        "src/__fixtures__/**",
+        "src/types/**",
+        "src/tools/test-helpers.ts",
+      ],
       thresholds: {
         lines: 100,
         statements: 100,

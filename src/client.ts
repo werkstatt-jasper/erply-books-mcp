@@ -241,10 +241,11 @@ export class ErplyBooksClient {
         );
       }
       const envelope = page as { items?: unknown; totalCount?: unknown };
-      if (!Array.isArray(envelope.items)) {
-        throw new Error(`getAllPages expected { items: [...] } from ${path}`);
+      // Empty pages often return `items: null` rather than `[]`.
+      if (envelope.items != null && !Array.isArray(envelope.items)) {
+        throw new Error(`getAllPages expected { items: [...] | null } from ${path}`);
       }
-      const items = envelope.items as T[];
+      const items = (Array.isArray(envelope.items) ? envelope.items : []) as T[];
       allItems.push(...items);
       const totalCount =
         typeof envelope.totalCount === "number" && Number.isFinite(envelope.totalCount)

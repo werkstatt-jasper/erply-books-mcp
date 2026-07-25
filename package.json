@@ -14,7 +14,9 @@
     "./api-error": "./dist/api-error.js",
     "./server-setup": "./dist/server-setup.js",
     "./logger": "./dist/logger.js",
-    "./tools/*": "./dist/tools/*.js"
+    "./tools/*": "./dist/tools/*.js",
+    "./validation/*": "./dist/validation/*.js",
+    "./types/*": "./dist/types/*.js"
   },
   "scripts": {
     "build": "tsc",

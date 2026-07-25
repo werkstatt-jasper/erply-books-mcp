@@ -23,9 +23,15 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 describe("buildAllTools", () => {
-  it("returns an empty catalog in the scaffold", () => {
+  it("merges the read-tools MVP with erply_ prefixes", () => {
     const client = {} as ErplyBooksClient;
-    expect(buildAllTools(client)).toEqual({});
+    const tools = buildAllTools(client);
+    expect(tools.erply_get_organisation).toBeDefined();
+    expect(tools.erply_list_accounts).toBeDefined();
+    expect(tools.erply_list_customers).toBeDefined();
+    expect(tools.erply_list_invoices).toBeDefined();
+    expect(tools.erply_get_invoice).toBeDefined();
+    expect(tools.erply_list_payments).toBeDefined();
   });
 });
 
