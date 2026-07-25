@@ -207,16 +207,27 @@ export class ErplyBooksClient {
     return this.request<T>(path, { method: "GET", params });
   }
 
-  async post<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, { method: "POST", body });
+  async post<T = unknown>(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
+    return this.request<T>(path, { method: "POST", body, params });
   }
 
-  async put<T = unknown>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, { method: "PUT", body });
+  async put<T = unknown>(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
+    return this.request<T>(path, { method: "PUT", body, params });
   }
 
-  async delete<T = unknown>(path: string): Promise<T> {
-    return this.request<T>(path, { method: "DELETE" });
+  async delete<T = unknown>(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
+    return this.request<T>(path, { method: "DELETE", params });
   }
 
   /**

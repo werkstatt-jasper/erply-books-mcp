@@ -29,7 +29,7 @@ export type ToolRecord = Record<
   }
 >;
 
-/** Registers all Erply Books MCP tools (read MVP + later write groups). */
+/** Registers all Erply Books MCP tools (read + write MVP). */
 export function buildAllTools(client: ErplyBooksClient): ToolRecord {
   return {
     ...createOrganisationTools(client),

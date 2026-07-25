@@ -33,3 +33,10 @@ export function jsonToolResult(payload: unknown): {
     content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
   };
 }
+
+/** Normalize DELETE/204 (undefined) to a JSON-friendly `{ ok: true }`. */
+export function mutationToolResult(payload: unknown): {
+  content: Array<{ type: "text"; text: string }>;
+} {
+  return jsonToolResult(payload === undefined ? { ok: true } : payload);
+}

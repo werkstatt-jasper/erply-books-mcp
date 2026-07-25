@@ -5,12 +5,14 @@ import type { Customer } from "../types/customers.js";
 import {
   optionalBoolean,
   optionalNonNegativeInt,
+  optionalNumber,
   optionalPositiveInt,
   optionalString,
   optionalYmd,
   parseToolArgs,
+  positiveInt,
 } from "../validation/tool-args.js";
-import { jsonToolResult, unwrapListEnvelope } from "./list-response.js";
+import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const listCustomersSchema = z.object({
   keyword: optionalString,
@@ -23,6 +25,42 @@ const listCustomersSchema = z.object({
   sort: optionalString,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
+});
+
+const createCustomerSchema = z
+  .object({
+    name: z.string().min(1),
+    code: optionalString,
+    registrationCode: optionalString,
+    email: optionalString,
+    phone1: optionalString,
+    legalAddress: optionalString,
+    vatNumber: optionalString,
+    customer: optionalBoolean,
+    supplier: optionalBoolean,
+    entityTypeCode: optionalString,
+  })
+  .passthrough();
+
+const updateCustomerSchema = z
+  .object({
+    customerId: positiveInt,
+    name: optionalString,
+    code: optionalString,
+    registrationCode: optionalString,
+    email: optionalString,
+    phone1: optionalString,
+    legalAddress: optionalString,
+    vatNumber: optionalString,
+    customer: optionalBoolean,
+    supplier: optionalBoolean,
+    entityTypeCode: optionalString,
+    deadlineDays: optionalNumber,
+  })
+  .passthrough();
+
+const deleteCustomerSchema = z.object({
+  customerId: positiveInt,
 });
 
 export function createCustomerTools(client: ErplyBooksClient) {
@@ -52,6 +90,84 @@ export function createCustomerTools(client: ErplyBooksClient) {
         const args = parseToolArgs(listCustomersSchema, params);
         const response = await client.get("/customers", args);
         return jsonToolResult(unwrapListEnvelope<Customer>(response));
+      },
+    },
+
+    erply_create_customer: {
+      description:
+        "Create a customer/supplier in Erply Books (POST /customers). Requires name. Sends id: 0 as required by the API. Additional APICustomerInfo fields may be passed through. Returns the created customer JSON.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          name: { type: "string", description: "Customer/supplier name (required)" },
+          code: { type: "string", description: "Customer code" },
+          registrationCode: { type: "string", description: "Company registration code" },
+          email: { type: "string" },
+          phone1: { type: "string" },
+          legalAddress: { type: "string" },
+          vatNumber: { type: "string" },
+          customer: { type: "boolean", description: "Mark as customer" },
+          supplier: { type: "boolean", description: "Mark as supplier" },
+          entityTypeCode: {
+            type: "string",
+            description: "ENTITY_TYPE dictionary code (e.g. ENTITY_TYPE_LEGAL)",
+          },
+        },
+        required: ["name"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createCustomerSchema, params);
+        const created = await client.post<Customer>("/customers", { ...args, id: 0 });
+        return mutationToolResult(created);
+      },
+    },
+
+    erply_update_customer: {
+      description:
+        "Update a customer/supplier (PUT /customers/{customerId}). Requires customerId. Path id wins over any body id. Extra APICustomerInfo fields may be passed through.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          customerId: { type: "number", description: "Customer id (required)" },
+          name: { type: "string" },
+          code: { type: "string" },
+          registrationCode: { type: "string" },
+          email: { type: "string" },
+          phone1: { type: "string" },
+          legalAddress: { type: "string" },
+          vatNumber: { type: "string" },
+          customer: { type: "boolean" },
+          supplier: { type: "boolean" },
+          entityTypeCode: { type: "string" },
+          deadlineDays: { type: "number" },
+        },
+        required: ["customerId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(updateCustomerSchema, params);
+        const { customerId, ...body } = args;
+        const updated = await client.put<Customer>(`/customers/${customerId}`, {
+          ...body,
+          id: customerId,
+        });
+        return mutationToolResult(updated);
+      },
+    },
+
+    erply_delete_customer: {
+      description:
+        "Delete a customer/supplier by id (DELETE /customers/{customerId}). Destructive — requires an explicit customerId.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          customerId: { type: "number", description: "Customer id to delete (required)" },
+        },
+        required: ["customerId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(deleteCustomerSchema, params);
+        const result = await client.delete(`/customers/${args.customerId}`);
+        return mutationToolResult(result);
       },
     },
   };

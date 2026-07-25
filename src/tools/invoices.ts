@@ -5,13 +5,14 @@ import { ERPLY_DOCUMENT_TYPES, type Invoice } from "../types/invoices.js";
 import {
   optionalBoolean,
   optionalNonNegativeInt,
+  optionalNumber,
   optionalPositiveInt,
   optionalString,
   parseToolArgs,
   positiveInt,
   ymdDateString,
 } from "../validation/tool-args.js";
-import { jsonToolResult, unwrapListEnvelope } from "./list-response.js";
+import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const documentTypeSchema = z.enum(ERPLY_DOCUMENT_TYPES);
 
@@ -32,6 +33,60 @@ const listInvoicesSchema = z.object({
 const getInvoiceSchema = z.object({
   documentId: positiveInt,
   lang: optionalString,
+});
+
+const createInvoiceSchema = z
+  .object({
+    typeCode: documentTypeSchema,
+    date: ymdDateString,
+    customerId: optionalPositiveInt,
+    customer: z
+      .record(z.string(), z.unknown())
+      .nullish()
+      .transform((v) => v ?? undefined),
+    number: optionalString,
+    currencyCode: optionalString,
+    projectId: optionalPositiveInt,
+    vatPercent: optionalNumber,
+    referenceNumber: optionalString,
+    deadlineDate: optionalString,
+    rows: z
+      .array(z.record(z.string(), z.unknown()))
+      .nullish()
+      .transform((v) => v ?? undefined),
+    registrationCode: optionalString,
+  })
+  .passthrough()
+  .superRefine((val, ctx) => {
+    if (val.customerId == null && val.customer == null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "customerId or customer is required",
+        path: ["customerId"],
+      });
+    }
+  });
+
+const updateInvoiceSchema = z
+  .object({
+    documentId: positiveInt,
+    typeCode: documentTypeSchema.optional(),
+    date: optionalString,
+    customerId: optionalPositiveInt,
+    number: optionalString,
+    currencyCode: optionalString,
+    projectId: optionalPositiveInt,
+    rows: z
+      .array(z.record(z.string(), z.unknown()))
+      .nullish()
+      .transform((v) => v ?? undefined),
+    registrationCode: optionalString,
+  })
+  .passthrough();
+
+const deleteInvoiceSchema = z.object({
+  invoiceId: positiveInt,
+  registrationCode: optionalString,
 });
 
 export function createInvoiceTools(client: ErplyBooksClient) {
@@ -84,6 +139,110 @@ export function createInvoiceTools(client: ErplyBooksClient) {
           lang: args.lang,
         });
         return jsonToolResult(invoice);
+      },
+    },
+
+    erply_create_invoice: {
+      description:
+        "Create an Erply Books document (POST /invoices). Requires typeCode (DOCUMENT_*), date (YYYY-MM-DD), and customerId or nested customer. Sends id: 0. Optional rows[] and registrationCode (query). Some document types / plans return HTTP 409.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          typeCode: {
+            type: "string",
+            description: "DOCUMENT_* type code (required)",
+            enum: [...ERPLY_DOCUMENT_TYPES],
+          },
+          date: { type: "string", description: "Document date YYYY-MM-DD (required)" },
+          customerId: { type: "number", description: "Existing customer id (or pass customer)" },
+          customer: {
+            type: "object",
+            description: "Inline customer object when creating with the document",
+            additionalProperties: true,
+          },
+          number: { type: "string" },
+          currencyCode: { type: "string" },
+          projectId: { type: "number" },
+          vatPercent: { type: "number" },
+          referenceNumber: { type: "string" },
+          deadlineDate: { type: "string" },
+          rows: {
+            type: "array",
+            description: "Invoice line rows (APIInvoiceRow-shaped objects)",
+            items: { type: "object", additionalProperties: true },
+          },
+          registrationCode: {
+            type: "string",
+            description: "Optional query param for partner/queue flows",
+          },
+        },
+        required: ["typeCode", "date"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createInvoiceSchema, params);
+        const { registrationCode, ...body } = args;
+        const created = await client.post<Invoice>(
+          "/invoices",
+          { ...body, id: 0 },
+          { registrationCode },
+        );
+        return mutationToolResult(created);
+      },
+    },
+
+    erply_update_invoice: {
+      description:
+        "Update an Erply Books document (PUT /invoices/{documentId}). Requires documentId. Optional registrationCode query. Extra APIInvoiceInfo fields may be passed through.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          documentId: { type: "number", description: "Document id (required)" },
+          typeCode: {
+            type: "string",
+            enum: [...ERPLY_DOCUMENT_TYPES],
+          },
+          date: { type: "string" },
+          customerId: { type: "number" },
+          number: { type: "string" },
+          currencyCode: { type: "string" },
+          projectId: { type: "number" },
+          rows: {
+            type: "array",
+            items: { type: "object", additionalProperties: true },
+          },
+          registrationCode: { type: "string" },
+        },
+        required: ["documentId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(updateInvoiceSchema, params);
+        const { documentId, registrationCode, ...body } = args;
+        const updated = await client.put<Invoice>(
+          `/invoices/${documentId}`,
+          { ...body, id: documentId },
+          { registrationCode },
+        );
+        return mutationToolResult(updated);
+      },
+    },
+
+    erply_delete_invoice: {
+      description:
+        "Delete an Erply Books document by id (DELETE /invoices/{invoiceId}). Destructive — requires an explicit invoiceId. Optional registrationCode query.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          invoiceId: { type: "number", description: "Invoice/document id to delete (required)" },
+          registrationCode: { type: "string" },
+        },
+        required: ["invoiceId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(deleteInvoiceSchema, params);
+        const result = await client.delete(`/invoices/${args.invoiceId}`, {
+          registrationCode: args.registrationCode,
+        });
+        return mutationToolResult(result);
       },
     },
   };

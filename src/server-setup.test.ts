@@ -23,15 +23,27 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 describe("buildAllTools", () => {
-  it("merges the read-tools MVP with erply_ prefixes", () => {
+  it("merges read + write tools with erply_ prefixes", () => {
     const client = {} as ErplyBooksClient;
     const tools = buildAllTools(client);
     expect(tools.erply_get_organisation).toBeDefined();
     expect(tools.erply_list_accounts).toBeDefined();
+    expect(tools.erply_create_account).toBeDefined();
+    expect(tools.erply_update_account).toBeDefined();
+    expect(tools.erply_delete_account).toBeDefined();
     expect(tools.erply_list_customers).toBeDefined();
+    expect(tools.erply_create_customer).toBeDefined();
+    expect(tools.erply_update_customer).toBeDefined();
+    expect(tools.erply_delete_customer).toBeDefined();
     expect(tools.erply_list_invoices).toBeDefined();
     expect(tools.erply_get_invoice).toBeDefined();
+    expect(tools.erply_create_invoice).toBeDefined();
+    expect(tools.erply_update_invoice).toBeDefined();
+    expect(tools.erply_delete_invoice).toBeDefined();
     expect(tools.erply_list_payments).toBeDefined();
+    expect(tools.erply_create_payment).toBeDefined();
+    expect(tools.erply_update_payment).toBeDefined();
+    expect(tools.erply_delete_payment).toBeDefined();
     expect(tools.erply_list_articles).toBeDefined();
     expect(tools.erply_list_projects).toBeDefined();
     expect(tools.erply_list_account_entries).toBeDefined();

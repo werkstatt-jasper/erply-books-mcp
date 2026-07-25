@@ -17,5 +17,17 @@
     "items": null,
     "totalCount": 0,
     "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "create_response": {
+    "id": 1,
+    "number": "1000",
+    "name": "Cash",
+    "typeCode": "ACCOUNT_TYPE_ASSETS"
+  },
+  "update_response": {
+    "id": 1,
+    "number": "1000",
+    "name": "Cash updated",
+    "typeCode": "ACCOUNT_TYPE_ASSETS"
   }
 }

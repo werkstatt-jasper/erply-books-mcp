@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { jsonToolResult, unwrapListEnvelope } from "./list-response.js";
+import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 describe("unwrapListEnvelope", () => {
   it("returns items and totalCount, dropping organisation", () => {
@@ -36,5 +36,17 @@ describe("jsonToolResult", () => {
     expect(jsonToolResult({ ok: true })).toEqual({
       content: [{ type: "text", text: JSON.stringify({ ok: true }, null, 2) }],
     });
+  });
+});
+
+describe("mutationToolResult", () => {
+  it("maps undefined (HTTP 204) to { ok: true }", () => {
+    expect(mutationToolResult(undefined)).toEqual({
+      content: [{ type: "text", text: JSON.stringify({ ok: true }, null, 2) }],
+    });
+  });
+
+  it("passes through API JSON bodies", () => {
+    expect(JSON.parse(mutationToolResult({ id: 3 }).content[0].text)).toEqual({ id: 3 });
   });
 });

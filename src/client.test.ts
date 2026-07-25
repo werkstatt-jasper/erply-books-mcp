@@ -161,10 +161,23 @@ describe("ErplyBooksClient", () => {
       expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify({ name: "Acme" }));
     });
 
+    it("POSTs with optional query params", async () => {
+      fetchMock.mockResolvedValue(jsonResponse({ id: 1 }));
+      await client.post("/invoices", { id: 0 }, { registrationCode: "REG" });
+      expect(String(fetchMock.mock.calls[0][0])).toContain("registrationCode=REG");
+      expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+    });
+
     it("PUTs JSON body", async () => {
       fetchMock.mockResolvedValue(jsonResponse({ id: 9 }));
       await client.put("/customers/9", { name: "Acme2" });
       expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
+    });
+
+    it("PUTs with optional query params", async () => {
+      fetchMock.mockResolvedValue(jsonResponse({ id: 1 }));
+      await client.put("/invoices/1", { id: 1 }, { registrationCode: "REG" });
+      expect(String(fetchMock.mock.calls[0][0])).toContain("registrationCode=REG");
     });
 
     it("DELETEs without body", async () => {
@@ -172,6 +185,13 @@ describe("ErplyBooksClient", () => {
       await expect(client.delete("/customers/9")).resolves.toBeUndefined();
       expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
       expect(fetchMock.mock.calls[0][1].body).toBeUndefined();
+    });
+
+    it("DELETEs with optional query params", async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+      await client.delete("/invoices/1", { registrationCode: "REG" });
+      expect(String(fetchMock.mock.calls[0][0])).toContain("registrationCode=REG");
+      expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
     });
 
     it("logs ok outcome", async () => {

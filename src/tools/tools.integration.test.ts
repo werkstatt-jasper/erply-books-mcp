@@ -164,6 +164,78 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
   });
 });
 
+describe.skipIf(!hasToken)("write tools live MVP", () => {
+  const client = new ErplyBooksClient(loadAuthConfig);
+  const tools = buildAllTools(client);
+
+  it("erply_create_customer then delete (or plan/module error)", async () => {
+    const uniqueName = `MCP E5 test ${Date.now()}`;
+    try {
+      const created = await tools.erply_create_customer.handler({
+        name: uniqueName,
+        customer: true,
+        entityTypeCode: "ENTITY_TYPE_LEGAL",
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number; name?: string };
+      expect(typeof body.id).toBe("number");
+      const deleted = await tools.erply_delete_customer.handler({ customerId: body.id });
+      expect(JSON.parse(deleted.content[0].text)).toMatchObject({ ok: true });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_create_account then delete (or plan/module error)", async () => {
+    const number = `9${String(Date.now()).slice(-5)}`;
+    try {
+      const created = await tools.erply_create_account.handler({
+        number,
+        name: `MCP E5 acct ${number}`,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_account.handler({ accountId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_create_invoice then delete (or plan/module error)", async () => {
+    try {
+      const created = await tools.erply_create_invoice.handler({
+        typeCode: "DOCUMENT_POS_SELL",
+        date: "2025-06-01",
+        customer: { id: 0, name: `MCP E5 inv ${Date.now()}` },
+        rows: [{ name: "Test line", quantity: 1, price: 1 }],
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_invoice.handler({ invoiceId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_create_payment then delete (or plan/module error)", async () => {
+    try {
+      const created = await tools.erply_create_payment.handler({
+        opDate: "2025-06-02",
+        sumPaid: 0.01,
+        note: `MCP E5 pay ${Date.now()}`,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_payment.handler({ paymentId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+});
+
 describe.skipIf(hasToken)("read tools live MVP (no token)", () => {
   it("skips when ERPLY_BOOKS_API_TOKEN is unset", () => {
     expect(hasToken).toBe(false);

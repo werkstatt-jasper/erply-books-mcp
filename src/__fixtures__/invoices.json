@@ -18,5 +18,19 @@
     "documentType": "DOCUMENT_POS_SELL",
     "date": "2025-06-01",
     "rows": []
+  },
+  "create_response": {
+    "id": 55,
+    "number": "SI-1",
+    "typeCode": "DOCUMENT_POS_SELL",
+    "date": "2025-06-01",
+    "customerId": 10
+  },
+  "update_response": {
+    "id": 55,
+    "number": "SI-1b",
+    "typeCode": "DOCUMENT_POS_SELL",
+    "date": "2025-06-01",
+    "customerId": 10
   }
 }

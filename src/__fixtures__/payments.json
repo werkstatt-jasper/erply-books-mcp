@@ -11,5 +11,19 @@
     ],
     "totalCount": 1,
     "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "create_response": {
+    "id": 77,
+    "opDate": "2025-06-02",
+    "sumPaid": 12.5,
+    "customerId": 10,
+    "typeCode": "INVOICE_PAYMENT"
+  },
+  "update_response": {
+    "id": 77,
+    "opDate": "2025-06-02",
+    "sumPaid": 15,
+    "customerId": 10,
+    "typeCode": "INVOICE_PAYMENT"
   }
 }

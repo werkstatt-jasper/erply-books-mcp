@@ -3,5 +3,17 @@
     "items": [{ "id": 10, "name": "Acme OÜ", "code": "ACME", "email": "a@example.com" }],
     "totalCount": 1,
     "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "create_response": {
+    "id": 10,
+    "name": "Acme OÜ",
+    "code": "ACME",
+    "email": "a@example.com"
+  },
+  "update_response": {
+    "id": 10,
+    "name": "Acme Updated",
+    "code": "ACME",
+    "email": "a@example.com"
   }
 }
