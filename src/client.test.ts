@@ -365,7 +365,9 @@ describe("ErplyBooksClient", () => {
     it("treats missing or non-finite totalCount as unknown and uses short-page stop", async () => {
       const c = new ErplyBooksClient(baseConfig, { pageSize: 2 });
       fetchMock
-        .mockResolvedValueOnce(jsonResponse({ items: [{ id: 1 }, { id: 2 }], totalCount: Number.NaN }))
+        .mockResolvedValueOnce(
+          jsonResponse({ items: [{ id: 1 }, { id: 2 }], totalCount: Number.NaN }),
+        )
         .mockResolvedValueOnce(jsonResponse({ items: [{ id: 3 }] }));
 
       await expect(c.getAllPages<{ id: number }>("/accounts")).resolves.toEqual([
