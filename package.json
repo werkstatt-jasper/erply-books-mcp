@@ -1,0 +1,55 @@
+{
+  "name": "@werkstatt/erply-books-mcp",
+  "version": "0.1.0",
+  "description": "Open-source MCP server for the Erply Books accounting API",
+  "main": "dist/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./client": "./dist/client.js",
+    "./auth": "./dist/auth.js",
+    "./server-setup": "./dist/server-setup.js",
+    "./logger": "./dist/logger.js",
+    "./tools/*": "./dist/tools/*.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "lint": "biome check src/ vitest.config.ts",
+    "lint:fix": "biome check --write src/ vitest.config.ts",
+    "format": "biome format --write src/ vitest.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/werkstatt-jasper/erply-books-mcp.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "erply-books",
+    "erply",
+    "accounting",
+    "estonia"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "pino": "^10.3.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.9",
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^4.1.1",
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.1"
+  }
+}
