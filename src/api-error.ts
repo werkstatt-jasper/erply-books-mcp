@@ -85,6 +85,18 @@ export function createHttpJsonApiError(params: {
   });
 }
 
+/** True when the error body looks like an HTML page (Erply website / gateway). */
+export function looksLikeHtmlBody(text: string): boolean {
+  const head = text.slice(0, 200).toLowerCase();
+  return head.includes("<!doctype") || head.includes("<html");
+}
+
+/** Pull MODULE_* codes from HTML 409 bodies when present. */
+export function extractModuleCodeFromHtml(text: string): string | undefined {
+  const match = text.match(/\bMODULE_[A-Z0-9_]+\b/);
+  return match?.[0];
+}
+
 export function createHttpPlainApiError(params: {
   method: string;
   url: string;
@@ -93,7 +105,20 @@ export function createHttpPlainApiError(params: {
   text: string;
 }): ErplyBooksApiError {
   const snippet = truncateBodySnippet(params.text);
-  const message = `HTTP Error ${params.httpStatus}: ${params.statusText} - ${snippet} ${clientFacingRequestLabel(params.method, params.url)}`;
+  const label = clientFacingRequestLabel(params.method, params.url);
+  let message: string;
+  if (params.httpStatus === 404 && looksLikeHtmlBody(params.text)) {
+    message =
+      `HTTP Error 404: Not Found - Erply returned an HTML page instead of JSON. ` +
+      `This usually means the API base URL is wrong (use https://api.erplybooks.com/api, including /api). ${label}`;
+  } else if (params.httpStatus === 409 && looksLikeHtmlBody(params.text)) {
+    const moduleCode = extractModuleCodeFromHtml(params.text);
+    message = moduleCode
+      ? `HTTP Error 409: Conflict - Erply price plan lacks ${moduleCode}. ${label}`
+      : `HTTP Error 409: Conflict - Erply returned HTML (often a missing MODULE_* on the org price plan). ${label}`;
+  } else {
+    message = `HTTP Error ${params.httpStatus}: ${params.statusText} - ${snippet} ${label}`;
+  }
   return new ErplyBooksApiError({
     kind: "http",
     message,

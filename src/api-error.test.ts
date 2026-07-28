@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   clientFacingRequestLabel,
   createHttpJsonApiError,
+  createHttpPlainApiError,
   createNetworkApiError,
   ErplyBooksApiError,
+  extractModuleCodeFromHtml,
   isRetryableFetchFailure,
+  looksLikeHtmlBody,
   throwNonOkResponse,
   truncateBodySnippet,
 } from "./api-error.js";
@@ -137,6 +140,63 @@ describe("createHttpJsonApiError", () => {
   });
 });
 
+describe("looksLikeHtmlBody", () => {
+  it("detects doctype and html tags", () => {
+    expect(looksLikeHtmlBody("<!DOCTYPE html><html>")).toBe(true);
+    expect(looksLikeHtmlBody("      <html>\n<head>")).toBe(true);
+    expect(looksLikeHtmlBody('{"message":"nope"}')).toBe(false);
+  });
+});
+
+describe("extractModuleCodeFromHtml", () => {
+  it("finds MODULE_* tokens", () => {
+    expect(extractModuleCodeFromHtml("<html>MODULE_TRANSACTIONS missing</html>")).toBe(
+      "MODULE_TRANSACTIONS",
+    );
+    expect(extractModuleCodeFromHtml("<html>no module</html>")).toBeUndefined();
+  });
+});
+
+describe("createHttpPlainApiError", () => {
+  it("hints at wrong base URL for HTML 404", () => {
+    const e = createHttpPlainApiError({
+      method: "GET",
+      url: "https://api.erplybooks.com/invoices",
+      httpStatus: 404,
+      statusText: "Not Found",
+      text: "<!DOCTYPE html><html><title>ERPLY Books</title></html>",
+    });
+    expect(e.message).toContain("API base URL is wrong");
+    expect(e.message).toContain("https://api.erplybooks.com/api");
+    expect(e.message).toContain("[GET /invoices]");
+    expect(e.message).not.toContain("<!DOCTYPE");
+  });
+
+  it("surfaces MODULE_* from HTML 409 when present", () => {
+    const e = createHttpPlainApiError({
+      method: "GET",
+      url: "https://api.erplybooks.com/api/transaction_entries",
+      httpStatus: 409,
+      statusText: "Conflict",
+      text: "<html>Error MODULE_TRANSACTIONS not available</html>",
+    });
+    expect(e.message).toContain("MODULE_TRANSACTIONS");
+    expect(e.message).toContain("[GET /api/transaction_entries]");
+  });
+
+  it("hints at missing MODULE_* for HTML 409 without a code", () => {
+    const e = createHttpPlainApiError({
+      method: "GET",
+      url: "https://api.erplybooks.com/api/reports",
+      httpStatus: 409,
+      statusText: "Conflict",
+      text: "<html><body>Conflict</body></html>",
+    });
+    expect(e.message).toContain("missing MODULE_*");
+    expect(e.message).not.toContain("MODULE_TRANSACTIONS");
+  });
+});
+
 describe("throwNonOkResponse", () => {
   it("throws ErplyBooksApiError for JSON object bodies", () => {
     const res = new Response("", { status: 401, statusText: "Unauthorized" });
@@ -157,5 +217,21 @@ describe("throwNonOkResponse", () => {
     expect(() => throwNonOkResponse("GET", "https://api.erplybooks.com/api/x", res, "42")).toThrow(
       ErplyBooksApiError,
     );
+  });
+
+  it("maps HTML 404 via throwNonOkResponse", () => {
+    const res = new Response("", { status: 404, statusText: "Not Found" });
+    try {
+      throwNonOkResponse(
+        "GET",
+        "https://api.erplybooks.com/invoices",
+        res,
+        "<html><title>ERPLY Books</title></html>",
+      );
+      expect.unreachable();
+    } catch (e) {
+      expect(e).toBeInstanceOf(ErplyBooksApiError);
+      expect((e as ErplyBooksApiError).message).toContain("API base URL is wrong");
+    }
   });
 });
