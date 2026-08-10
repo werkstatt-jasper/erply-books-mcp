@@ -1,0 +1,33 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "attachmentId": 101,
+        "documentId": 55,
+        "filename": "receipt.pdf",
+        "typeCode": "PDF",
+        "description": "Fixture attachment"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "single": {
+    "attachmentId": 101,
+    "documentId": 55,
+    "filename": "receipt.pdf",
+    "typeCode": "PDF",
+    "base64": "dGVzdA==",
+    "description": "Fixture attachment"
+  },
+  "create_response": {
+    "attachmentId": 102,
+    "documentId": 55,
+    "filename": "upload.pdf",
+    "typeCode": "PDF"
+  },
+  "bank_import_v2_response": {
+    "imported": true,
+    "count": 2
+  }
+}

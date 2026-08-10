@@ -1,33 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import attachmentsFixture from "../__fixtures__/attachments.json" with { type: "json" };
 import paymentsFixture from "../__fixtures__/payments.json" with { type: "json" };
 import type { ErplyBooksClient } from "../client.js";
 import { __test__, createPaymentBankTools } from "./payments-bank.js";
 import { createMockClient } from "./test-helpers.js";
-
-describe("decodeBase64File", () => {
-  it("decodes a CSV payload", () => {
-    const b64 = Buffer.from("a,b\n1,2\n", "utf8").toString("base64");
-    const file = __test__.decodeBase64File(b64, "stmt.csv");
-    expect(file.name).toBe("stmt.csv");
-    expect(file.size).toBeGreaterThan(0);
-  });
-
-  it("rejects empty payload", () => {
-    expect(() => __test__.decodeBase64File("", "x.csv")).toThrow(/fileBase64/);
-  });
-
-  it("rejects invalid base64 characters", () => {
-    expect(() => __test__.decodeBase64File("!!!", "x.csv")).toThrow(/invalid base64/);
-  });
-
-  it("rejects whitespace-only after normalize that decodes empty", () => {
-    expect(() => __test__.decodeBase64File("  ", "x.csv")).toThrow(/fileBase64/);
-  });
-
-  it("rejects base64 that decodes to an empty buffer", () => {
-    expect(() => __test__.decodeBase64File("A", "x.csv")).toThrow(/decoded file is empty/);
-  });
-});
 
 describe("erply_import_payment", () => {
   let client: ErplyBooksClient;
@@ -240,5 +216,94 @@ describe("erply_bank_import", () => {
     const form = vi.mocked(client.postMultipart).mock.calls[0][1] as FormData;
     expect(form.get("file")).toBeTruthy();
     expect(JSON.parse(result.content[0].text).imported).toBe(true);
+  });
+});
+
+describe("erply_bank_import_v2", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createPaymentBankTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createPaymentBankTools(client);
+  });
+
+  it("rejects when neither file nor attachmentId is provided", async () => {
+    await expect(tools.erply_bank_import_v2.handler({})).rejects.toThrow(
+      /fileBase64\+fileName|attachmentId/,
+    );
+  });
+
+  it("rejects when only fileBase64 is provided", async () => {
+    await expect(tools.erply_bank_import_v2.handler({ fileBase64: "dGVzdA==" })).rejects.toThrow(
+      /fileBase64|fileName|attachmentId/,
+    );
+  });
+
+  it("rejects when both file and attachmentId are provided", async () => {
+    const fileBase64 = Buffer.from("a,b\n1,2\n", "utf8").toString("base64");
+    await expect(
+      tools.erply_bank_import_v2.handler({
+        fileBase64,
+        fileName: "stmt.csv",
+        attachmentId: 101,
+      }),
+    ).rejects.toThrow(/not both/);
+  });
+
+  it("POSTs JSON with nested file attachment and mapped option fields", async () => {
+    vi.mocked(client.post).mockResolvedValue(attachmentsFixture.bank_import_v2_response);
+    const fileBase64 = Buffer.from("a,b\n1,2\n", "utf8").toString("base64");
+    const result = await tools.erply_bank_import_v2.handler({
+      fileBase64,
+      fileName: "stmt.csv",
+      accountId: 42,
+      getEverything: true,
+      getMissing: true,
+      separatorField: ";",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/payments/bank_import/v2",
+      expect.objectContaining({
+        apiAttachmentInfo: { filename: "stmt.csv", base64: fileBase64 },
+        accountId: 42,
+        everything: true,
+        missing: true,
+        separator: ";",
+      }),
+    );
+    expect(JSON.parse(result.content[0].text).imported).toBe(true);
+  });
+
+  it("POSTs JSON with attachmentId reference", async () => {
+    vi.mocked(client.post).mockResolvedValue(attachmentsFixture.bank_import_v2_response);
+    await tools.erply_bank_import_v2.handler({
+      attachmentId: 101,
+      encoding: "UTF-8",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/payments/bank_import/v2",
+      expect.objectContaining({
+        apiAttachmentInfo: { attachmentId: 101 },
+        encoding: "UTF-8",
+      }),
+    );
+  });
+
+  it("bankImportV2Body maps option fields", () => {
+    const body = __test__.bankImportV2Body({
+      attachmentId: 9,
+      getEverything: false,
+      getMissing: false,
+      separatorField: ",",
+    });
+    expect(body).toEqual(
+      expect.objectContaining({
+        apiAttachmentInfo: { attachmentId: 9 },
+        everything: false,
+        missing: false,
+        separator: ",",
+      }),
+    );
   });
 });
