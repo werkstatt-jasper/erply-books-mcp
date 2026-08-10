@@ -203,6 +203,11 @@ Bank import uploads use multipart (`fileBase64` + `fileName`). `/payments/bank_i
 | `erply_list_account_entries` | `GET /account_entries` | `dateFrom`, `dateTo` |
 | `erply_list_transaction_entries` | `GET /transaction_entries` | `dateFrom`, `dateTo` |
 | `erply_get_transaction_entry` | `GET /transaction_entries/{id}` | `transactionEntryId` |
+| `erply_create_transaction_entry` | `POST /transaction_entries` | `opDate`, `typeCode`, `accountEntries` |
+| `erply_update_transaction_entry` | `PUT /transaction_entries/{transactionEntryId}` | `transactionEntryId` |
+| `erply_delete_transaction_entry` | `DELETE /transaction_entries/{transactionEntryId}` | `transactionEntryId` |
+
+Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `accountEntries` rows (`accountId` plus `debitSum` / `creditSum`). Plans without **MODULE_TRANSACTIONS** return HTTP 409.
 
 ### Reports
 

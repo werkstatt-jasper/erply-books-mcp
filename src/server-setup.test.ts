@@ -60,6 +60,9 @@ describe("buildAllTools", () => {
     expect(tools.erply_list_account_entries).toBeDefined();
     expect(tools.erply_list_transaction_entries).toBeDefined();
     expect(tools.erply_get_transaction_entry).toBeDefined();
+    expect(tools.erply_create_transaction_entry).toBeDefined();
+    expect(tools.erply_update_transaction_entry).toBeDefined();
+    expect(tools.erply_delete_transaction_entry).toBeDefined();
     expect(tools.erply_balance_sheet).toBeDefined();
     expect(tools.erply_income_sheet).toBeDefined();
     expect(tools.erply_aged_receivables).toBeDefined();

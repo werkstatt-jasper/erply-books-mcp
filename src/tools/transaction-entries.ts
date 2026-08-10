@@ -4,13 +4,14 @@ import type { ErplyBooksClient } from "../client.js";
 import { ERPLY_TRANSACTION_TYPES, type TransactionEntry } from "../types/transaction-entries.js";
 import {
   optionalNonNegativeInt,
+  optionalNumber,
   optionalPositiveInt,
   optionalString,
   parseToolArgs,
   positiveInt,
   ymdDateString,
 } from "../validation/tool-args.js";
-import { jsonToolResult, unwrapListEnvelope } from "./list-response.js";
+import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const listTransactionEntriesSchema = z.object({
   dateFrom: ymdDateString,
@@ -26,6 +27,53 @@ const listTransactionEntriesSchema = z.object({
 const getTransactionEntrySchema = z.object({
   transactionEntryId: positiveInt,
   lang: optionalString,
+});
+
+const accountEntryRowSchema = z
+  .object({
+    accountId: positiveInt,
+    debitSum: optionalNumber,
+    creditSum: optionalNumber,
+    description: optionalString,
+    projectId: optionalPositiveInt,
+    taxRateId: optionalPositiveInt,
+    accountNumber: optionalString,
+  })
+  .passthrough();
+
+const createTransactionEntrySchema = z
+  .object({
+    opDate: ymdDateString,
+    typeCode: z.string().min(1),
+    accountEntries: z.array(accountEntryRowSchema).min(1),
+    description: optionalString,
+    sum: optionalNumber,
+    projectId: optionalPositiveInt,
+    taxRateId: optionalPositiveInt,
+    code: optionalString,
+    percent: optionalNumber,
+    documentStatusTypeCode: optionalString,
+  })
+  .passthrough();
+
+const updateTransactionEntrySchema = z
+  .object({
+    transactionEntryId: positiveInt,
+    opDate: optionalString,
+    typeCode: optionalString,
+    accountEntries: z.array(accountEntryRowSchema).min(1).optional(),
+    description: optionalString,
+    sum: optionalNumber,
+    projectId: optionalPositiveInt,
+    taxRateId: optionalPositiveInt,
+    code: optionalString,
+    percent: optionalNumber,
+    documentStatusTypeCode: optionalString,
+  })
+  .passthrough();
+
+const deleteTransactionEntrySchema = z.object({
+  transactionEntryId: positiveInt,
 });
 
 export function createTransactionEntryTools(client: ErplyBooksClient) {
@@ -75,6 +123,126 @@ export function createTransactionEntryTools(client: ErplyBooksClient) {
           { lang: args.lang },
         );
         return jsonToolResult(entry);
+      },
+    },
+
+    erply_create_transaction_entry: {
+      description:
+        "Create a transaction/journal entry (POST /transaction_entries). Requires opDate (YYYY-MM-DD), typeCode (e.g. DIRECT_TRANSACTION for manual journals), and a non-empty accountEntries array (each row needs accountId; use debitSum and/or creditSum). Sends id: 0. Erply validates that debits equal credits. Some price plans return HTTP 409 (MODULE_TRANSACTIONS). Extra APITransactionEntryInfo fields may be passed through.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          opDate: { type: "string", description: "Operation date YYYY-MM-DD (required)" },
+          typeCode: {
+            type: "string",
+            description:
+              "TRANSACTION_TYPE code (required); use DIRECT_TRANSACTION for manual journals",
+          },
+          accountEntries: {
+            type: "array",
+            description:
+              "Ledger rows (required, non-empty). Each object needs accountId; optional debitSum, creditSum, description, projectId, taxRateId.",
+            items: {
+              type: "object",
+              properties: {
+                accountId: { type: "number" },
+                debitSum: { type: "number" },
+                creditSum: { type: "number" },
+                description: { type: "string" },
+                projectId: { type: "number" },
+                taxRateId: { type: "number" },
+                accountNumber: { type: "string" },
+              },
+              required: ["accountId"],
+            },
+          },
+          description: { type: "string" },
+          sum: { type: "number" },
+          projectId: { type: "number" },
+          taxRateId: { type: "number" },
+          code: { type: "string" },
+          percent: { type: "number" },
+          documentStatusTypeCode: { type: "string" },
+        },
+        required: ["opDate", "typeCode", "accountEntries"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(createTransactionEntrySchema, params);
+        const created = await client.post<TransactionEntry>("/transaction_entries", {
+          ...args,
+          id: 0,
+        });
+        return mutationToolResult(created);
+      },
+    },
+
+    erply_update_transaction_entry: {
+      description:
+        "Update a transaction/journal entry (PUT /transaction_entries/{transactionEntryId}). Requires transactionEntryId. Path id wins over body id. May 409 (MODULE_TRANSACTIONS).",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          transactionEntryId: {
+            type: "number",
+            description: "Transaction entry id (required)",
+          },
+          opDate: { type: "string", description: "Operation date YYYY-MM-DD" },
+          typeCode: { type: "string" },
+          accountEntries: {
+            type: "array",
+            description: "Replacement ledger rows when provided (non-empty if set)",
+            items: {
+              type: "object",
+              properties: {
+                accountId: { type: "number" },
+                debitSum: { type: "number" },
+                creditSum: { type: "number" },
+                description: { type: "string" },
+                projectId: { type: "number" },
+                taxRateId: { type: "number" },
+                accountNumber: { type: "string" },
+              },
+              required: ["accountId"],
+            },
+          },
+          description: { type: "string" },
+          sum: { type: "number" },
+          projectId: { type: "number" },
+          taxRateId: { type: "number" },
+          code: { type: "string" },
+          percent: { type: "number" },
+          documentStatusTypeCode: { type: "string" },
+        },
+        required: ["transactionEntryId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(updateTransactionEntrySchema, params);
+        const { transactionEntryId, ...body } = args;
+        const updated = await client.put<TransactionEntry>(
+          `/transaction_entries/${transactionEntryId}`,
+          { ...body, id: transactionEntryId },
+        );
+        return mutationToolResult(updated);
+      },
+    },
+
+    erply_delete_transaction_entry: {
+      description:
+        "Delete a transaction/journal entry by id (DELETE /transaction_entries/{transactionEntryId}). Destructive — requires an explicit transactionEntryId. May 409 (MODULE_TRANSACTIONS).",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          transactionEntryId: {
+            type: "number",
+            description: "Transaction entry id to delete (required)",
+          },
+        },
+        required: ["transactionEntryId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(deleteTransactionEntrySchema, params);
+        const result = await client.delete(`/transaction_entries/${args.transactionEntryId}`);
+        return mutationToolResult(result);
       },
     },
   };

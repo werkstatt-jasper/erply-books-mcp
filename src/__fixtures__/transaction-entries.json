@@ -18,5 +18,19 @@
     "date": "2025-06-01",
     "description": "Sale",
     "rows": []
+  },
+  "create_response": {
+    "id": 201,
+    "opDate": "2025-06-15",
+    "typeCode": "DIRECT_TRANSACTION",
+    "description": "MCP journal",
+    "accountEntries": [{ "accountId": 1, "debitSum": 10 }, { "accountId": 2, "creditSum": 10 }]
+  },
+  "update_response": {
+    "id": 201,
+    "opDate": "2025-06-15",
+    "typeCode": "DIRECT_TRANSACTION",
+    "description": "MCP journal updated",
+    "accountEntries": [{ "accountId": 1, "debitSum": 12 }, { "accountId": 2, "creditSum": 12 }]
   }
 }
