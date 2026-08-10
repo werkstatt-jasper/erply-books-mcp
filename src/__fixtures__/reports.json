@@ -14,5 +14,25 @@
   "general_ledger": {
     "reportType": "general_ledger",
     "rows": [{ "accountId": 1, "debit": 10, "credit": 0 }]
+  },
+  "daybook": {
+    "reportType": "daybook",
+    "rows": [{ "documentId": 5, "description": "Sale" }]
+  },
+  "trial_balance": {
+    "reportType": "trial_balance",
+    "rows": [{ "accountId": 1, "debit": 100, "credit": 100 }]
+  },
+  "vat_ee": {
+    "reportType": "vat_ee",
+    "rows": [{ "code": "1", "sum": 20 }]
+  },
+  "contact_balance": {
+    "reportType": "contact_balance",
+    "rows": [{ "customerId": 10, "balance": 50 }]
+  },
+  "fixed_assets": {
+    "reportType": "fixed_assets",
+    "rows": [{ "articleId": 3, "name": "Laptop" }]
   }
 }

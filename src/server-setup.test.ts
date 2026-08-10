@@ -78,6 +78,11 @@ describe("buildAllTools", () => {
     expect(tools.erply_income_sheet).toBeDefined();
     expect(tools.erply_aged_receivables).toBeDefined();
     expect(tools.erply_general_ledger).toBeDefined();
+    expect(tools.erply_daybook).toBeDefined();
+    expect(tools.erply_trial_balance).toBeDefined();
+    expect(tools.erply_vat_ee).toBeDefined();
+    expect(tools.erply_contact_balance).toBeDefined();
+    expect(tools.erply_fixed_assets).toBeDefined();
   });
 });
 

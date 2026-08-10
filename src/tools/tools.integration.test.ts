@@ -174,6 +174,71 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
+
+  it("erply_daybook succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_daybook.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_trial_balance succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_trial_balance.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_vat_ee succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_vat_ee.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-03-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_contact_balance succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_contact_balance.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_fixed_assets succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_fixed_assets.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
 });
 
 describe.skipIf(!hasToken)("write tools live MVP", () => {
