@@ -19,13 +19,33 @@ export const ERPLY_TRANSACTION_TYPES = [
 
 export type ErplyTransactionType = (typeof ERPLY_TRANSACTION_TYPES)[number];
 
-/** Journal / transaction entry from `GET /transaction_entries`. */
+/** Ledger line on a transaction entry (`APIAccountEntryFullInfoV2`). */
+export interface TransactionAccountEntry {
+  id?: number;
+  accountId?: number;
+  accountNumber?: string;
+  description?: string;
+  debitSum?: number;
+  creditSum?: number;
+  projectId?: number;
+  taxRateId?: number;
+  [key: string]: unknown;
+}
+
+/** Journal / transaction entry from `/transaction_entries`. */
 export interface TransactionEntry {
   id?: number;
-  typeCode?: string;
+  opDate?: string;
   date?: string;
+  typeCode?: string;
   description?: string;
+  sum?: number;
   projectId?: number;
   documentId?: number;
+  taxRateId?: number;
+  percent?: number;
+  code?: string;
+  documentStatusTypeCode?: string;
+  accountEntries?: TransactionAccountEntry[];
   [key: string]: unknown;
 }

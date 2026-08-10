@@ -231,6 +231,35 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("erply_create_transaction_entry then delete (or plan/module error)", async () => {
+    try {
+      const accountsResult = await tools.erply_list_accounts.handler({ start: 0, limit: 2 });
+      const accounts = JSON.parse(accountsResult.content[0].text) as {
+        items: Array<{ id?: number }>;
+      };
+      const accountIds = accounts.items
+        .map((a) => a.id)
+        .filter((id): id is number => typeof id === "number");
+      const debitId = accountIds[0] ?? 1;
+      const creditId = accountIds[1] ?? debitId;
+      const created = await tools.erply_create_transaction_entry.handler({
+        opDate: "2025-06-15",
+        typeCode: "DIRECT_TRANSACTION",
+        description: `MCP E22 txn ${Date.now()}`,
+        accountEntries: [
+          { accountId: debitId, debitSum: 0.01 },
+          { accountId: creditId, creditSum: 0.01 },
+        ],
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_transaction_entry.handler({ transactionEntryId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_create_invoice then delete (or plan/module error)", async () => {
     try {
       const created = await tools.erply_create_invoice.handler({
