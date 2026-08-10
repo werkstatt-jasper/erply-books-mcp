@@ -186,8 +186,20 @@ create/update/delete.
 | `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
 | `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
+| `erply_bank_import_v2` | `POST /payments/bank_import/v2` | `fileBase64`+`fileName` or `attachmentId` |
 
-Bank import uploads use multipart (`fileBase64` + `fileName`). `/payments/bank_import/v2` is deferred until attachments tools ship.
+`erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
+
+### Attachments
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_list_attachments` | `GET /attachments/all` | — |
+| `erply_get_attachment` | `GET /attachments/all/{attachmentId}` | `attachmentId` |
+| `erply_create_attachment` | `POST /attachments` | `fileBase64`, `fileName` |
+| `erply_delete_attachment` | `DELETE /attachments/{attachmentId}` | `attachmentId` |
+
+Create maps `fileName`/`fileBase64` to API fields `filename`/`base64`. Digitize/KYC/parse/zip helpers are not shipped yet.
 
 ### Articles and projects
 
@@ -227,8 +239,7 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_general_ledger` | `GET /reports/general_ledger` | `dateFrom`, `dateTo` |
 
 **Out of scope:** daybook, report-generator POST flows, partner/recurring invoice helpers,
-GoERP `POST …/delete` aliases, supplier-only report modules, `/payments/bank_import/v2`
-(needs attachments).
+GoERP `POST …/delete` aliases, supplier-only report modules, attachment digi/KYC/parse/zip helpers.
 
 ## Upstream API documentation
 

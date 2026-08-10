@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { ErplyBooksClient } from "../client.js";
+import type { BankImportInfo } from "../types/attachments.js";
 import type { PaymentImport, SepaPaymentRequest } from "../types/payments.js";
 import {
   optionalBoolean,
@@ -9,6 +10,7 @@ import {
   optionalString,
   parseToolArgs,
 } from "../validation/tool-args.js";
+import { decodeBase64File, normalizeFileBase64 } from "./file-base64.js";
 import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const importPaymentSchema = z
@@ -91,9 +93,7 @@ const sepaPaymentsSchema = z
   })
   .passthrough();
 
-const bankImportSchema = z.object({
-  fileBase64: z.string().min(1),
-  fileName: z.string().min(1),
+const bankImportOptionsSchema = {
   encoding: optionalString,
   calculateCurrency: optionalBoolean,
   dateFormatCode: optionalString,
@@ -104,21 +104,73 @@ const bankImportSchema = z.object({
   separatorField: optionalString,
   detectDateFormatAutomatically: optionalBoolean,
   includeHeader: optionalBoolean,
+};
+
+const bankImportSchema = z.object({
+  fileBase64: z.string().min(1),
+  fileName: z.string().min(1),
+  ...bankImportOptionsSchema,
 });
 
-function decodeBase64File(fileBase64: string, fileName: string): File {
-  const normalized = fileBase64.replace(/\s/g, "");
-  if (normalized.length === 0) {
-    throw new Error("fileBase64: empty");
-  }
-  if (!/^[A-Za-z0-9+/]+=*$/.test(normalized)) {
-    throw new Error("fileBase64: invalid base64 characters");
-  }
-  const bytes = Buffer.from(normalized, "base64");
-  if (bytes.length === 0) {
-    throw new Error("fileBase64: decoded file is empty");
-  }
-  return new File([bytes], fileName);
+const bankImportV2Schema = z
+  .object({
+    fileBase64: optionalString,
+    fileName: optionalString,
+    attachmentId: optionalPositiveInt,
+    ...bankImportOptionsSchema,
+  })
+  .superRefine((v, ctx) => {
+    const hasFile =
+      v.fileBase64 !== undefined &&
+      v.fileBase64.length > 0 &&
+      v.fileName !== undefined &&
+      v.fileName.length > 0;
+    const hasAttachment = v.attachmentId !== undefined;
+    if (!hasFile && !hasAttachment) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide fileBase64+fileName, or attachmentId",
+      });
+    }
+    if (hasFile && hasAttachment) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide either fileBase64+fileName or attachmentId, not both",
+      });
+    }
+    if (
+      (v.fileBase64 !== undefined && v.fileBase64.length > 0) !==
+      (v.fileName !== undefined && v.fileName.length > 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "fileBase64 and fileName are required together",
+      });
+    }
+  });
+
+function bankImportV2Body(args: z.infer<typeof bankImportV2Schema>): BankImportInfo {
+  const apiAttachmentInfo =
+    args.attachmentId !== undefined
+      ? { attachmentId: args.attachmentId }
+      : {
+          filename: args.fileName as string,
+          base64: normalizeFileBase64(args.fileBase64 as string),
+        };
+
+  return {
+    apiAttachmentInfo,
+    encoding: args.encoding,
+    calculateCurrency: args.calculateCurrency,
+    dateFormatCode: args.dateFormatCode,
+    type: args.type,
+    everything: args.getEverything,
+    accountId: args.accountId,
+    missing: args.getMissing,
+    separator: args.separatorField,
+    detectDateFormatAutomatically: args.detectDateFormatAutomatically,
+    includeHeader: args.includeHeader,
+  };
 }
 
 export function createPaymentBankTools(client: ErplyBooksClient) {
@@ -280,7 +332,7 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_bank_import: {
       description:
-        "Upload a bank statement file (POST /payments/bank_import multipart). Requires fileBase64 and fileName. Optional query: accountId, encoding, type, dateFormatCode, separatorField, calculateCurrency, getEverything, getMissing, detectDateFormatAutomatically, includeHeader. Prefer this over bank_import/v2 (needs attachments — not shipped yet).",
+        "Upload a bank statement file (POST /payments/bank_import multipart). Requires fileBase64 and fileName. Optional query: accountId, encoding, type, dateFormatCode, separatorField, calculateCurrency, getEverything, getMissing, detectDateFormatAutomatically, includeHeader. For JSON body with nested APIAttachmentInfo, use erply_bank_import_v2.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -315,8 +367,46 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
         return mutationToolResult(result);
       },
     },
+
+    erply_bank_import_v2: {
+      description:
+        "Bank statement import v2 (POST /payments/bank_import/v2 JSON). Provide either fileBase64+fileName (nested as apiAttachmentInfo) or attachmentId from erply_create_attachment. Tool args getEverything/getMissing/separatorField map to API fields everything/missing/separator.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          fileBase64: {
+            type: "string",
+            description: "Bank statement file contents as base64 (with fileName)",
+          },
+          fileName: {
+            type: "string",
+            description: "Original file name including extension (with fileBase64)",
+          },
+          attachmentId: {
+            type: "number",
+            description: "Existing attachment id (alternative to fileBase64+fileName)",
+          },
+          encoding: { type: "string" },
+          calculateCurrency: { type: "boolean" },
+          dateFormatCode: { type: "string" },
+          type: { type: "string", description: "Bank import type code when required by Erply" },
+          getEverything: { type: "boolean", description: "Maps to API field everything" },
+          accountId: { type: "number", description: "Bank account id" },
+          getMissing: { type: "boolean", description: "Maps to API field missing" },
+          separatorField: { type: "string", description: "Maps to API field separator" },
+          detectDateFormatAutomatically: { type: "boolean" },
+          includeHeader: { type: "boolean" },
+        },
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(bankImportV2Schema, params);
+        const body = bankImportV2Body(args);
+        const result = await client.post<BankImportInfo>("/payments/bank_import/v2", body);
+        return mutationToolResult(result);
+      },
+    },
   };
 }
 
 /** Exported for unit tests. */
-export const __test__ = { decodeBase64File };
+export const __test__ = { decodeBase64File, bankImportV2Body, bankImportV2Schema };

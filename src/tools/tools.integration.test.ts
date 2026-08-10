@@ -264,6 +264,26 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("erply_create_attachment then delete (or plan/module error)", async () => {
+    try {
+      const created = await tools.erply_create_attachment.handler({
+        fileBase64: Buffer.from(`MCP E24 ${Date.now()}`, "utf8").toString("base64"),
+        fileName: "mcp-e24.txt",
+        description: `MCP E24 attachment ${Date.now()}`,
+      });
+      const body = JSON.parse(created.content[0].text) as {
+        attachmentId?: number;
+        id?: number;
+      };
+      const attachmentId = body.attachmentId ?? body.id;
+      expect(typeof attachmentId).toBe("number");
+      await tools.erply_delete_attachment.handler({ attachmentId });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_create_transaction_entry then delete (or plan/module error)", async () => {
     try {
       const accountsResult = await tools.erply_list_accounts.handler({ start: 0, limit: 2 });
