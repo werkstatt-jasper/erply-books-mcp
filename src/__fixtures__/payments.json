@@ -25,5 +25,42 @@
     "sumPaid": 15,
     "customerId": 10,
     "typeCode": "INVOICE_PAYMENT"
+  },
+  "import_response": {
+    "id": 501,
+    "date": "2022-05-30T12:00:00",
+    "amount": 500,
+    "typeCode": "MONEY_OUT_TRANSACTION",
+    "customerId": 8543983,
+    "debitAccountId": 4122383,
+    "creditAccountId": 4122437
+  },
+  "pending_page": {
+    "items": [
+      {
+        "id": 501,
+        "amount": 500,
+        "typeCode": "MONEY_OUT_TRANSACTION",
+        "description": "pending fixture"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "sepa_response": {
+    "invoiceIds": "10,11",
+    "bankAccountId": 42
+  },
+  "bank_import_response": {
+    "imported": true,
+    "count": 2
+  },
+  "save_all_response": {
+    "ok": true
+  },
+  "connect_response": {
+    "paymentId": 77,
+    "invoiceId": 100,
+    "amount": 12.5
   }
 }

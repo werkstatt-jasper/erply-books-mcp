@@ -5,6 +5,7 @@ export function createMockClient(): ErplyBooksClient {
   return {
     get: vi.fn(),
     post: vi.fn(),
+    postMultipart: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
     getAllPages: vi.fn(),

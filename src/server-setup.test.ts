@@ -44,6 +44,13 @@ describe("buildAllTools", () => {
     expect(tools.erply_create_payment).toBeDefined();
     expect(tools.erply_update_payment).toBeDefined();
     expect(tools.erply_delete_payment).toBeDefined();
+    expect(tools.erply_import_payment).toBeDefined();
+    expect(tools.erply_save_all_payment_imports).toBeDefined();
+    expect(tools.erply_connect_payment_with_documents).toBeDefined();
+    expect(tools.erply_list_pending_payments).toBeDefined();
+    expect(tools.erply_settle_prepayments).toBeDefined();
+    expect(tools.erply_sepa_payments).toBeDefined();
+    expect(tools.erply_bank_import).toBeDefined();
     expect(tools.erply_list_articles).toBeDefined();
     expect(tools.erply_list_projects).toBeDefined();
     expect(tools.erply_list_account_entries).toBeDefined();
