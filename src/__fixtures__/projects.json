@@ -8,5 +8,16 @@
     "items": null,
     "totalCount": 0,
     "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "create_response": {
+    "id": 3,
+    "name": "Website rebuild",
+    "affirmed": true,
+    "description": "Fixture project"
+  },
+  "update_response": {
+    "id": 3,
+    "name": "Website rebuild updated",
+    "affirmed": true
   }
 }

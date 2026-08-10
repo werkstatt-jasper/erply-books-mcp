@@ -231,6 +231,39 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("erply_create_article then delete (or plan/module error)", async () => {
+    const name = `MCP E23 article ${Date.now()}`;
+    try {
+      const created = await tools.erply_create_article.handler({
+        name,
+        code: `E23${String(Date.now()).slice(-6)}`,
+        typeCode: "ARTICLE_SERVICE",
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_article.handler({ articleId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_create_project then delete (or plan/module error)", async () => {
+    const name = `MCP E23 project ${Date.now()}`;
+    try {
+      const created = await tools.erply_create_project.handler({
+        name,
+        description: name,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_project.handler({ projectId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_create_transaction_entry then delete (or plan/module error)", async () => {
     try {
       const accountsResult = await tools.erply_list_accounts.handler({ start: 0, limit: 2 });
