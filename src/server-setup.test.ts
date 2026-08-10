@@ -31,6 +31,10 @@ describe("buildAllTools", () => {
     expect(tools.erply_create_account).toBeDefined();
     expect(tools.erply_update_account).toBeDefined();
     expect(tools.erply_delete_account).toBeDefined();
+    expect(tools.erply_list_tax_rates).toBeDefined();
+    expect(tools.erply_create_tax_rate).toBeDefined();
+    expect(tools.erply_update_tax_rate).toBeDefined();
+    expect(tools.erply_delete_tax_rate).toBeDefined();
     expect(tools.erply_list_customers).toBeDefined();
     expect(tools.erply_create_customer).toBeDefined();
     expect(tools.erply_update_customer).toBeDefined();
