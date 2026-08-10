@@ -237,9 +237,15 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_income_sheet` | `GET /reports/income_sheet` | `dateFrom`, `dateTo` |
 | `erply_aged_receivables` | `GET /reports/aged` | `dateFrom`, `dateTo` |
 | `erply_general_ledger` | `GET /reports/general_ledger` | `dateFrom`, `dateTo` |
+| `erply_daybook` | `GET /reports/daybook` | `dateFrom`, `dateTo` |
+| `erply_trial_balance` | `GET /reports/trial_balance` | `dateFrom`, `dateTo` |
+| `erply_vat_ee` | `GET /reports/tax/ee/vat` | `dateFrom`, `dateTo` |
+| `erply_contact_balance` | `GET /reports/contact_balance` | `dateFrom`, `dateTo` |
+| `erply_fixed_assets` | `GET /reports/fixed_assets` | `dateFrom`, `dateTo` |
 
-**Out of scope:** daybook, report-generator POST flows, partner/recurring invoice helpers,
-GoERP `POST …/delete` aliases, supplier-only report modules, attachment digi/KYC/parse/zip helpers.
+**Out of scope:** report-generator POST flows, partner/recurring invoice helpers,
+GoERP `POST …/delete` aliases, supplier-only report modules, attachment digi/KYC/parse/zip helpers,
+generic `/reports/vat_report`, and LT/LV VAT report paths.
 
 ## Upstream API documentation
 
