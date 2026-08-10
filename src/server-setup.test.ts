@@ -56,7 +56,13 @@ describe("buildAllTools", () => {
     expect(tools.erply_sepa_payments).toBeDefined();
     expect(tools.erply_bank_import).toBeDefined();
     expect(tools.erply_list_articles).toBeDefined();
+    expect(tools.erply_create_article).toBeDefined();
+    expect(tools.erply_update_article).toBeDefined();
+    expect(tools.erply_delete_article).toBeDefined();
     expect(tools.erply_list_projects).toBeDefined();
+    expect(tools.erply_create_project).toBeDefined();
+    expect(tools.erply_update_project).toBeDefined();
+    expect(tools.erply_delete_project).toBeDefined();
     expect(tools.erply_list_account_entries).toBeDefined();
     expect(tools.erply_list_transaction_entries).toBeDefined();
     expect(tools.erply_get_transaction_entry).toBeDefined();

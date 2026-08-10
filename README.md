@@ -194,7 +194,15 @@ Bank import uploads use multipart (`fileBase64` + `fileName`). `/payments/bank_i
 | Tool | API | Required |
 |------|-----|----------|
 | `erply_list_articles` | `GET /articles` | — |
+| `erply_create_article` | `POST /articles` | `name` |
+| `erply_update_article` | `PUT /articles/{articleId}` | `articleId` |
+| `erply_delete_article` | `DELETE /articles/{articleId}` | `articleId` |
 | `erply_list_projects` | `GET /projects` | — |
+| `erply_create_project` | `POST /projects` | `name` |
+| `erply_update_project` | `PUT /projects/{projectId}` | `projectId` |
+| `erply_delete_project` | `DELETE /projects/{projectId}` | `projectId` |
+
+Project create/update use body field `affirmed` (list filter remains `isAffirmed`). `/projects/groups` is not shipped yet.
 
 ### Ledger and transactions
 
