@@ -14,6 +14,7 @@ import { createPaymentTools } from "./tools/payments.js";
 import { createPaymentBankTools } from "./tools/payments-bank.js";
 import { createProjectTools } from "./tools/projects.js";
 import { createReportTools } from "./tools/reports.js";
+import { createTaxRateTools } from "./tools/tax-rates.js";
 import { createTransactionEntryTools } from "./tools/transaction-entries.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: tool handlers use per-tool param shapes
@@ -35,6 +36,7 @@ export function buildAllTools(client: ErplyBooksClient): ToolRecord {
   return {
     ...createOrganisationTools(client),
     ...createAccountTools(client),
+    ...createTaxRateTools(client),
     ...createCustomerTools(client),
     ...createInvoiceTools(client),
     ...createPaymentTools(client),

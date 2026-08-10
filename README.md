@@ -137,6 +137,15 @@ structured `ErplyBooksApiError`.
 | `erply_update_account` | `PUT /accounts/{accountId}` | `accountId` |
 | `erply_delete_account` | `DELETE /accounts/{accountId}` | `accountId` |
 
+### Tax rates
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_list_tax_rates` | `GET /tax_rates` | — |
+| `erply_create_tax_rate` | `POST /tax_rates` | `name`, `percent` |
+| `erply_update_tax_rate` | `PUT /tax_rates/{taxRateId}` | `taxRateId` |
+| `erply_delete_tax_rate` | `DELETE /tax_rates/{taxRateId}` | `taxRateId` |
+
 ### Customers
 
 | Tool | API | Required |

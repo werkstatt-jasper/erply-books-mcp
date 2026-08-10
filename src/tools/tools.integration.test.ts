@@ -65,6 +65,18 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
     }
   });
 
+  it("erply_list_tax_rates returns { totalCount, items } or plan error", async () => {
+    try {
+      const result = await tools.erply_list_tax_rates.handler({ start: 0, limit: 5 });
+      const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+      expect(Array.isArray(body.items)).toBe(true);
+      expect(typeof body.totalCount).toBe("number");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_list_articles returns { totalCount, items }", async () => {
     const result = await tools.erply_list_articles.handler({ start: 0, limit: 5 });
     const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
@@ -196,6 +208,23 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
       const body = JSON.parse(created.content[0].text) as { id?: number };
       expect(typeof body.id).toBe("number");
       await tools.erply_delete_account.handler({ accountId: body.id });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_create_tax_rate then delete (or plan/module error)", async () => {
+    const name = `MCP E21 tax ${Date.now()}`;
+    try {
+      const created = await tools.erply_create_tax_rate.handler({
+        name,
+        percent: 0.01,
+        description: name,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      expect(typeof body.id).toBe("number");
+      await tools.erply_delete_tax_rate.handler({ taxRateId: body.id });
     } catch (error) {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
       expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);

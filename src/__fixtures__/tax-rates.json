@@ -1,0 +1,34 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 10,
+        "name": "VAT 22%",
+        "description": "Standard VAT",
+        "percent": 22,
+        "typeCode": "TAX_RATE_VAT",
+        "sales": true,
+        "purchase": true
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "list_empty": {
+    "items": null,
+    "totalCount": 0,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "create_response": {
+    "id": 10,
+    "name": "VAT 22%",
+    "percent": 22,
+    "typeCode": "TAX_RATE_VAT"
+  },
+  "update_response": {
+    "id": 10,
+    "name": "VAT 22% updated",
+    "percent": 22,
+    "typeCode": "TAX_RATE_VAT"
+  }
+}
