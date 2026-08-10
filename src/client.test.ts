@@ -168,6 +168,46 @@ describe("ErplyBooksClient", () => {
       expect(fetchMock.mock.calls[0][1].method).toBe("POST");
     });
 
+    it("postMultipart omits Content-Type and sends FormData with query params", async () => {
+      fetchMock.mockResolvedValue(jsonResponse({ imported: true }));
+      const form = new FormData();
+      form.append("file", new Blob(["a,b\n1,2\n"], { type: "text/csv" }), "stmt.csv");
+
+      await client.postMultipart("/payments/bank_import", form, {
+        accountId: 42,
+        encoding: "UTF-8",
+        getMissing: undefined,
+      });
+
+      const calledUrl = fetchMock.mock.calls[0][0] as string;
+      const url = new URL(calledUrl);
+      expect(url.pathname).toBe("/api/payments/bank_import");
+      expect(url.searchParams.get("accountId")).toBe("42");
+      expect(url.searchParams.get("encoding")).toBe("UTF-8");
+      expect(url.searchParams.has("getMissing")).toBe(false);
+
+      const init = fetchMock.mock.calls[0][1] as RequestInit;
+      expect(init.method).toBe("POST");
+      expect(init.body).toBeInstanceOf(FormData);
+      expect(init.headers).toMatchObject({
+        "X-API-TOKEN": "test-token",
+      });
+      expect((init.headers as Record<string, string>)["Content-Type"]).toBeUndefined();
+      expect((init.headers as Record<string, string>)["User-Agent"]).toContain("erply-books-mcp");
+    });
+
+    it("rejects request options with both body and formData", async () => {
+      const form = new FormData();
+      await expect(
+        client.request("/payments/bank_import", {
+          method: "POST",
+          body: { x: 1 },
+          formData: form,
+        }),
+      ).rejects.toThrow(/either body or formData/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it("PUTs JSON body", async () => {
       fetchMock.mockResolvedValue(jsonResponse({ id: 9 }));
       await client.put("/customers/9", { name: "Acme2" });

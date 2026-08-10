@@ -16,6 +16,8 @@ export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   params?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
+  /** When set, sent as multipart body; Content-Type is left to fetch (boundary). */
+  formData?: FormData;
 }
 
 export interface ErplyBooksClientOptions {
@@ -127,7 +129,10 @@ export class ErplyBooksClient {
   }
 
   async request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { method = "GET", params, body } = options;
+    const { method = "GET", params, body, formData } = options;
+    if (formData !== undefined && body !== undefined) {
+      throw new Error("request: pass either body or formData, not both");
+    }
     const started = performance.now();
 
     try {
@@ -143,7 +148,11 @@ export class ErplyBooksClient {
       }
 
       const urlString = url.toString();
-      const headers = generateAuthHeaders(config);
+      const headers: Record<string, string> = generateAuthHeaders(config);
+      if (formData !== undefined) {
+        // Let fetch set multipart boundary; JSON Content-Type would break the upload.
+        delete headers["Content-Type"];
+      }
       const maxAttempts = 1 + maxRetries;
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -152,10 +161,16 @@ export class ErplyBooksClient {
 
         let response: Response;
         try {
+          let fetchBody: BodyInit | undefined;
+          if (formData !== undefined) {
+            fetchBody = formData;
+          } else if (body !== undefined) {
+            fetchBody = JSON.stringify(body);
+          }
           response = await fetch(urlString, {
             method,
             headers,
-            body: body !== undefined ? JSON.stringify(body) : undefined,
+            body: fetchBody,
             signal: AbortSignal.timeout(timeoutMs),
           });
         } catch (e) {
@@ -213,6 +228,17 @@ export class ErplyBooksClient {
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
     return this.request<T>(path, { method: "POST", body, params });
+  }
+
+  /**
+   * POST multipart/form-data. Does not set Content-Type (fetch adds the boundary).
+   */
+  async postMultipart<T = unknown>(
+    path: string,
+    formData: FormData,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
+    return this.request<T>(path, { method: "POST", formData, params });
   }
 
   async put<T = unknown>(

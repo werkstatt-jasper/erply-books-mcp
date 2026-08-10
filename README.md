@@ -170,6 +170,15 @@ create/update/delete.
 | `erply_create_payment` | `POST /payments` | `opDate`, `sumPaid` |
 | `erply_update_payment` | `PUT /payments/{paymentId}` | `paymentId` |
 | `erply_delete_payment` | `DELETE /payments/{paymentId}` | `paymentId` |
+| `erply_import_payment` | `POST /payments/import` | `date`, `amount`, `typeCode` |
+| `erply_save_all_payment_imports` | `POST /payments/save_all_payments` | `items` |
+| `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | `paymentId` or `invoiceId` |
+| `erply_list_pending_payments` | `GET /payments/pending_payments` | — |
+| `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
+| `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
+| `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
+
+Bank import uploads use multipart (`fileBase64` + `fileName`). `/payments/bank_import/v2` is deferred until attachments tools ship.
 
 ### Articles and projects
 
@@ -196,7 +205,8 @@ create/update/delete.
 | `erply_general_ledger` | `GET /reports/general_ledger` | `dateFrom`, `dateTo` |
 
 **Out of scope:** daybook, report-generator POST flows, partner/recurring invoice helpers,
-GoERP `POST …/delete` aliases, supplier-only report modules.
+GoERP `POST …/delete` aliases, supplier-only report modules, `/payments/bank_import/v2`
+(needs attachments).
 
 ## Upstream API documentation
 
