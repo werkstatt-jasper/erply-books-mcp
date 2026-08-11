@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import type { ErplyBooksClient } from "../client.js";
 import type { BankImportInfo } from "../types/attachments.js";
-import type { PaymentImport, SepaPaymentRequest } from "../types/payments.js";
+import type {
+  ConnectPaymentWithDocumentsRequest,
+  PaymentImport,
+  SepaPaymentRequest,
+} from "../types/payments.js";
 import {
   optionalBoolean,
   optionalNumber,
@@ -40,8 +44,11 @@ const saveAllPaymentImportsSchema = z.object({
 
 const connectPaymentSchema = z
   .object({
+    id: optionalPositiveInt,
     paymentId: optionalPositiveInt,
+    pendingPaymentId: optionalPositiveInt,
     invoiceId: optionalPositiveInt,
+    invoiceNumber: optionalString,
     customerId: optionalPositiveInt,
     amount: optionalNumber,
     date: optionalString,
@@ -51,8 +58,12 @@ const connectPaymentSchema = z
   })
   .passthrough()
   .refine(
-    (v) => v.paymentId !== undefined || v.invoiceId !== undefined,
-    "paymentId or invoiceId is required",
+    (v) => v.id !== undefined || v.paymentId !== undefined || v.pendingPaymentId !== undefined,
+    "id, paymentId, or pendingPaymentId is required",
+  )
+  .refine(
+    (v) => v.invoiceId !== undefined || v.invoiceNumber !== undefined,
+    "invoiceId or invoiceNumber is required",
   );
 
 const listPendingPaymentsSchema = z.object({
@@ -218,7 +229,8 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_save_all_payment_imports: {
       description:
-        "Batch-save payment import rows (POST /payments/save_all_payments). Body is { items: [...] } of APIPaymentImportInfo objects. Use after import/match editing.",
+        "Batch-save payment import rows (POST /payments/save_all_payments). Body is { items: [...] } of APIPaymentImportInfo objects. " +
+        "Updates import row fields only; it does not create a linked payment or change invoice totals. Use erply_update_payment with invoiceId for that.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -239,12 +251,24 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_connect_payment_with_documents: {
       description:
-        "Match a payment import row to invoice(s) (POST /payments/connect_payment_with_documents). Requires paymentId and/or invoiceId. Extra APIPaymentImportInfo fields may be passed through.",
+        "Link a bank-import/pending payment to an invoice or sales order (POST /payments/connect_payment_with_documents). " +
+        "Requires a payment identifier (id = pending import row id, paymentId, or pendingPaymentId) and a document identifier (invoiceId or invoiceNumber). " +
+        "Uses PaymentImportInfo field names. " +
+        "NOTE: On Demo testbaas this endpoint consistently returns 409 'The list of documents is empty' even for freshly created pending import + invoice; use erply_update_payment with invoiceId as a working alternative.",
       inputSchema: {
         type: "object" as const,
         properties: {
-          paymentId: { type: "number", description: "Payment or import payment id" },
-          invoiceId: { type: "number", description: "Invoice/document id to match" },
+          id: {
+            type: "number",
+            description: "Pending import row id (from /payments/pending_payments)",
+          },
+          paymentId: {
+            type: "number",
+            description: "Payment id (same as pendingPaymentId for pending rows)",
+          },
+          pendingPaymentId: { type: "number", description: "Pending payment id" },
+          invoiceId: { type: "number", description: "Invoice/document id to link" },
+          invoiceNumber: { type: "string", description: "Invoice/document number to link" },
           customerId: { type: "number" },
           amount: { type: "number" },
           date: { type: "string" },
@@ -257,7 +281,7 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
         const args = parseToolArgs(connectPaymentSchema, params);
         const result = await client.post<PaymentImport>(
           "/payments/connect_payment_with_documents",
-          args,
+          args as ConnectPaymentWithDocumentsRequest,
         );
         return mutationToolResult(result);
       },

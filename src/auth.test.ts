@@ -114,13 +114,14 @@ describe("erplyRequestTimeoutMsFromEnv", () => {
 });
 
 describe("generateAuthHeaders", () => {
-  it("sets X-API-TOKEN, Content-Type, and User-Agent", () => {
+  it("sets Accept, X-API-TOKEN, Content-Type, and User-Agent", () => {
     expect(
       generateAuthHeaders({
         apiToken: "secret-token",
         baseUrl: DEFAULT_ERPLY_BOOKS_BASE_URL,
       }),
     ).toEqual({
+      Accept: "application/json",
       "Content-Type": "application/json",
       "User-Agent": ERPLY_BOOKS_CLIENT_USER_AGENT,
       "X-API-TOKEN": "secret-token",

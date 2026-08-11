@@ -15,18 +15,43 @@ export interface Payment {
 export interface PaymentImport {
   id?: number;
   paymentId?: number;
+  pendingPaymentId?: number;
   date?: string;
   amount?: number;
   typeCode?: string;
   debit?: string;
   customerId?: number;
   invoiceId?: number;
+  invoiceNumber?: string;
   debitAccountId?: number;
   creditAccountId?: number;
   referenceNumber?: string;
   description?: string;
   currencyCode?: string;
   reconciled?: boolean;
+  importValidated?: boolean;
+  linkedInvoiceInfo?: unknown[] | null;
+  [key: string]: unknown;
+}
+
+/** Request body for `POST /payments/connect_payment_with_documents`. */
+export interface ConnectPaymentWithDocumentsRequest {
+  /** Pending import row id (`/payments/pending_payments` → `id`). */
+  id?: number;
+  /** Payment id (same value as `pendingPaymentId` on pending rows). */
+  paymentId?: number;
+  /** Pending payment id. */
+  pendingPaymentId?: number;
+  /** Invoice or document id to link. */
+  invoiceId?: number;
+  /** Invoice or document number to link. */
+  invoiceNumber?: string;
+  customerId?: number;
+  amount?: number;
+  date?: string;
+  typeCode?: string;
+  referenceNumber?: string;
+  description?: string;
   [key: string]: unknown;
 }
 

@@ -21,6 +21,7 @@ export interface AuthConfig {
 
 export interface AuthHeaders {
   [key: string]: string;
+  Accept: string;
   "Content-Type": string;
   "User-Agent": string;
   "X-API-TOKEN": string;
@@ -73,6 +74,7 @@ export function loadAuthConfig(): AuthConfig {
 /** Builds request headers. Never puts the token in the URL/query string. */
 export function generateAuthHeaders(config: AuthConfig): AuthHeaders {
   return {
+    Accept: "application/json",
     "Content-Type": "application/json",
     "User-Agent": ERPLY_BOOKS_CLIENT_USER_AGENT,
     "X-API-TOKEN": config.apiToken,

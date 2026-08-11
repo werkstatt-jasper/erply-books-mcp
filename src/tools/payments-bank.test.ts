@@ -77,10 +77,13 @@ describe("erply_connect_payment_with_documents", () => {
     tools = createPaymentBankTools(client);
   });
 
-  it("requires paymentId or invoiceId", async () => {
+  it("requires a payment identifier and a document identifier", async () => {
     await expect(tools.erply_connect_payment_with_documents.handler({})).rejects.toThrow(
-      /paymentId or invoiceId/,
+      /id, paymentId, or pendingPaymentId/,
     );
+    await expect(
+      tools.erply_connect_payment_with_documents.handler({ paymentId: 77 }),
+    ).rejects.toThrow(/invoiceId or invoiceNumber/);
   });
 
   it("POSTs match body", async () => {
@@ -95,12 +98,15 @@ describe("erply_connect_payment_with_documents", () => {
     );
   });
 
-  it("accepts invoiceId alone", async () => {
+  it("accepts pending import row id and invoice number", async () => {
     vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
-    await tools.erply_connect_payment_with_documents.handler({ invoiceId: 100 });
+    await tools.erply_connect_payment_with_documents.handler({
+      id: 120066906,
+      invoiceNumber: "WT324639",
+    });
     expect(client.post).toHaveBeenCalledWith(
       "/payments/connect_payment_with_documents",
-      expect.objectContaining({ invoiceId: 100 }),
+      expect.objectContaining({ id: 120066906, invoiceNumber: "WT324639" }),
     );
   });
 });

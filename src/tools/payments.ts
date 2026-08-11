@@ -94,7 +94,8 @@ export function createPaymentTools(client: ErplyBooksClient) {
 
     erply_create_payment: {
       description:
-        "Create a payment (POST /payments). Requires opDate (YYYY-MM-DD) and sumPaid. Sends id: 0. Some price plans return HTTP 409 (MODULE_PAID_MONEY_REPORT). Extra APIPaymentInfo fields may be passed through.",
+        "Create a payment (POST /payments). Requires opDate (YYYY-MM-DD) and sumPaid. Sends id: 0. " +
+        "Pass invoiceId to link the payment to an invoice/sales order immediately. Some price plans return HTTP 409 (MODULE_PAID_MONEY_REPORT). Extra APIPaymentInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -121,7 +122,8 @@ export function createPaymentTools(client: ErplyBooksClient) {
 
     erply_update_payment: {
       description:
-        "Update a payment (PUT /payments/{paymentId}). Requires paymentId. Path id wins over body id.",
+        "Update a payment (PUT /payments/{paymentId}). Requires paymentId. Path id wins over body id. " +
+        "To link a payment to an invoice after bank import, pass invoiceId together with opDate, sumPaid, typeCode, accountId, customerId, and currencyCode.",
       inputSchema: {
         type: "object" as const,
         properties: {

@@ -123,6 +123,7 @@ describe("ErplyBooksClient", () => {
       await client.get("/organisation");
 
       expect(fetchMock.mock.calls[0][1].headers).toMatchObject({
+        Accept: "application/json",
         "Content-Type": "application/json",
         "X-API-TOKEN": "test-token",
       });

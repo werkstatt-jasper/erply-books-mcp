@@ -469,6 +469,74 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
       expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
+
+  it("import payment → update payment with invoiceId links it to the invoice", async () => {
+    let invoiceId: number | undefined;
+    let paymentId: number | undefined;
+    let customerId: number | undefined;
+
+    try {
+      const customerResult = await tools.erply_create_customer.handler({
+        name: `MCP recon ${Date.now()}`,
+      });
+      customerId = JSON.parse(customerResult.content[0].text).id;
+
+      const invoiceResult = await tools.erply_create_invoice.handler({
+        typeCode: "DOCUMENT_SELL",
+        date: "2026-08-11",
+        number: `MCP-REC-${Date.now()}`,
+        customerId,
+        rows: [{ name: "Test line", quantity: 1, price: 100 }],
+      });
+      invoiceId = JSON.parse(invoiceResult.content[0].text).id;
+
+      const paymentResult = await tools.erply_create_payment.handler({
+        opDate: "2026-08-11",
+        sumPaid: 100,
+        typeCode: "OTHER_INCOMING_PAYMENT",
+        accountId: 1307870,
+        customerId,
+        currencyCode: "CURRENCY_EUR",
+        note: "MCP recon test",
+      });
+      paymentId = JSON.parse(paymentResult.content[0].text).id;
+
+      await tools.erply_update_payment.handler({
+        paymentId,
+        opDate: "2026-08-11",
+        sumPaid: 100,
+        invoiceId,
+        typeCode: "OTHER_INCOMING_PAYMENT",
+        accountId: 1307870,
+        customerId,
+        currencyCode: "CURRENCY_EUR",
+      });
+
+      const invoice = JSON.parse(
+        (await tools.erply_get_invoice.handler({ documentId: invoiceId })).content[0].text,
+      );
+      expect(invoice.sumPaid).toBe(100);
+      expect(invoice.sumLeftToPay).toBe(0);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (paymentId) {
+        try {
+          await tools.erply_delete_payment.handler({ paymentId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+      if (invoiceId) {
+        try {
+          await tools.erply_delete_invoice.handler({ documentId: invoiceId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
+  });
 });
 
 describe.skipIf(hasToken)("read tools live MVP (no token)", () => {

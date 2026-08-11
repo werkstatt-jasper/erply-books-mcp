@@ -191,7 +191,7 @@ accept a comma-separated string or a number array.
 | `erply_delete_payment` | `DELETE /payments/{paymentId}` | `paymentId` |
 | `erply_import_payment` | `POST /payments/import` | `date`, `amount`, `typeCode` |
 | `erply_save_all_payment_imports` | `POST /payments/save_all_payments` | `items` |
-| `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | `paymentId` or `invoiceId` |
+| `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | payment id + document id |
 | `erply_list_pending_payments` | `GET /payments/pending_payments` | — |
 | `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
@@ -199,6 +199,41 @@ accept a comma-separated string or a number array.
 | `erply_bank_import_v2` | `POST /payments/bank_import/v2` | `fileBase64`+`fileName` or `attachmentId` |
 
 `erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
+
+#### Bank-import reconciliation workflow (verified on Demo testbaas)
+
+The accountant workflow after importing a bank statement is:
+
+1. **Import** with `erply_bank_import` / `erply_bank_import_v2` or create rows with `erply_import_payment`.
+2. **List unmatched** with `erply_list_pending_payments`.
+3. **Link to invoice/order** by updating the created payment:
+   - `erply_update_payment` with `paymentId`, `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, `currencyCode`.
+   - This sets `sumPaid` on the invoice and reduces `sumLeftToPay`.
+4. **Verify** with `erply_get_invoice`.
+
+`erply_connect_payment_with_documents` is intended for step 3, but on Demo testbaas it consistently returns **409** `DataConflictException` with `messageCode`: `The list of documents is empty` for every combination of pending import id, payment id, invoice id, sales order id, and document number we tested. Use the `erply_update_payment` workaround below until Erply clarifies the expected payload.
+
+##### Working example: link an imported payment to an invoice
+
+```json
+// erply_update_payment
+{
+  "paymentId": 120662763,
+  "opDate": "2026-08-11",
+  "sumPaid": 100,
+  "invoiceId": 83896219,
+  "typeCode": "OTHER_INCOMING_PAYMENT",
+  "accountId": 1307870,
+  "customerId": 15709235,
+  "currencyCode": "CURRENCY_EUR"
+}
+```
+
+After this, `GET /invoices/83896219` returns `sumPaid: 100`, `sumLeftToPay: 0`.
+
+##### `erply_save_all_payment_imports` behavior
+
+Saving an import row with `invoiceId` via `erply_save_all_payment_imports` updates the import row only; it does **not** create a linked payment or change the invoice totals.
 
 ### Attachments
 
