@@ -166,10 +166,20 @@ Note: `GET /customers/v2` returns **405** on current tokens — list uses `/cust
 | `erply_create_invoice` | `POST /invoices` | `typeCode`, `date`, and `customerId` or `customer` |
 | `erply_update_invoice` | `PUT /invoices/{documentId}` | `documentId` |
 | `erply_delete_invoice` | `DELETE /invoices/{invoiceId}` | `invoiceId` |
+| `erply_get_invoice_pdf` | `GET /invoices/pdf/v2/{documentId}` | `documentId` |
+| `erply_send_invoice_email` | `POST /invoices/email/simple` | `documentId`, `receiver` |
+| `erply_get_einvoice` | `GET /invoices/einvoice` | `documentIds` |
+| `erply_send_einvoices` | `POST /invoices/send_einvoices` | `documentIds` |
+| `erply_confirm_invoices` | `POST /invoices/confirm_invoices` | `ids` |
+| `erply_list_partner_invoices` | `GET /invoices/partner` | `dateFrom`, `dateTo` |
+| `erply_create_partner_invoice` | `POST /invoices/partner` | `typeCode`, `date`, and `customerId` or `customer` |
+| `erply_create_recurring_invoice` | `POST /invoices/recurring` | `copyFromDocumentId` |
+| `erply_update_recurring_invoice` | `PUT /invoices/recurring/{documentId}` | `documentId` |
 
 `documentType` / `typeCode` use [API Dictionary](https://www.erplybooks.com/api-dictionary/)
 codes (e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`). Optional query `registrationCode` on
-create/update/delete.
+create/update/delete. PDF uses **v2 JSON** (not binary `/invoices/pdf/{id}`). `documentIds` / `ids`
+accept a comma-separated string or a number array.
 
 ### Payments
 
@@ -243,8 +253,9 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_contact_balance` | `GET /reports/contact_balance` | `dateFrom`, `dateTo` |
 | `erply_fixed_assets` | `GET /reports/fixed_assets` | `dateFrom`, `dateTo` |
 
-**Out of scope:** report-generator POST flows, partner/recurring invoice helpers,
-GoERP `POST …/delete` aliases, supplier-only report modules, attachment digi/KYC/parse/zip helpers,
+**Out of scope:** report-generator POST flows, binary invoice PDF v1, GoERP `*/get_single` and
+`POST …/delete` aliases, hash-based invoice email routes, partner invoice update/delete,
+invoice CSV import, supplier-only report modules, attachment digi/KYC/parse/zip helpers,
 generic `/reports/vat_report`, and LT/LV VAT report paths.
 
 ## Upstream API documentation
