@@ -1,0 +1,7 @@
+{
+  "sample": [
+    { "code": "DOCUMENT_SELL", "name": "Sales Invoice" },
+    { "code": "DOCUMENT_BUY", "name": "Purchase Invoice" },
+    { "code": "DOCUMENT_POS_SELL", "name": "Cash Sales Invoice" }
+  ]
+}
