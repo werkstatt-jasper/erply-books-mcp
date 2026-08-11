@@ -10,6 +10,7 @@ import { createArticleTools } from "./tools/articles.js";
 import { createAttachmentTools } from "./tools/attachments.js";
 import { createCustomerTools } from "./tools/customers.js";
 import { createInvoiceTools } from "./tools/invoices.js";
+import { createInvoiceExtraTools } from "./tools/invoices-extras.js";
 import { createOrganisationTools } from "./tools/organisation.js";
 import { createPaymentTools } from "./tools/payments.js";
 import { createPaymentBankTools } from "./tools/payments-bank.js";
@@ -40,6 +41,7 @@ export function buildAllTools(client: ErplyBooksClient): ToolRecord {
     ...createTaxRateTools(client),
     ...createCustomerTools(client),
     ...createInvoiceTools(client),
+    ...createInvoiceExtraTools(client),
     ...createPaymentTools(client),
     ...createPaymentBankTools(client),
     ...createAttachmentTools(client),

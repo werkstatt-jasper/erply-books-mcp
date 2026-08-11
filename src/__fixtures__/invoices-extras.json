@@ -1,0 +1,56 @@
+{
+  "pdf_v2": {
+    "documentId": 55,
+    "fileName": "invoice-55.pdf",
+    "base64": "JVBERi0xLjQ=",
+    "contentType": "application/pdf"
+  },
+  "email_response": {
+    "ok": true,
+    "documentId": 55,
+    "receiver": "billing@example.com"
+  },
+  "einvoice": {
+    "documentIds": "55",
+    "format": "xml",
+    "payload": "<Invoice/>"
+  },
+  "send_einvoices_response": {
+    "ok": true,
+    "sent": 1
+  },
+  "confirm_response": {
+    "ok": true,
+    "ids": "55,56"
+  },
+  "partner_list_page": {
+    "items": [
+      {
+        "id": 901,
+        "typeCode": "DOCUMENT_SELL",
+        "date": "2025-06-01",
+        "partnerDocumentId": "P-1"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "partner_create_response": {
+    "id": 902,
+    "typeCode": "DOCUMENT_SELL",
+    "date": "2025-06-02",
+    "partnerDocumentId": "P-2"
+  },
+  "recurring_create_response": {
+    "id": 301,
+    "copyFromDocumentId": 55,
+    "enabled": true,
+    "dayOfMonth": 1
+  },
+  "recurring_update_response": {
+    "id": 301,
+    "copyFromDocumentId": 55,
+    "enabled": false,
+    "dayOfMonth": 15
+  }
+}

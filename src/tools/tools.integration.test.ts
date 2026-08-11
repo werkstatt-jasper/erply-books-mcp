@@ -395,6 +395,51 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("erply_get_invoice_pdf succeeds or returns structured 409/500", async () => {
+    try {
+      const listed = await tools.erply_list_invoices.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+        documentType: "DOCUMENT_POS_SELL",
+        start: 0,
+        limit: 1,
+      });
+      const page = JSON.parse(listed.content[0].text) as {
+        items: Array<{ id?: number }>;
+      };
+      const documentId = page.items[0]?.id ?? 1;
+      const result = await tools.erply_get_invoice_pdf.handler({ documentId });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_list_partner_invoices succeeds or returns structured 409/500", async () => {
+    try {
+      const result = await tools.erply_list_partner_invoices.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+      });
+      const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+      expect(Array.isArray(body.items)).toBe(true);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_confirm_invoices surfaces plan restriction or accepts ids", async () => {
+    try {
+      const result = await tools.erply_confirm_invoices.handler({ ids: [1] });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([400, 403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_create_payment then delete (or plan/module error)", async () => {
     try {
       const created = await tools.erply_create_payment.handler({

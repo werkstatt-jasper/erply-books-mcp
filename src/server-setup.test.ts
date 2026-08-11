@@ -44,6 +44,15 @@ describe("buildAllTools", () => {
     expect(tools.erply_create_invoice).toBeDefined();
     expect(tools.erply_update_invoice).toBeDefined();
     expect(tools.erply_delete_invoice).toBeDefined();
+    expect(tools.erply_get_invoice_pdf).toBeDefined();
+    expect(tools.erply_send_invoice_email).toBeDefined();
+    expect(tools.erply_get_einvoice).toBeDefined();
+    expect(tools.erply_send_einvoices).toBeDefined();
+    expect(tools.erply_confirm_invoices).toBeDefined();
+    expect(tools.erply_list_partner_invoices).toBeDefined();
+    expect(tools.erply_create_partner_invoice).toBeDefined();
+    expect(tools.erply_create_recurring_invoice).toBeDefined();
+    expect(tools.erply_update_recurring_invoice).toBeDefined();
     expect(tools.erply_list_payments).toBeDefined();
     expect(tools.erply_create_payment).toBeDefined();
     expect(tools.erply_update_payment).toBeDefined();
