@@ -92,6 +92,7 @@ describe("buildAllTools", () => {
     expect(tools.erply_vat_ee).toBeDefined();
     expect(tools.erply_contact_balance).toBeDefined();
     expect(tools.erply_fixed_assets).toBeDefined();
+    expect(tools.erply_get_dictionary).toBeDefined();
   });
 });
 

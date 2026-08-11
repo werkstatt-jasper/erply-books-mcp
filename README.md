@@ -288,6 +288,19 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_contact_balance` | `GET /reports/contact_balance` | `dateFrom`, `dateTo` |
 | `erply_fixed_assets` | `GET /reports/fixed_assets` | `dateFrom`, `dateTo` |
 
+### Settings / dictionaries
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_get_dictionary` | `GET /settings/dictionaries/{dictionaryCode}` | `dictionaryCode` |
+
+`dictionaryCode` is one of: `ACCOUNT_TYPE`, `TRANSACTION_TYPE`, `INCOME_TYPE`,
+`BALANCE_TYPE`, `ACCOUNT_FEATURE_TYPE`, `DOCUMENT_TYPE`, `ENTITY_TYPE`, `ARTICLE_TYPE`,
+`UNIT`, `PAYMENT_TYPE`, `ARTICLE_ROW_TYPE`, `CURRENCY`, `CASH_FLOW_TYPE`,
+`ARTICLE_FEATURE_TYPE`, `TAX_RATE_TYPE`, `DOCUMENT_STATUS_TYPE`, `LANGUAGE`. Optional
+`languageCode` (e.g. `LANGUAGE_ET`) localizes names. See the
+[API Dictionary](https://www.erplybooks.com/api-dictionary/) for value lists.
+
 **Out of scope:** report-generator POST flows, binary invoice PDF v1, GoERP `*/get_single` and
 `POST …/delete` aliases, hash-based invoice email routes, partner invoice update/delete,
 invoice CSV import, supplier-only report modules, attachment digi/KYC/parse/zip helpers,

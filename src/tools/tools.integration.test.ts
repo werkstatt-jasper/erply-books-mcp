@@ -239,6 +239,18 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect([409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
+
+  it("erply_get_dictionary returns DOCUMENT_TYPE entries or structured error", async () => {
+    try {
+      const result = await tools.erply_get_dictionary.handler({
+        dictionaryCode: "DOCUMENT_TYPE",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
 });
 
 describe.skipIf(!hasToken)("write tools live MVP", () => {
