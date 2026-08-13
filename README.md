@@ -367,10 +367,13 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 `languageCode` (e.g. `LANGUAGE_ET`) localizes names. See the
 [API Dictionary](https://www.erplybooks.com/api-dictionary/) for value lists.
 
-**Out of scope:** report-generator POST flows, binary invoice PDF v1, GoERP `*/get_single`
-aliases, hash-based invoice email routes, partner invoice update/delete,
-invoice CSV import, supplier-only report modules,
-generic `/reports/vat_report`, and LT/LV VAT report paths.
+**Coverage vs the full Erply Books API:** see [docs/api-coverage.md](docs/api-coverage.md)
+for the full endpoint matrix (356 spec operations: covered / gap-issue / skipped)
+and [docs/spec-conformance.md](docs/spec-conformance.md) for the verification of
+implemented tools against the OpenAPI spec and prose docs. Uncovered endpoints are
+tracked as GitLab issues E29–E46 in the
+[Erply Books milestone](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/milestone/12);
+GoERP `*/get_single` aliases are intentionally skipped.
 
 ## Upstream API documentation
 
