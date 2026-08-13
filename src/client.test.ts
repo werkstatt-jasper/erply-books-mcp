@@ -169,6 +169,38 @@ describe("ErplyBooksClient", () => {
       expect(fetchMock.mock.calls[0][1].headers.Accept).toContain("text/html");
     });
 
+    it("getArrayBuffer returns the response body as bytes", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(Buffer.from("PK\x00\x00"), {
+          status: 200,
+          headers: { "Content-Type": "application/octet-stream" },
+        }),
+      );
+      const bytes = await client.getArrayBuffer("/report_generator/file/xlsx", { type: "xlsx" });
+      expect(Buffer.from(bytes).toString("latin1")).toContain("PK");
+      expect(fetchMock.mock.calls[0][1].headers.Accept).toBe("*/*");
+    });
+
+    it("postBytes POSTs JSON and returns bytes", async () => {
+      fetchMock.mockResolvedValue(
+        new Response("a,b\n1,2\n", {
+          status: 200,
+          headers: { "Content-Type": "text/csv" },
+        }),
+      );
+      const bytes = await client.postBytes("/report_generator/csv", { type: "csv" });
+      expect(Buffer.from(bytes).toString("utf8")).toBe("a,b\n1,2\n");
+      expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+      expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify({ type: "csv" }));
+      expect(fetchMock.mock.calls[0][1].headers.Accept).toBe("*/*");
+    });
+
+    it("204 with parseAs arrayBuffer returns an empty ArrayBuffer", async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+      const bytes = await client.postBytes("/report_generator/custom_excel");
+      expect(bytes.byteLength).toBe(0);
+    });
+
     it("POSTs JSON body", async () => {
       fetchMock.mockResolvedValue(jsonResponse({ id: 9 }));
       await client.post("/customers", { name: "Acme" });

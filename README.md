@@ -354,6 +354,29 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_contact_balance` | `GET /reports/contact_balance` | `dateFrom`, `dateTo` |
 | `erply_fixed_assets` | `GET /reports/fixed_assets` | `dateFrom`, `dateTo` |
 
+### Custom reports (report generator)
+
+Erply Books custom reports use `POST /report_generator` with a JSON query (tables, parameters, output). Discover columns first via `erply_list_custom_report_columns`. File endpoints may return CSV/XML as UTF-8 or XLSX as base64 (`encoding: "base64"`). Production/planner/AI generator routes are not included (E35).
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_run_custom_report` | `POST /report_generator` | — |
+| `erply_run_custom_report_csv` | `POST /report_generator/csv` | — |
+| `erply_run_custom_report_xlsx` | `POST /report_generator/xlsx` | — |
+| `erply_run_custom_report_excel` | `POST /report_generator/custom_excel` | — |
+| `erply_send_custom_report_email` | `POST /report_generator/email` | — |
+| `erply_send_custom_report` | `POST /report_generator/send_report` | — |
+| `erply_run_custom_reports_multiple` | `POST /report_generator/multiple` | `items` |
+| `erply_run_custom_report_file` | `POST /report_generator/file` | — |
+| `erply_run_custom_report_file_json` | `POST /report_generator/file/{type}/json_format` | `type` |
+| `erply_list_custom_report_columns` | `GET /report_generator/columns` | — |
+| `erply_contact_invoice_result_report` | `GET /report_generator/contact_invoice_result_report` | — |
+| `erply_list_user_defined_reports` | `GET /report_generator/user_defined` | — |
+| `erply_get_custom_report_xml` | `GET /report_generator/xml` | — |
+| `erply_get_custom_report_file` | `GET /report_generator/file/{type}` | `type` |
+| `erply_edit_custom_report_callback` | `POST /report_generator/edit` | — |
+| `erply_update_custom_report_values` | `POST /report_generator/update_values` | — |
+
 ### Settings / dictionaries
 
 | Tool | API | Required |

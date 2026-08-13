@@ -18,8 +18,11 @@ export interface RequestOptions {
   body?: unknown;
   /** When set, sent as multipart body; Content-Type is left to fetch (boundary). */
   formData?: FormData;
-  /** Default `json`. Use `text` for HTML/plain responses such as attachment preview. */
-  parseAs?: "json" | "text";
+  /**
+   * Default `json`. Use `text` for HTML/plain responses such as attachment preview.
+   * Use `arrayBuffer` for CSV/XLSX/XML file downloads from the report generator.
+   */
+  parseAs?: "json" | "text" | "arrayBuffer";
 }
 
 export interface ErplyBooksClientOptions {
@@ -158,6 +161,8 @@ export class ErplyBooksClient {
       if (parseAs === "text") {
         // Preview and similar endpoints return HTML and 406 if Accept is application/json.
         headers.Accept = "text/html, text/plain;q=0.9, */*;q=0.8";
+      } else if (parseAs === "arrayBuffer") {
+        headers.Accept = "*/*";
       }
       const maxAttempts = 1 + maxRetries;
 
@@ -205,6 +210,9 @@ export class ErplyBooksClient {
 
         if (response.status === 204) {
           this.logRequest(method, path, started, undefined);
+          if (parseAs === "arrayBuffer") {
+            return new ArrayBuffer(0) as T;
+          }
           return undefined as T;
         }
 
@@ -212,6 +220,12 @@ export class ErplyBooksClient {
           const text = await response.text();
           this.logRequest(method, path, started, undefined);
           return text as T;
+        }
+
+        if (parseAs === "arrayBuffer") {
+          const bytes = await response.arrayBuffer();
+          this.logRequest(method, path, started, undefined);
+          return bytes as T;
         }
 
         const data = (await response.json()) as T;
@@ -242,12 +256,36 @@ export class ErplyBooksClient {
     return this.request<string>(path, { method: "GET", params, parseAs: "text" });
   }
 
+  /** GET that returns the raw response body as bytes (CSV/XLSX/XML downloads). */
+  async getArrayBuffer(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<ArrayBuffer> {
+    return this.request<ArrayBuffer>(path, { method: "GET", params, parseAs: "arrayBuffer" });
+  }
+
   async post<T = unknown>(
     path: string,
     body?: unknown,
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
     return this.request<T>(path, { method: "POST", body, params });
+  }
+
+  /**
+   * POST JSON and return the raw body as bytes (CSV/XLSX report-generator exports).
+   */
+  async postBytes(
+    path: string,
+    body?: unknown,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<ArrayBuffer> {
+    return this.request<ArrayBuffer>(path, {
+      method: "POST",
+      body,
+      params,
+      parseAs: "arrayBuffer",
+    });
   }
 
   /**
