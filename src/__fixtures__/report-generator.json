@@ -1,0 +1,9 @@
+{
+  "columns": [{ "fieldName": "id", "tableName": "Invoice" }],
+  "contact_invoice": { "rows": [{ "contactId": 10, "sum": 100 }] },
+  "user_defined": { "totalCount": 1, "items": [{ "id": 7, "reportName": "Sales" }] },
+  "run": { "rows": [{ "total": 42 }] },
+  "send": { "ok": true },
+  "edit": { "success": "true" },
+  "update": { "updated": 1 }
+}

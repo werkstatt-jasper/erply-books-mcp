@@ -265,6 +265,31 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
+
+  it("erply_list_custom_report_columns succeeds or returns structured error", async () => {
+    try {
+      const result = await tools.erply_list_custom_report_columns.handler({
+        tables: "Invoice",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("erply_list_user_defined_reports succeeds or returns structured error", async () => {
+    try {
+      const result = await tools.erply_list_user_defined_reports.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+      });
+      expect(result.content[0].text.length).toBeGreaterThan(2);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
 });
 
 describe.skipIf(!hasToken)("write tools live MVP", () => {
