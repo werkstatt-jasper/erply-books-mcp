@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-13 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (89 tools).
+Generated 2026-08-14 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (121 tools).
 
-- **Covered:** 90 operations
-- **Gap (tracked as GitLab issues):** 250 operations
+- **Covered:** 122 operations
+- **Gap (tracked as GitLab issues):** 218 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -144,52 +144,52 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/invoices` | covered: `erply_create_invoice` |
 | `GET` | `/invoices/{documentId}` | covered: `erply_get_invoice` |
 | `PUT` | `/invoices/{documentId}` | covered: `erply_update_invoice` |
-| `DELETE` | `/invoices/{documentId}/rows/{articleRowId}` | gap: E31 #170 |
+| `DELETE` | `/invoices/{documentId}/rows/{articleRowId}` | covered: `erply_delete_invoice_row` |
 | `DELETE` | `/invoices/{invoiceId}` | covered: `erply_delete_invoice` |
-| `POST` | `/invoices/add_attribute` | gap: E31 #170 |
-| `POST` | `/invoices/add_dimension` | gap: E31 #170 |
-| `POST` | `/invoices/add_document_connection` | gap: E31 #170 |
-| `POST` | `/invoices/add_opposite` | gap: E31 #170 |
-| `POST` | `/invoices/add_to_queue` | gap: E31 #170 |
+| `POST` | `/invoices/add_attribute` | covered: `erply_add_invoice_attribute` |
+| `POST` | `/invoices/add_dimension` | covered: `erply_add_invoice_dimension` |
+| `POST` | `/invoices/add_document_connection` | covered: `erply_add_invoice_document_connection` |
+| `POST` | `/invoices/add_opposite` | covered: `erply_add_invoice_opposite` |
+| `POST` | `/invoices/add_to_queue` | covered: `erply_add_invoice_to_queue` |
 | `POST` | `/invoices/confirm_invoices` | covered: `erply_confirm_invoices` |
-| `POST` | `/invoices/delete` | gap: E31 #170 |
-| `POST` | `/invoices/delete_multiple_and_payments` | gap: E31 #170 |
+| `POST` | `/invoices/delete` | covered: `erply_delete_invoice_via_post` |
+| `POST` | `/invoices/delete_multiple_and_payments` | covered: `erply_delete_invoices_multiple_and_payments` |
 | `GET` | `/invoices/einvoice` | covered: `erply_get_einvoice` |
 | `POST` | `/invoices/email/{hash}` | gap: E32 #171 |
 | `POST` | `/invoices/email/{hash}/{documentId}` | gap: E32 #171 |
 | `POST` | `/invoices/email/simple` | covered: `erply_send_invoice_email` |
-| `POST` | `/invoices/forward_to_user` | gap: E31 #170 |
+| `POST` | `/invoices/forward_to_user` | covered: `erply_forward_invoice_to_user` |
 | `GET` | `/invoices/get_single` | skipped (GoERP `get_single` alias / base list) |
 | `GET` | `/invoices/history` | gap: E30 #169 |
 | `POST` | `/invoices/import/file` | gap: E32 #171 |
 | `POST` | `/invoices/import/formsubmit` | gap: E32 #171 |
 | `GET` | `/invoices/new_number` | gap: E30 #169 |
 | `POST` | `/invoices/new_number` | gap: E30 #169 |
-| `POST` | `/invoices/override` | gap: E31 #170 |
+| `POST` | `/invoices/override` | covered: `erply_override_invoice_fields` |
 | `GET` | `/invoices/parsed_invoice_info_validation` | gap: E30 #169 |
-| `DELETE` | `/invoices/partner` | gap: E31 #170 |
+| `DELETE` | `/invoices/partner` | covered: `erply_delete_partner_invoice` |
 | `GET` | `/invoices/partner` | covered: `erply_list_partner_invoices` |
 | `POST` | `/invoices/partner` | covered: `erply_create_partner_invoice` |
-| `PUT` | `/invoices/partner/{documentId}` | gap: E31 #170 |
+| `PUT` | `/invoices/partner/{documentId}` | covered: `erply_update_partner_invoice` |
 | `GET` | `/invoices/pdf/{documentId}` | gap: E32 #171 |
 | `GET` | `/invoices/pdf/get_single` | skipped (GoERP `get_single` alias / base list) |
 | `GET` | `/invoices/pdf/v2/{documentId}` | covered: `erply_get_invoice_pdf` |
 | `GET` | `/invoices/pdf/v2/get_single` | skipped (GoERP `get_single` alias / base list) |
-| `POST` | `/invoices/prepare_rows` | gap: E31 #170 |
+| `POST` | `/invoices/prepare_rows` | covered: `erply_prepare_invoice_rows` |
 | `POST` | `/invoices/recurring` | covered: `erply_create_recurring_invoice` |
 | `PUT` | `/invoices/recurring/{documentId}` | covered: `erply_update_recurring_invoice` |
 | `POST` | `/invoices/send_einvoices` | covered: `erply_send_einvoices` |
 | `POST` | `/invoices/send_erply_invoice/{documentId}` | gap: E32 #171 |
 | `POST` | `/invoices/send_erply_invoices` | gap: E32 #171 |
-| `POST` | `/invoices/split_rows` | gap: E31 #170 |
-| `PUT` | `/invoices/split_rows/{documentId}` | gap: E31 #170 |
+| `POST` | `/invoices/split_rows` | covered: `erply_split_invoice_rows` |
+| `PUT` | `/invoices/split_rows/{documentId}` | covered: `erply_update_invoice_split_rows` |
 | `GET` | `/invoices/templates` | gap: E30 #169 |
 | `POST` | `/invoices/templates` | gap: E30 #169 |
 | `DELETE` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
 | `GET` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
 | `PUT` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
 | `GET` | `/invoices/templates/get_single` | skipped (GoERP `get_single` alias / base list) |
-| `POST` | `/invoices/use_prepayment` | gap: E31 #170 |
+| `POST` | `/invoices/use_prepayment` | covered: `erply_use_invoice_prepayment` |
 | `POST` | `/messages/send_sms` | gap: E46 #185 |
 | `GET` | `/organisation` | covered: `erply_get_organisation` |
 | `PUT` | `/organisation/{organisationId}` | gap: E43 #182 |
@@ -235,30 +235,30 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/projects/groups` | gap: E33 #172 |
 | `DELETE` | `/projects/groups/{projectId}` | gap: E33 #172 |
 | `PUT` | `/projects/groups/{projectId}` | gap: E33 #172 |
-| `POST` | `/report_generator` | gap: E34 #173 |
+| `POST` | `/report_generator` | covered: `erply_run_custom_report` |
 | `GET` | `/report_generator/average_inventory_report` | gap: E35 #174 |
-| `GET` | `/report_generator/columns` | gap: E34 #173 |
-| `GET` | `/report_generator/contact_invoice_result_report` | gap: E34 #173 |
-| `POST` | `/report_generator/csv` | gap: E34 #173 |
-| `POST` | `/report_generator/custom_excel` | gap: E34 #173 |
-| `POST` | `/report_generator/edit` | gap: E34 #173 |
-| `POST` | `/report_generator/email` | gap: E34 #173 |
-| `POST` | `/report_generator/file` | gap: E34 #173 |
-| `GET` | `/report_generator/file/{type}` | gap: E34 #173 |
-| `POST` | `/report_generator/file/{type}/json_format` | gap: E34 #173 |
-| `POST` | `/report_generator/multiple` | gap: E34 #173 |
+| `GET` | `/report_generator/columns` | covered: `erply_list_custom_report_columns` |
+| `GET` | `/report_generator/contact_invoice_result_report` | covered: `erply_contact_invoice_result_report` |
+| `POST` | `/report_generator/csv` | covered: `erply_run_custom_report_csv` |
+| `POST` | `/report_generator/custom_excel` | covered: `erply_run_custom_report_excel` |
+| `POST` | `/report_generator/edit` | covered: `erply_edit_custom_report_callback` |
+| `POST` | `/report_generator/email` | covered: `erply_send_custom_report_email` |
+| `POST` | `/report_generator/file` | covered: `erply_run_custom_report_file` |
+| `GET` | `/report_generator/file/{type}` | covered: `erply_get_custom_report_file` |
+| `POST` | `/report_generator/file/{type}/json_format` | covered: `erply_run_custom_report_file_json` |
+| `POST` | `/report_generator/multiple` | covered: `erply_run_custom_reports_multiple` |
 | `GET` | `/report_generator/production_analyzer` | gap: E35 #174 |
 | `POST` | `/report_generator/production_analyzer` | gap: E35 #174 |
 | `DELETE` | `/report_generator/production_analyzer/{articleRowId}` | gap: E35 #174 |
 | `PUT` | `/report_generator/production_analyzer/{articleRowId}` | gap: E35 #174 |
 | `GET` | `/report_generator/production_planner` | gap: E35 #174 |
-| `POST` | `/report_generator/send_report` | gap: E34 #173 |
+| `POST` | `/report_generator/send_report` | covered: `erply_send_custom_report` |
 | `POST` | `/report_generator/send_to_ai` | gap: E35 #174 |
 | `POST` | `/report_generator/swagger_assistance` | gap: E35 #174 |
-| `POST` | `/report_generator/update_values` | gap: E34 #173 |
-| `GET` | `/report_generator/user_defined` | gap: E34 #173 |
-| `POST` | `/report_generator/xlsx` | gap: E34 #173 |
-| `GET` | `/report_generator/xml` | gap: E34 #173 |
+| `POST` | `/report_generator/update_values` | covered: `erply_update_custom_report_values` |
+| `GET` | `/report_generator/user_defined` | covered: `erply_list_user_defined_reports` |
+| `POST` | `/report_generator/xlsx` | covered: `erply_run_custom_report_xlsx` |
+| `GET` | `/report_generator/xml` | covered: `erply_get_custom_report_xml` |
 | `GET` | `/reports/aged` | covered: `erply_aged_receivables` |
 | `GET` | `/reports/aged_report` | gap: E36 #175 |
 | `GET` | `/reports/balance_sheet` | covered: `erply_balance_sheet` |

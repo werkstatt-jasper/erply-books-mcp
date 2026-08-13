@@ -1,0 +1,30 @@
+{
+  "ok": { "ok": true },
+  "attribute": { "ok": true, "documentId": 55, "attributeName": "NOTE" },
+  "dimension": { "ok": true, "projectId": "12" },
+  "connection": { "ok": true, "documentId": 55, "baseDocumentId": 40 },
+  "opposite": {
+    "id": 88,
+    "invoice": { "id": 55, "typeCode": "DOCUMENT_SELL", "date": "2025-06-02" }
+  },
+  "queue": { "ok": true },
+  "delete_post": { "ok": true, "id": 55 },
+  "delete_multiple": { "ok": true, "code": "55" },
+  "forward": { "ok": true, "userId": 7 },
+  "override": { "ok": true, "fieldName": "note" },
+  "prepare_rows": { "ok": true, "baseDocumentId": 40 },
+  "split": {
+    "invoiceId": 55,
+    "oldRows": [{ "id": 1 }],
+    "newRows": [{ "id": 2 }, { "id": 3 }]
+  },
+  "prepayment": { "ok": true, "documentId": 55, "paymentId": 90 },
+  "partner_update": {
+    "id": 902,
+    "typeCode": "DOCUMENT_SELL",
+    "date": "2025-06-03",
+    "partnerDocumentId": "P-3"
+  },
+  "partner_delete": { "ok": true, "invoiceId": "902" },
+  "delete_row": { "ok": true, "documentId": 55, "articleRowId": 3 }
+}
