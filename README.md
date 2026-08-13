@@ -181,6 +181,29 @@ codes (e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`). Optional query `registrationC
 create/update/delete. PDF uses **v2 JSON** (not binary `/invoices/pdf/{id}`). `documentIds` / `ids`
 accept a comma-separated string or a number array.
 
+#### Invoice workflow
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_add_invoice_attribute` | `POST /invoices/add_attribute` | `documentId` |
+| `erply_add_invoice_dimension` | `POST /invoices/add_dimension` | — |
+| `erply_add_invoice_document_connection` | `POST /invoices/add_document_connection` | `documentId`, `baseDocumentId` |
+| `erply_add_invoice_opposite` | `POST /invoices/add_opposite` | — |
+| `erply_add_invoice_to_queue` | `POST /invoices/add_to_queue` | — |
+| `erply_delete_invoice_via_post` | `POST /invoices/delete` | `id` |
+| `erply_delete_invoices_multiple_and_payments` | `POST /invoices/delete_multiple_and_payments` | — |
+| `erply_forward_invoice_to_user` | `POST /invoices/forward_to_user` | `userId` |
+| `erply_override_invoice_fields` | `POST /invoices/override` | `documentIds`, `fieldName` |
+| `erply_prepare_invoice_rows` | `POST /invoices/prepare_rows` | `baseDocumentId` |
+| `erply_split_invoice_rows` | `POST /invoices/split_rows` | — |
+| `erply_update_invoice_split_rows` | `PUT /invoices/split_rows/{documentId}` | `documentId` |
+| `erply_use_invoice_prepayment` | `POST /invoices/use_prepayment` | `documentId` |
+| `erply_delete_partner_invoice` | `DELETE /invoices/partner` | `invoiceId` |
+| `erply_update_partner_invoice` | `PUT /invoices/partner/{documentId}` | `documentId` |
+| `erply_delete_invoice_row` | `DELETE /invoices/{documentId}/rows/{articleRowId}` | `documentId`, `articleRowId` |
+
+Opposite/split/partner-update bodies accept extra spec fields via passthrough. `erply_delete_invoice_via_post` is the POST alias of `erply_delete_invoice`. Destructive tools require an explicit id.
+
 ### Payments
 
 | Tool | API | Required |

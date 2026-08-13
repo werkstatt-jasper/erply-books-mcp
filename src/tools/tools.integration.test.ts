@@ -565,6 +565,25 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("invoice workflow tools surface structured errors for dummy ids", async () => {
+    const dummy = 999999999;
+    await expectOkOrApiError(() =>
+      tools.erply_add_invoice_attribute.handler({ documentId: dummy, attributeName: "MCP_PROBE" }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_add_invoice_document_connection.handler({
+        documentId: dummy,
+        baseDocumentId: dummy,
+      }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_use_invoice_prepayment.handler({ documentId: dummy, paymentId: dummy }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_delete_invoice_row.handler({ documentId: dummy, articleRowId: dummy }),
+    );
+  });
+
   it("erply_create_payment then delete (or plan/module error)", async () => {
     try {
       const created = await tools.erply_create_payment.handler({
