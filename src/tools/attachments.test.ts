@@ -28,6 +28,33 @@ describe("erply_list_attachments", () => {
     expect(body.totalCount).toBe(1);
     expect(body.items[0].attachmentId).toBe(101);
   });
+
+  it("forwards Purchase Inbox list filters", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    await tools.erply_list_attachments.handler({
+      getNotConnectedInvoices: true,
+      getOnlyPartnerSupplierDocuments: true,
+      getOnlyLocalSupplierDocuments: false,
+      getOnlyNotSupplierConnectedDocuments: true,
+      doNotGetInvoice: true,
+      getLast10: true,
+      getProjectsFromDocuments: true,
+      reportGeneratorInput: "{}",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/attachments/all",
+      expect.objectContaining({
+        getNotConnectedInvoices: true,
+        getOnlyPartnerSupplierDocuments: true,
+        getOnlyLocalSupplierDocuments: false,
+        getOnlyNotSupplierConnectedDocuments: true,
+        doNotGetInvoice: true,
+        getLast10: true,
+        getProjectsFromDocuments: true,
+        reportGeneratorInput: "{}",
+      }),
+    );
+  });
 });
 
 describe("erply_get_attachment", () => {

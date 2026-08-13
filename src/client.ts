@@ -18,6 +18,8 @@ export interface RequestOptions {
   body?: unknown;
   /** When set, sent as multipart body; Content-Type is left to fetch (boundary). */
   formData?: FormData;
+  /** Default `json`. Use `text` for HTML/plain responses such as attachment preview. */
+  parseAs?: "json" | "text";
 }
 
 export interface ErplyBooksClientOptions {
@@ -129,7 +131,7 @@ export class ErplyBooksClient {
   }
 
   async request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { method = "GET", params, body, formData } = options;
+    const { method = "GET", params, body, formData, parseAs = "json" } = options;
     if (formData !== undefined && body !== undefined) {
       throw new Error("request: pass either body or formData, not both");
     }
@@ -152,6 +154,10 @@ export class ErplyBooksClient {
       if (formData !== undefined) {
         // Let fetch set multipart boundary; JSON Content-Type would break the upload.
         delete headers["Content-Type"];
+      }
+      if (parseAs === "text") {
+        // Preview and similar endpoints return HTML and 406 if Accept is application/json.
+        headers.Accept = "text/html, text/plain;q=0.9, */*;q=0.8";
       }
       const maxAttempts = 1 + maxRetries;
 
@@ -202,6 +208,12 @@ export class ErplyBooksClient {
           return undefined as T;
         }
 
+        if (parseAs === "text") {
+          const text = await response.text();
+          this.logRequest(method, path, started, undefined);
+          return text as T;
+        }
+
         const data = (await response.json()) as T;
         this.logRequest(method, path, started, undefined);
         return data;
@@ -220,6 +232,14 @@ export class ErplyBooksClient {
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
     return this.request<T>(path, { method: "GET", params });
+  }
+
+  /** GET that returns the raw response body as text (e.g. HTML preview). */
+  async getText(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<string> {
+    return this.request<string>(path, { method: "GET", params, parseAs: "text" });
   }
 
   async post<T = unknown>(

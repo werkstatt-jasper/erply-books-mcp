@@ -155,6 +155,20 @@ describe("ErplyBooksClient", () => {
       timeoutSpy.mockRestore();
     });
 
+    it("getText returns the response body as text", async () => {
+      fetchMock.mockResolvedValue(
+        new Response("<html>preview</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+      const text = await client.getText("/attachments/preview", { attachmentId: 101 });
+      expect(text).toBe("<html>preview</html>");
+      expect(String(fetchMock.mock.calls[0][0])).toContain("attachmentId=101");
+      expect(fetchMock.mock.calls[0][1].method).toBe("GET");
+      expect(fetchMock.mock.calls[0][1].headers.Accept).toContain("text/html");
+    });
+
     it("POSTs JSON body", async () => {
       fetchMock.mockResolvedValue(jsonResponse({ id: 9 }));
       await client.post("/customers", { name: "Acme" });

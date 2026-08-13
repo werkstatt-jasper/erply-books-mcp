@@ -8,6 +8,20 @@ import { buildAllTools } from "../server-setup.js";
 
 const hasToken = Boolean(process.env.ERPLY_BOOKS_API_TOKEN?.trim());
 
+const ATTACHMENT_PROBE_STATUSES = [400, 403, 404, 406, 409, 415, 500];
+
+async function expectOkOrApiError(
+  run: () => Promise<unknown>,
+  statuses: number[] = ATTACHMENT_PROBE_STATUSES,
+): Promise<void> {
+  try {
+    await run();
+  } catch (error) {
+    expect(error).toBeInstanceOf(ErplyBooksApiError);
+    expect(statuses).toContain((error as ErplyBooksApiError).httpStatus);
+  }
+}
+
 describe.skipIf(!hasToken)("read tools live MVP", () => {
   const client = new ErplyBooksClient(loadAuthConfig);
   const tools = buildAllTools(client);
@@ -339,6 +353,80 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
       expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
+  });
+
+  it("erply_list_attachments accepts Purchase Inbox filters or structured error", async () => {
+    try {
+      const result = await tools.erply_list_attachments.handler({
+        getNotConnectedInvoices: true,
+        start: 0,
+        limit: 5,
+      });
+      const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
+      expect(Array.isArray(body.items)).toBe(true);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("purchase inbox digitize/parse/confirm/preview surface plan or not-found errors", async () => {
+    let itemId = 1;
+    try {
+      const listed = await tools.erply_list_attachments.handler({
+        getNotConnectedInvoices: true,
+        start: 0,
+        limit: 1,
+      });
+      const page = JSON.parse(listed.content[0].text) as {
+        items: Array<{ attachmentId?: number; id?: number }>;
+      };
+      itemId = page.items[0]?.attachmentId ?? page.items[0]?.id ?? 1;
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+    await expectOkOrApiError(() => tools.erply_digitize_attachment.handler({ itemId }));
+    await expectOkOrApiError(() => tools.erply_parse_attachment.handler({ attachmentId: itemId }));
+    await expectOkOrApiError(() => tools.erply_mark_attachment_opened.handler({ itemId }));
+    await expectOkOrApiError(() =>
+      tools.erply_confirm_attachment.handler({ attachmentId: itemId }),
+    );
+    await expectOkOrApiError(async () => {
+      const preview = await tools.erply_get_attachment_preview.handler({ attachmentId: itemId });
+      expect(preview.content[0].text.length).toBeGreaterThan(2);
+    });
+  });
+
+  it("attachment extras (zip/html/child/digi/kyc aliases) succeed or return structured errors", async () => {
+    await expectOkOrApiError(() =>
+      tools.erply_get_attachment_html_template.handler({ attachmentId: 1 }),
+    );
+    await expectOkOrApiError(() => tools.erply_get_attachments_zip.handler({ documentId: 1 }));
+    await expectOkOrApiError(() => tools.erply_get_summary_invoice.handler({ attachmentId: 1 }));
+    await expectOkOrApiError(() =>
+      tools.erply_get_attachment_child.handler({ attachmentId: 1, noDownload: 1 }),
+    );
+    await expectOkOrApiError(() => tools.erply_get_digi_attachment.handler({ attachmentId: 1 }));
+    await expectOkOrApiError(() =>
+      tools.erply_get_digi_country_from_parser.handler({ code: "EE" }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_link_attachment_to_erply_invoice.handler({ attachmentId: 1 }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_create_purchase_order_from_attachment.handler({ customerId: 1 }),
+    );
+    await expectOkOrApiError(() => tools.erply_delete_attachment_via_post.handler({ id: 1 }));
+    await expectOkOrApiError(() =>
+      tools.erply_delete_activity_attachment.handler({ activityItemAttachmentId: 1 }),
+    );
+    await expectOkOrApiError(() =>
+      tools.erply_mark_attachment_not_digitizable.handler({
+        itemId: 1,
+        info: "mcp integration probe",
+      }),
+    );
   });
 
   it("erply_create_attachment then delete (or plan/module error)", async () => {

@@ -237,6 +237,11 @@ Saving an import row with `invoiceId` via `erply_save_all_payment_imports` updat
 
 ### Attachments
 
+The Erply Books Purchase Inbox is the attachments surface: there is no dedicated
+`/inbox` path. Unprocessed supplier files are attachments **without** a `documentId`.
+
+#### CRUD
+
 | Tool | API | Required |
 |------|-----|----------|
 | `erply_list_attachments` | `GET /attachments/all` | — |
@@ -244,7 +249,68 @@ Saving an import row with `invoiceId` via `erply_save_all_payment_imports` updat
 | `erply_create_attachment` | `POST /attachments` | `fileBase64`, `fileName` |
 | `erply_delete_attachment` | `DELETE /attachments/{attachmentId}` | `attachmentId` |
 
-Create maps `fileName`/`fileBase64` to API fields `filename`/`base64`. Digitize/KYC/parse/zip helpers are not shipped yet.
+Create maps `fileName`/`fileBase64` to API fields `filename`/`base64`. Three POST modes:
+
+1. **Attach to an existing invoice** — pass `documentId`, keep `total` null.
+2. **Add to the Purchase Inbox** — omit `documentId`, keep `total` null.
+3. **Create an expense document instantly** — set `total` (and optional `netTotal`, `taxRateId`, `contactName`, `expenseType`).
+
+List accepts inbox-style filters: `getNotConnectedInvoices`,
+`getOnlyPartnerSupplierDocuments`, `getOnlyLocalSupplierDocuments`,
+`getOnlyNotSupplierConnectedDocuments`, `doNotGetInvoice`, `getLast10`,
+`getProjectsFromDocuments`, `reportGeneratorInput`.
+
+#### Purchase inbox
+
+Typical loop: list unprocessed items → digitize → parse → confirm or convert.
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_digitize_attachment` | `PUT /attachments/digitize/{itemId}` | `itemId` |
+| `erply_parse_attachment` | `GET /attachments/parse/{attachmentId}` | `attachmentId` |
+| `erply_confirm_attachment` | `POST /attachments/confirm` | — |
+| `erply_mark_attachment_opened` | `PUT /attachments/mark_attachment_as_opened/{itemId}` | `itemId` |
+| `erply_mark_attachment_not_digitizable` | `PUT /attachments/not_digitizable/{itemId}` | `itemId` |
+| `erply_create_purchase_order_from_attachment` | `POST /attachments/add_purchase_order` | — |
+| `erply_link_attachment_to_erply_invoice` | `POST /attachments/erply_invoice_only` or `PUT …/{documentId}` | — |
+
+`erply_confirm_attachment` sends JSON `APIDocumentConfirmationInfo`
+(`attachmentId`, `waitingForUserId`, `additionalMessage`, `customEmail`, `sendEmail`, …).
+The live API returns HTTP 415 for multipart on this path. `erply_link_attachment_to_erply_invoice`
+uses PUT when `documentId` is set.
+
+#### File helpers
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_get_attachment_preview` | `GET /attachments/preview` | — |
+| `erply_get_attachment_html_template` | `GET /attachments/html_template` | — |
+| `erply_get_attachments_zip` | `GET /attachments/zip_file/{documentId}` | `documentId` |
+| `erply_get_summary_invoice` | `GET /attachments/summary_invoice/{attachmentId}` | `attachmentId` |
+| `erply_get_attachment_child` | `GET /attachments/{attachmentId}/child` | `attachmentId` |
+| `erply_create_attachments_multiple` | `POST /attachments/multiple` | `files` |
+| `erply_create_attachment_simple` | `POST /attachments/simple` | `fileBase64`, `fileName` |
+| `erply_delete_attachment_via_post` | `POST /attachments/delete` | `id` |
+| `erply_delete_activity_attachment` | `DELETE /attachments/all/{activityItemAttachmentId}` | `activityItemAttachmentId` |
+
+Preview returns `{ contentType: "text/html", body }`. The client sends `Accept: text/html`
+for this call; `Accept: application/json` yields HTTP 406.
+
+#### Digi queue
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_get_digi_attachment` | `GET /attachments/digi/{attachmentId}` | `attachmentId` |
+| `erply_create_digi_base64` | `POST /attachments/digi/base64` | `fileBase64`, `fileName` |
+| `erply_create_digi_form` | `POST /attachments/digi/form` | `fileBase64`, `fileName` |
+| `erply_get_digi_country_from_parser` | `POST /attachments/digi/country_from_parser` | — |
+
+#### KYC
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_submit_kyc` | `POST /attachments/kyc` | `fileBase64`, `fileName` |
+| `erply_submit_kyc_json` | `POST /attachments/kyc/json` | `fileBase64`, `fileName` |
 
 ### Articles and projects
 
@@ -301,9 +367,9 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 `languageCode` (e.g. `LANGUAGE_ET`) localizes names. See the
 [API Dictionary](https://www.erplybooks.com/api-dictionary/) for value lists.
 
-**Out of scope:** report-generator POST flows, binary invoice PDF v1, GoERP `*/get_single` and
-`POST …/delete` aliases, hash-based invoice email routes, partner invoice update/delete,
-invoice CSV import, supplier-only report modules, attachment digi/KYC/parse/zip helpers,
+**Out of scope:** report-generator POST flows, binary invoice PDF v1, GoERP `*/get_single`
+aliases, hash-based invoice email routes, partner invoice update/delete,
+invoice CSV import, supplier-only report modules,
 generic `/reports/vat_report`, and LT/LV VAT report paths.
 
 ## Upstream API documentation

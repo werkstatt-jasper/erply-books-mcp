@@ -23,6 +23,47 @@ export interface Attachment {
   [key: string]: unknown;
 }
 
+/** Purchase Inbox confirmation body (`APIDocumentConfirmationInfo`). */
+export interface DocumentConfirmationInfo {
+  id?: number;
+  attachmentId?: number;
+  documentId?: number;
+  activityItemId?: number;
+  activityItemAttachmentId?: number;
+  documentStatusTypeCode?: string;
+  createDatetime?: string;
+  creatorUserId?: number;
+  waitingForUserId?: number;
+  additionalMessage?: string;
+  customEmail?: string;
+  sendEmail?: boolean;
+  [key: string]: unknown;
+}
+
+/** Query/body fields for POST /attachments/add_purchase_order. */
+export interface PurchaseOrderFromAttachmentInfo {
+  customerId?: number;
+  articleId?: number;
+  projectId?: number;
+  documentInfoId?: number;
+  lang?: string;
+  status?: string;
+  additionalPercentage?: string;
+  baseDocumentId?: number;
+  currency?: string;
+  ATTRIBUTE_GROSS_WEIGHT?: string;
+  ATTRIBUTE_LICENCEPLATE?: string;
+  ATTRIBUTE_UNLADEN_WEIGHT?: string;
+  [key: string]: unknown;
+}
+
+/** Parsed Purchase Inbox document (`GET /attachments/parse/{attachmentId}`). */
+export interface ParsedAttachmentInfo {
+  attachmentId?: number;
+  documentId?: number;
+  [key: string]: unknown;
+}
+
 /** Bank import v2 body (`APIBankImportInfo`). */
 export interface BankImportInfo {
   id?: number;

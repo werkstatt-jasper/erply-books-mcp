@@ -29,5 +29,57 @@
   "bank_import_v2_response": {
     "imported": true,
     "count": 2
+  },
+  "parsed": {
+    "attachmentId": 101,
+    "documentId": 55,
+    "number": "INV-1",
+    "contactName": "Acme",
+    "total": 12.5
+  },
+  "confirm_response": {
+    "attachmentId": 101,
+    "waitingForUserId": 7,
+    "sendEmail": true
+  },
+  "purchase_order_response": {
+    "id": 88,
+    "customerId": 12
+  },
+  "erply_invoice_response": {
+    "documentId": 55,
+    "attachmentId": 101
+  },
+  "html_template": {
+    "html": "<div>template</div>"
+  },
+  "zip_file": {
+    "filename": "attachments.zip",
+    "base64": "UEsDBA=="
+  },
+  "summary_invoice": {
+    "attachmentId": 101,
+    "invoiceIds": "55,56"
+  },
+  "child": {
+    "attachmentId": 201,
+    "filename": "einvoice.xml"
+  },
+  "multiple_response": {
+    "count": 2
+  },
+  "simple_response": {
+    "attachmentId": 103
+  },
+  "digi": {
+    "attachmentId": 101,
+    "filename": "digitized.pdf"
+  },
+  "country_from_parser": {
+    "code": "EE",
+    "name": "Estonia"
+  },
+  "kyc_response": {
+    "ok": true
   }
 }
