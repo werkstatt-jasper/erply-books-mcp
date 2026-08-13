@@ -28,6 +28,14 @@ const listAttachmentsSchema = z.object({
   changedSince: optionalPositiveInt,
   documentStatusType: optionalString,
   activityItemType: optionalString,
+  getNotConnectedInvoices: optionalBoolean,
+  getOnlyPartnerSupplierDocuments: optionalBoolean,
+  getOnlyLocalSupplierDocuments: optionalBoolean,
+  getOnlyNotSupplierConnectedDocuments: optionalBoolean,
+  doNotGetInvoice: optionalBoolean,
+  getLast10: optionalBoolean,
+  getProjectsFromDocuments: optionalBoolean,
+  reportGeneratorInput: optionalString,
 });
 
 const getAttachmentSchema = z.object({
@@ -72,7 +80,7 @@ export function createAttachmentTools(client: ErplyBooksClient) {
   return {
     erply_list_attachments: {
       description:
-        "List attachments (GET /attachments/all). Optional filters: attachmentId, documentId, customerId, dateTo, transactionEntryId, projectId, getEverything, start/limit, and related activity filters. Returns { totalCount, items } when available.",
+        "List attachments including Purchase Inbox items (GET /attachments/all). Optional filters: attachmentId, documentId, customerId, dateTo, transactionEntryId, projectId, getEverything, start/limit, activity filters, and inbox-style flags (getNotConnectedInvoices, getOnlyPartnerSupplierDocuments, getOnlyLocalSupplierDocuments, getOnlyNotSupplierConnectedDocuments, doNotGetInvoice, getLast10, getProjectsFromDocuments, reportGeneratorInput). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -90,6 +98,29 @@ export function createAttachmentTools(client: ErplyBooksClient) {
           changedSince: { type: "number", description: "Changed-since timestamp/id filter" },
           documentStatusType: { type: "string" },
           activityItemType: { type: "string" },
+          getNotConnectedInvoices: {
+            type: "boolean",
+            description: "Purchase Inbox: items not yet connected to an invoice",
+          },
+          getOnlyPartnerSupplierDocuments: {
+            type: "boolean",
+            description: "Purchase Inbox: partner-supplier documents only",
+          },
+          getOnlyLocalSupplierDocuments: {
+            type: "boolean",
+            description: "Purchase Inbox: local-supplier documents only",
+          },
+          getOnlyNotSupplierConnectedDocuments: {
+            type: "boolean",
+            description: "Purchase Inbox: documents not connected to a supplier",
+          },
+          doNotGetInvoice: {
+            type: "boolean",
+            description: "Omit linked invoice payloads from the list",
+          },
+          getLast10: { type: "boolean", description: "Return only the last 10 attachments" },
+          getProjectsFromDocuments: { type: "boolean" },
+          reportGeneratorInput: { type: "string" },
         },
       },
       handler: async (params: unknown) => {
@@ -125,7 +156,7 @@ export function createAttachmentTools(client: ErplyBooksClient) {
 
     erply_create_attachment: {
       description:
-        "Create/upload an attachment (POST /attachments JSON APIAttachmentInfo). Requires fileName and fileBase64 (mapped to filename/base64). Optional documentId, typeCode, description, date, and related invoice fields. Extra APIAttachmentInfo fields may be passed through.",
+        "Create/upload an attachment (POST /attachments JSON APIAttachmentInfo). Requires fileName and fileBase64 (mapped to filename/base64). Three modes: (1) attach to an existing invoice — pass documentId and keep total null; (2) add to the Purchase Inbox — omit documentId and keep total null; (3) create an expense document instantly — set total (and optional netTotal, taxRateId, contactName, expenseType, number). Extra APIAttachmentInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {

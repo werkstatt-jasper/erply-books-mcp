@@ -4,6 +4,7 @@ import type { ErplyBooksClient } from "../client.js";
 export function createMockClient(): ErplyBooksClient {
   return {
     get: vi.fn(),
+    getText: vi.fn(),
     post: vi.fn(),
     postMultipart: vi.fn(),
     put: vi.fn(),
