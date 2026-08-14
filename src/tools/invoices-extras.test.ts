@@ -125,7 +125,7 @@ describe("erply_confirm_invoices", () => {
     await expect(tools.erply_confirm_invoices.handler({})).rejects.toThrow(/ids/);
   });
 
-  it("POSTs bodyless with ids query", async () => {
+  it("POSTs bodyless with ids query and defaults STATUS_CONFIRMED", async () => {
     vi.mocked(client.post).mockResolvedValue(extrasFixture.confirm_response);
     await tools.erply_confirm_invoices.handler({
       ids: [55, 56],
@@ -133,10 +133,33 @@ describe("erply_confirm_invoices", () => {
     });
     expect(client.post).toHaveBeenCalledWith("/invoices/confirm_invoices", undefined, {
       ids: "55,56",
-      attachmentId: undefined,
-      documentStatusTypeCode: undefined,
+      documentStatusTypeCode: "STATUS_CONFIRMED",
       useTransactionLockIfNecessary: true,
     });
+  });
+
+  it("forwards an explicit documentStatusTypeCode", async () => {
+    vi.mocked(client.post).mockResolvedValue(extrasFixture.confirm_response);
+    await tools.erply_confirm_invoices.handler({
+      ids: "55",
+      documentStatusTypeCode: "STATUS_PENDING",
+    });
+    expect(client.post).toHaveBeenCalledWith("/invoices/confirm_invoices", undefined, {
+      ids: "55",
+      documentStatusTypeCode: "STATUS_PENDING",
+      useTransactionLockIfNecessary: undefined,
+    });
+  });
+
+  it("rejects attachmentId", async () => {
+    await expect(
+      tools.erply_confirm_invoices.handler({ ids: [55], attachmentId: 49873 }),
+    ).rejects.toThrow(/Unrecognized key|attachmentId/);
+  });
+
+  it("describes the STATUS_CONFIRMED default and rejected attachmentId", () => {
+    expect(tools.erply_confirm_invoices.description).toMatch(/defaults to STATUS_CONFIRMED/);
+    expect(tools.erply_confirm_invoices.description).toMatch(/attachmentId is not supported/);
   });
 });
 

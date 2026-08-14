@@ -170,7 +170,7 @@ Note: `GET /customers/v2` returns **405** on current tokens — list uses `/cust
 | `erply_send_invoice_email` | `POST /invoices/email/simple` | `documentId`, `receiver` |
 | `erply_get_einvoice` | `GET /invoices/einvoice` | `documentIds` |
 | `erply_send_einvoices` | `POST /invoices/send_einvoices` | `documentIds` |
-| `erply_confirm_invoices` | `POST /invoices/confirm_invoices` | `ids` |
+| `erply_confirm_invoices` | `POST /invoices/confirm_invoices` | `ids` (status defaults to `STATUS_CONFIRMED`; `attachmentId` rejected) |
 | `erply_list_partner_invoices` | `GET /invoices/partner` | `dateFrom`, `dateTo` |
 | `erply_create_partner_invoice` | `POST /invoices/partner` | `typeCode`, `date`, and `customerId` or `customer` |
 | `erply_create_recurring_invoice` | `POST /invoices/recurring` | `copyFromDocumentId` |
