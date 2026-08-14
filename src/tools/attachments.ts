@@ -10,6 +10,7 @@ import {
   parseToolArgs,
   positiveInt,
 } from "../validation/tool-args.js";
+import { withLiftedOcrText } from "./attachment-ocr.js";
 import { normalizeFileBase64 } from "./file-base64.js";
 import {
   bytesToolResult,
@@ -127,7 +128,10 @@ export function createAttachmentTools(client: ErplyBooksClient) {
         "filter (attachmentId, documentId, customerId, dateTo, transactionEntryId, projectId, description, " +
         "activityItemId, changedSince, documentStatusType, activityItemType, or inbox flags) opts out. " +
         "documentId is ignored by the live API (alone: empty; with getEverything: full inbox). " +
-        "attachmentId works only together with getEverything. Returns { totalCount, items } when available.",
+        "attachmentId works only together with getEverything. Returns { totalCount, items } when available. " +
+        "Each item includes ocrText (string or null): the raw pipe-delimited digitization OCR, lifted from " +
+        "item.alternativeValue9. Use it as a fallback when erply_parse_attachment output is inaccurate. " +
+        "The nested item blob is left intact.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -184,7 +188,8 @@ export function createAttachmentTools(client: ErplyBooksClient) {
       handler: async (params: unknown) => {
         const args = parseToolArgs(listAttachmentsSchema, params);
         const response = await client.get("/attachments/all", listAttachmentsQuery(args));
-        return jsonToolResult(unwrapListEnvelope<Attachment>(response));
+        const { totalCount, items } = unwrapListEnvelope<Attachment>(response);
+        return jsonToolResult({ totalCount, items: items.map(withLiftedOcrText) });
       },
     },
 

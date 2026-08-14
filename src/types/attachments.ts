@@ -1,3 +1,22 @@
+/** Nested activity-item blob on GET /attachments/all rows. */
+export interface AttachmentItemInfo {
+  id?: number;
+  typeCode?: string;
+  description?: string;
+  value?: string | null;
+  decimalValue?: number | null;
+  alternativeValue?: string | null;
+  alternativeValue2?: string | null;
+  alternativeValue3?: string | null;
+  alternativeValue4?: string | null;
+  alternativeValue5?: string | null;
+  alternativeValue6?: string | null;
+  alternativeValue7?: string | null;
+  alternativeValue8?: string | null;
+  alternativeValue9?: string | null;
+  [key: string]: unknown;
+}
+
 /** Attachment row from Erply Books `/attachments` (`APIAttachmentInfo`). */
 export interface Attachment {
   id?: number;
@@ -20,6 +39,9 @@ export interface Attachment {
   description?: string;
   organisationId?: number;
   exceptionInfo?: string;
+  item?: AttachmentItemInfo | null;
+  /** Lifted from `item.alternativeValue9` (raw digitization OCR). */
+  ocrText?: string | null;
   [key: string]: unknown;
 }
 
@@ -61,6 +83,8 @@ export interface PurchaseOrderFromAttachmentInfo {
 export interface ParsedAttachmentInfo {
   attachmentId?: number;
   documentId?: number;
+  /** Present when `includeOcrText` is set; raw OCR from the list record. */
+  ocrText?: string | null;
   [key: string]: unknown;
 }
 

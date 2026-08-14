@@ -112,6 +112,13 @@ does not express. Full list in appendix D.
     truncated `{"statusType":"NO_CONTENT","entity"` (35 bytes) so the original
     inbox file cannot be re-uploaded. `erply_attach_inbox_item_to_document`
     is the working confirm recipe. See #195 (E56).
+12. `GET /attachments/all` rows nest raw digitization OCR at
+    `item.alternativeValue9` (pipe-delimited text). Verified live 2026-08-14
+    on Demo testbaas attachment `5383713`. Sibling `alternativeValue`–`8` are
+    not OCR (email id, user note, `"true"` flag, mostly null).
+    `erply_list_attachments` lifts that field to `ocrText`.
+    `erply_parse_attachment` does not return it unless `includeOcrText=true`
+    (secondary list lookup; failures → `ocrText: null`). See #196 (E57).
 
 ## Cosmetic notes (no action)
 
