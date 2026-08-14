@@ -11,6 +11,22 @@ export interface Payment {
   [key: string]: unknown;
 }
 
+/** Linked document on an `APIPaymentImportInfo` (`APILinkedPaymentImportInfo`). */
+export interface LinkedPaymentImportInfo {
+  id?: number;
+  invoiceId?: number;
+  customerId?: number;
+  number?: string;
+  sumPaid?: number;
+  sumWithVat?: number;
+  sumLeftToPay?: number;
+  typeCode?: string;
+  description?: string;
+  accountId?: number;
+  projects?: number[];
+  [key: string]: unknown;
+}
+
 /** Payment import / bank-match row from `POST /payments/import` and related endpoints. */
 export interface PaymentImport {
   id?: number;
@@ -30,7 +46,7 @@ export interface PaymentImport {
   currencyCode?: string;
   reconciled?: boolean;
   importValidated?: boolean;
-  linkedInvoiceInfo?: unknown[] | null;
+  linkedInvoiceInfo?: LinkedPaymentImportInfo[] | null;
   [key: string]: unknown;
 }
 
@@ -42,10 +58,12 @@ export interface ConnectPaymentWithDocumentsRequest {
   paymentId?: number;
   /** Pending payment id. */
   pendingPaymentId?: number;
-  /** Invoice or document id to link. */
+  /** Invoice or document id to link (mapped into `linkedInvoiceInfo` by the tool). */
   invoiceId?: number;
-  /** Invoice or document number to link. */
+  /** Invoice or document number to link (mapped into `linkedInvoiceInfo.number`). */
   invoiceNumber?: string;
+  /** Documents to link; this is the list the endpoint actually reads. */
+  linkedInvoiceInfo?: LinkedPaymentImportInfo[];
   customerId?: number;
   amount?: number;
   date?: string;

@@ -72,9 +72,12 @@ does not express. Full list in appendix D.
    uses `sort`; tools follow swagger.
 3. `GET /customers/v2`: documented ("customers have two API versions") but
    returns 405 with the current sandbox token; tool uses v1 `/customers`.
-4. `POST /payments/connect_payment_with_documents`: consistent 409 `MODULE_*` on
-   the demo org; workaround via `erply_update_payment` + `invoiceId` is documented
-   in the tool description.
+4. `POST /payments/connect_payment_with_documents`: documents must be in
+   `linkedInvoiceInfo` (not top-level `invoiceId`); otherwise 409 "The list of
+   documents is empty". Sparse bodies can 500 — send pending-row fields. Connect
+   sets `importValidated` but does not change invoice `sumPaid`/`sumLeftToPay`
+   on the demo org; use `erply_update_payment` to apply balances (#190 / E51,
+   related #189 / E50).
 5. `POST /payments/save_all_payments`: does not link payments to invoices (only
    updates import rows) — see README.
 6. `POST /payments/bank_import/v2`: undocumented in swagger (see C-class).
@@ -176,7 +179,7 @@ The full per-tool tables follow below.
 | `erply_update_invoice` | `APIInvoiceInfo` | 7/42 | id, customerName, discountPercent, languageCode, vatPercent, referenceNumber, deadlineDate, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, partnerDocumentId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, payments, attachments, customer, history |
 | `erply_import_payment` | `APIPaymentImportInfo` | 16/51 | id, paymentId, archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, beneficiaryRemitterId, employeeId, importValidated, category, checkNumber, linkedInvoiceInfo, linkedDescription, invoiceSum, transactionEntryId, pendingChequePaymentId, projects, partnerAccountId, currencyRate, taxRateId, vatPercent, yellow, oldImportDetails, code, parentPaymentId, activityItems, reconciledItems, pendingPaymentId, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
 | `erply_save_all_payment_imports` | `APIPaymentImportListInfo` | 1/1 | — |
-| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 11/51 | archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, debit, currencyCode, beneficiaryRemitterId, employeeId, debitAccountId, creditAccountId, importValidated, category, checkNumber, linkedInvoiceInfo, linkedDescription, invoiceSum, transactionEntryId, findCustomerMatch, pendingChequePaymentId, projectId, projects, partnerAccountId, currencyRate, calculateCurrencyRate, taxRateId, vatPercent, yellow, oldImportDetails, reconciled, code, parentPaymentId, activityItems, reconciledItems, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
+| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 12/51 | archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, debit, currencyCode, beneficiaryRemitterId, employeeId, debitAccountId, creditAccountId, importValidated, category, checkNumber, linkedDescription, invoiceSum, transactionEntryId, findCustomerMatch, pendingChequePaymentId, projectId, projects, partnerAccountId, currencyRate, calculateCurrencyRate, taxRateId, vatPercent, yellow, oldImportDetails, reconciled, code, parentPaymentId, activityItems, reconciledItems, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
 | `erply_sepa_payments` | `APIPaymentImportFileInfo` | 11/25 | id, invoiceCustomers, memos, customerNames, addRefNrSeparately, erplyClientCode, erplySessionKey, useBban, paymentUrgency, chargesBearer, invoiceDiscounts, doNotAdd, doNotAddSameContactDocuments, code2fa |
 | `erply_bank_import_v2` | `APIBankImportInfo` | 7/12 | id, apiAttachmentInfo, everything, missing, separator |
 | `erply_create_payment` | `APIPaymentInfo` | 11/29 | id, transactionIdentifier, transactionEntryId, sumWithVat, customerName, number, archivingId, code, badDebt, partnerPaymentId, partnerDocumentId, imported, documentStatusTypeCode, statusChangeDatetime, currencyRate, projects, entityName, parentPaymentId |
