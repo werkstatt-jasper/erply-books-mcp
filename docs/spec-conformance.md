@@ -23,7 +23,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | B | Spec query param not exposed by tool | 213 | intentional MVP scoping; high-value subset tracked in [#188 (E49)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/188) |
 | C | Tool param absent from spec | 24 | all explained (see below) |
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
-| E | Type mismatch | 34 | 1 real issue ([#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)); 33 benign |
+| E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
 | G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54) |
 
@@ -57,8 +57,8 @@ does not express. Full list in appendix D.
 
 ## E-class details (type mismatches)
 
-- **Real issue:** `reportType` is typed `string` in `erply_list_account_entries`
-  and `erply_general_ledger`, but the spec says `integer` →
+- **Fixed:** `reportType` on `erply_list_account_entries` and
+  `erply_general_ledger` is now `integer` (coerced), matching the spec →
   [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186).
 - **Benign (33):** spec types many ID query params (`customerId`, `projectId`,
   `accountId`, `articleId`, `documentId`, …) as `string`; the tools use `number`.

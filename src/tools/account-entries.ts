@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ErplyBooksClient } from "../client.js";
 import type { AccountEntry } from "../types/account-entries.js";
 import {
+  optionalInt,
   optionalNonNegativeInt,
   optionalPositiveInt,
   optionalString,
@@ -20,7 +21,7 @@ const listAccountEntriesSchema = z.object({
   articleId: optionalPositiveInt,
   balanceType: optionalString,
   incomeType: optionalString,
-  reportType: optionalString,
+  reportType: optionalInt,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -41,7 +42,7 @@ export function createAccountEntryTools(client: ErplyBooksClient) {
           articleId: { type: "number", description: "Filter by article id" },
           balanceType: { type: "string", description: "BALANCE_TYPE dictionary code" },
           incomeType: { type: "string", description: "INCOME_TYPE dictionary code" },
-          reportType: { type: "string", description: "Report type filter when supported" },
+          reportType: { type: "number", description: "Report type filter (integer per spec)" },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
         },

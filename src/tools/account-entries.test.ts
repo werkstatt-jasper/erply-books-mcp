@@ -36,4 +36,40 @@ describe("erply_list_account_entries", () => {
     );
     expect(JSON.parse(result.content[0].text).totalCount).toBe(1);
   });
+
+  it("passes integer reportType to GET /account_entries", async () => {
+    vi.mocked(client.get).mockResolvedValue(accountEntriesFixture.list_page);
+    await tools.erply_list_account_entries.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      reportType: 2,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/account_entries",
+      expect.objectContaining({ reportType: 2 }),
+    );
+  });
+
+  it("coerces numeric-string reportType to an integer", async () => {
+    vi.mocked(client.get).mockResolvedValue(accountEntriesFixture.list_page);
+    await tools.erply_list_account_entries.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      reportType: "2",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/account_entries",
+      expect.objectContaining({ reportType: 2 }),
+    );
+  });
+
+  it("rejects non-numeric reportType", async () => {
+    await expect(
+      tools.erply_list_account_entries.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        reportType: "abc",
+      }),
+    ).rejects.toThrow(/reportType/);
+  });
 });

@@ -34,6 +34,13 @@ export const optionalString = z
   .nullish()
   .transform((v) => v ?? undefined);
 
+/** Optional integer (coerced); null coerced to undefined. */
+export const optionalInt = z.coerce
+  .number()
+  .int()
+  .nullish()
+  .transform((v) => v ?? undefined);
+
 /** Optional number (coerced); null coerced to undefined. */
 export const optionalNumber = z.coerce
   .number()

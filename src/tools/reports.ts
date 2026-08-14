@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ErplyBooksClient } from "../client.js";
 import {
   optionalBoolean,
+  optionalInt,
   optionalNonNegativeInt,
   optionalPositiveInt,
   optionalString,
@@ -40,7 +41,7 @@ const generalLedgerSchema = dateRangeSchema.extend({
   articleId: optionalPositiveInt,
   balanceType: optionalString,
   incomeType: optionalString,
-  reportType: optionalString,
+  reportType: optionalInt,
   getSummary: optionalBoolean,
 });
 
@@ -183,7 +184,7 @@ export function createReportTools(client: ErplyBooksClient) {
           articleId: { type: "number" },
           balanceType: { type: "string" },
           incomeType: { type: "string" },
-          reportType: { type: "string" },
+          reportType: { type: "number", description: "Report type filter (integer per spec)" },
           getSummary: { type: "boolean" },
         },
         required: ["dateFrom", "dateTo"],

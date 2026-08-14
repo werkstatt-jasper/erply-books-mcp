@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   formatZodError,
   optionalBoolean,
+  optionalInt,
   optionalNonNegativeInt,
   optionalNumber,
   optionalString,
@@ -67,6 +68,16 @@ describe("parseToolArgs", () => {
     const schema = z.object({ start: optionalNonNegativeInt });
     expect(parseToolArgs(schema, { start: 0 })).toEqual({ start: 0 });
     expect(() => parseToolArgs(schema, { start: -1 })).toThrow(/start/);
+  });
+
+  it("accepts optional integers and coerces numeric strings", () => {
+    const schema = z.object({ reportType: optionalInt });
+    expect(parseToolArgs(schema, { reportType: 2 })).toEqual({ reportType: 2 });
+    expect(parseToolArgs(schema, { reportType: "2" })).toEqual({ reportType: 2 });
+    expect(parseToolArgs(schema, { reportType: null })).toEqual({ reportType: undefined });
+    expect(parseToolArgs(schema, {})).toEqual({ reportType: undefined });
+    expect(() => parseToolArgs(schema, { reportType: "abc" })).toThrow(/reportType/);
+    expect(() => parseToolArgs(schema, { reportType: 1.5 })).toThrow(/reportType/);
   });
 
   it("coerces optional string/number/boolean nullish values to undefined", () => {
