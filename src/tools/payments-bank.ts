@@ -336,7 +336,12 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_list_pending_payments: {
       description:
-        "List pending payment imports (GET /payments/pending_payments). Optional filters: dateFrom, dateTo, status, accountId, paymentId. Returns { totalCount, items } when available.",
+        "List unmatched bank-import rows (GET /payments/pending_payments) — the Bank Import UI feed. " +
+        "Rows typically have invoiceId 0, customerId 0, and importValidated false until connected. " +
+        "This is the list surface for unmatched imports; GET /payments/import does not exist (405). " +
+        "erply_list_payments returns confirmed payments only and will look empty for this use case. " +
+        "Optional filters: dateFrom, dateTo, status (must be a DocumentStatusType enum; UNMATCHED/PENDING are invalid), accountId, paymentId. " +
+        "A reconciled=false query param is ignored (rows often have reconciled true). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {

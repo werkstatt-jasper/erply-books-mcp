@@ -25,7 +25,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
 | E | Type mismatch | 34 | 1 real issue ([#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)); 33 benign |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 7 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189) |
+| G | Prose docs vs swagger vs observed behavior | 8 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -84,6 +84,12 @@ does not express. Full list in appendix D.
 7. PUT full-replace semantics: prose for `/invoices` says "All previous data is
    deleted and replaced" — update-tool descriptions should warn that `rows` must
    be resent if this holds on the live API.
+8. `GET /payments/import`: not in swagger; live **405** on Demo testbaas
+   (2026-08-14) with or without `dateFrom`/`dateTo`/`reconciled`/`accountId`.
+   Unmatched bank-import rows are `GET /payments/pending_payments`
+   (`erply_list_pending_payments`). `GET /payments` (even with
+   `getEverything=true`) returns confirmed `APIPaymentInfo` records, not import
+   rows. See #191 (E52).
 
 ## Cosmetic notes (no action)
 
