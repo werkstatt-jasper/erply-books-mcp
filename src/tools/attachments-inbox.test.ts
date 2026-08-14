@@ -209,4 +209,13 @@ describe("erply_link_attachment_to_erply_invoice", () => {
       baseDocumentIds: undefined,
     });
   });
+
+  it("describes base-document linking, not Purchase Inbox attach", () => {
+    expect(tools.erply_link_attachment_to_erply_invoice.description).toMatch(
+      /Link base documents \(waybills \/ orders\)/,
+    );
+    expect(tools.erply_link_attachment_to_erply_invoice.description).toMatch(
+      /does not attach a Purchase Inbox item/,
+    );
+  });
 });
