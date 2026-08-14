@@ -30,6 +30,8 @@ const parseAttachmentSchema = z.object({
   isSalesDocument: optionalBoolean,
 });
 
+const DEFAULT_CONFIRM_STATUS = "STATUS_CONFIRMED";
+
 const confirmAttachmentSchema = z
   .object({
     id: optionalPositiveInt,
@@ -45,7 +47,31 @@ const confirmAttachmentSchema = z
     customEmail: optionalString,
     sendEmail: optionalBoolean,
   })
-  .passthrough();
+  .passthrough()
+  .superRefine((v, ctx) => {
+    if (v.documentId !== undefined && v.attachmentId === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["attachmentId"],
+        message:
+          "attachmentId is required when documentId is set (use list field attachmentId, not id or activityItemId)",
+      });
+    }
+    if (v.documentId !== undefined && v.activityItemId !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["activityItemId"],
+        message:
+          "omit activityItemId when linking to a document — the live API 409s with Cannot Find File Information",
+      });
+    }
+  });
+
+const attachInboxToDocumentSchema = z.object({
+  attachmentId: positiveInt,
+  documentId: positiveInt,
+  documentStatusTypeCode: optionalString,
+});
 
 const markNotDigitizableSchema = z.object({
   itemId: positiveInt,
@@ -134,16 +160,30 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
 
     erply_confirm_attachment: {
       description:
-        "Ask confirmation / approve a Purchase Inbox attachment (POST /attachments/confirm JSON APIDocumentConfirmationInfo). Pass attachmentId and optional waitingForUserId, additionalMessage, customEmail, sendEmail, documentStatusTypeCode, documentId. Extra fields are passed through. Spec has no operation description; live API rejects multipart (HTTP 415).",
+        "Ask confirmation / approve a Purchase Inbox attachment (POST /attachments/confirm JSON APIDocumentConfirmationInfo). " +
+        "To associate an existing inbox item with an existing document, prefer erply_attach_inbox_item_to_document. " +
+        "That recipe is attachmentId (list field, not id/activityItemId) + documentId; documentStatusTypeCode defaults to STATUS_CONFIRMED. " +
+        "Passing activityItemId together with documentId 409s (Cannot Find File Information). " +
+        "Confirm writes a confirmation log — the inbox row documentId stays 0. " +
+        "Optional waitingForUserId, additionalMessage, customEmail, sendEmail. Extra fields are passed through. Live API rejects multipart (HTTP 415).",
       inputSchema: {
         type: "object" as const,
         properties: {
           id: { type: "number", description: "Confirmation id when updating" },
-          attachmentId: { type: "number", description: "Attachment/inbox item id" },
-          documentId: { type: "number" },
-          activityItemId: { type: "number" },
+          attachmentId: {
+            type: "number",
+            description: "List field attachmentId (required when documentId is set)",
+          },
+          documentId: { type: "number", description: "Existing document id to confirm against" },
+          activityItemId: {
+            type: "number",
+            description: "Do not pass with documentId — live API 409s",
+          },
           activityItemAttachmentId: { type: "number" },
-          documentStatusTypeCode: { type: "string" },
+          documentStatusTypeCode: {
+            type: "string",
+            description: "Defaults to STATUS_CONFIRMED",
+          },
           createDatetime: { type: "string" },
           creatorUserId: { type: "number" },
           waitingForUserId: { type: "number", description: "User id to ask for confirmation" },
@@ -154,7 +194,48 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
       },
       handler: async (params: unknown) => {
         const args = parseToolArgs(confirmAttachmentSchema, params);
-        const result = await client.post<DocumentConfirmationInfo>("/attachments/confirm", args);
+        const result = await client.post<DocumentConfirmationInfo>("/attachments/confirm", {
+          ...args,
+          documentStatusTypeCode: args.documentStatusTypeCode ?? DEFAULT_CONFIRM_STATUS,
+        });
+        return mutationToolResult(result);
+      },
+    },
+
+    erply_attach_inbox_item_to_document: {
+      description:
+        "Associate an existing Purchase Inbox item with an existing document (POST /attachments/confirm). " +
+        "Requires attachmentId (from erply_list_attachments — not id or activityItemId) and documentId. " +
+        "documentStatusTypeCode defaults to STATUS_CONFIRMED. " +
+        "This is the live API path: do not pass activityItemId (409 Cannot Find File Information). " +
+        "Creates a confirmation on the inbox item; the inbox row documentId stays 0 and GET invoice attachments may still be null. " +
+        "To upload a new file onto a document, use erply_create_attachment with documentId. " +
+        "GET /attachments/all/{id} often returns truncated NO_CONTENT, so re-uploading the original inbox bytes is not possible.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          attachmentId: {
+            type: "number",
+            description: "Purchase Inbox attachmentId from erply_list_attachments (required)",
+          },
+          documentId: {
+            type: "number",
+            description: "Existing document/invoice id (required)",
+          },
+          documentStatusTypeCode: {
+            type: "string",
+            description: "Defaults to STATUS_CONFIRMED",
+          },
+        },
+        required: ["attachmentId", "documentId"],
+      },
+      handler: async (params: unknown) => {
+        const args = parseToolArgs(attachInboxToDocumentSchema, params);
+        const result = await client.post<DocumentConfirmationInfo>("/attachments/confirm", {
+          attachmentId: args.attachmentId,
+          documentId: args.documentId,
+          documentStatusTypeCode: args.documentStatusTypeCode ?? DEFAULT_CONFIRM_STATUS,
+        });
         return mutationToolResult(result);
       },
     },
@@ -238,7 +319,7 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
       description:
         "Link base documents (waybills / orders) to an invoice (POST /attachments/erply_invoice_only, or PUT /attachments/erply_invoice_only/{documentId} when documentId is set). " +
         "Pass baseDocumentIds (comma-separated document ids) or the documentId path. " +
-        "attachmentId is a spec query param but does not attach a Purchase Inbox item to a document — that flow is not exposed (see E56).",
+        "attachmentId is a spec query param but does not attach a Purchase Inbox item to a document — use erply_attach_inbox_item_to_document.",
       inputSchema: {
         type: "object" as const,
         properties: {

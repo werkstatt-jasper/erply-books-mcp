@@ -104,6 +104,14 @@ does not express. Full list in appendix D.
     `erply_confirm_invoices` defaults it to `STATUS_CONFIRMED`. `attachmentId` is
     silently ignored by the API (success envelope, no link); the tool rejects it.
     See #193 (E54).
+11. `POST /attachments/confirm`: associating an existing Purchase Inbox item with
+    an existing document works with **only** `attachmentId` + `documentId` +
+    `documentStatusTypeCode` (`STATUS_CONFIRMED`). `activityItemId` + `documentId`
+    409s `"Cannot Find File Information"`. Confirm writes a confirmation log;
+    the inbox row `documentId` stays `0`. `GET /attachments/all/{id}` returns
+    truncated `{"statusType":"NO_CONTENT","entity"` (35 bytes) so the original
+    inbox file cannot be re-uploaded. `erply_attach_inbox_item_to_document`
+    is the working confirm recipe. See #195 (E56).
 
 ## Cosmetic notes (no action)
 
@@ -188,6 +196,7 @@ The full per-tool tables follow below.
 | `erply_get_digi_country_from_parser` | `APIDictionaryValueInfo` | 2/2 | — |
 | `erply_submit_kyc_json` | `APIAttachmentInfo` | 2/21 | id, attachmentId, partnerDocumentId, attributeId, folder, typeCode, filename, base64, number, contactName, expenseType, netTotal, taxSum, taxRateId, total, date, organisationId, exceptionInfo, attribute |
 | `erply_confirm_attachment` | `APIDocumentConfirmationInfo` | 12/12 | — |
+| `erply_attach_inbox_item_to_document` | `APIDocumentConfirmationInfo` | 3/12 | id, activityItemId, activityItemAttachmentId, createDatetime, creatorUserId, waitingForUserId, additionalMessage, customEmail, sendEmail |
 | `erply_create_attachment` | `APIAttachmentInfo` | 12/21 | id, attachmentId, attributeId, filename, base64, number, organisationId, exceptionInfo, attribute |
 | `erply_create_customer` | `APICustomerInfo` | 10/37 | id, legalCountryCode, legalPostcode, deadlineDays, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |
 | `erply_update_customer` | `APICustomerInfo` | 11/37 | id, legalCountryCode, legalPostcode, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |

@@ -417,10 +417,77 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     await expectOkOrApiError(() =>
       tools.erply_confirm_attachment.handler({ attachmentId: itemId }),
     );
+    await expectOkOrApiError(() =>
+      tools.erply_attach_inbox_item_to_document.handler({
+        attachmentId: itemId,
+        documentId: 1,
+      }),
+    );
     await expectOkOrApiError(async () => {
       const preview = await tools.erply_get_attachment_preview.handler({ attachmentId: itemId });
       expect(preview.content[0].text.length).toBeGreaterThan(2);
     });
+  });
+
+  it("erply_attach_inbox_item_to_document confirms against a created invoice", async () => {
+    let invoiceId: number | undefined;
+    try {
+      const listed = await tools.erply_list_attachments.handler({
+        getEverything: true,
+        start: 0,
+        limit: 1,
+      });
+      const page = JSON.parse(listed.content[0].text) as {
+        items: Array<{ attachmentId?: number }>;
+      };
+      const attachmentId = page.items[0]?.attachmentId;
+      if (typeof attachmentId !== "number") {
+        return;
+      }
+
+      const customers = JSON.parse(
+        (await tools.erply_list_customers.handler({ start: 0, limit: 1 })).content[0].text,
+      ) as { items: Array<{ id?: number }> };
+      const customerId = customers.items[0]?.id;
+      if (typeof customerId !== "number") {
+        return;
+      }
+
+      const created = await tools.erply_create_invoice.handler({
+        typeCode: "DOCUMENT_BUY",
+        date: "2026-08-14",
+        customerId,
+        number: `E56-IT-${Date.now()}`,
+        rows: [{ name: "E56 attach probe", quantity: 1, price: 1 }],
+      });
+      const invoice = JSON.parse(created.content[0].text) as { id?: number };
+      invoiceId = invoice.id;
+      expect(typeof invoiceId).toBe("number");
+
+      const confirmed = await tools.erply_attach_inbox_item_to_document.handler({
+        attachmentId,
+        documentId: invoiceId,
+      });
+      const body = JSON.parse(confirmed.content[0].text) as {
+        attachmentId?: number;
+        documentId?: number;
+        documentStatusTypeCode?: string;
+      };
+      expect(body.attachmentId).toBe(attachmentId);
+      expect(body.documentId).toBe(invoiceId);
+      expect(body.documentStatusTypeCode).toBe("STATUS_CONFIRMED");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (invoiceId) {
+        try {
+          await tools.erply_delete_invoice.handler({ invoiceId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
   });
 
   it("erply_get_attachment succeeds or returns a structured error", async () => {
