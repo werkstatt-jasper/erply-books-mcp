@@ -6,7 +6,23 @@
         "documentId": 55,
         "filename": "receipt.pdf",
         "typeCode": "PDF",
-        "description": "Fixture attachment"
+        "description": "Fixture attachment",
+        "item": {
+          "id": 77082009,
+          "typeCode": "ACTIVITY_ITEM_ATTRIBUTE",
+          "description": "ATTRIBUTE_DOCUMENT_ATTACHMENT",
+          "value": "STATUS_PENDING",
+          "decimalValue": null,
+          "alternativeValue": "4965801",
+          "alternativeValue2": "asdasda",
+          "alternativeValue3": null,
+          "alternativeValue4": null,
+          "alternativeValue5": "true",
+          "alternativeValue6": null,
+          "alternativeValue7": null,
+          "alternativeValue8": null,
+          "alternativeValue9": "100.00Raamatupidamisteenus 06.2021  1.00 100.00|200.00Palgateenus 06.2021  1.00 200.00|Tax (20%): 120.00|Invoice no.:|15001EESTI21|Date:|21.06.2021|"
+        }
       }
     ],
     "totalCount": 1,

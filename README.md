@@ -325,6 +325,12 @@ empty; with `getEverything` it still returns the full inbox. `attachmentId`
 works only together with `getEverything`. Inbox flags such as
 `getNotConnectedInvoices` also need `getEverything` (flag alone → empty).
 
+Each list item includes **`ocrText`** (`string` or `null`): the raw
+pipe-delimited digitization OCR, lifted from `item.alternativeValue9`.
+Sibling `alternativeValue`–`8` fields are not OCR (email id, notes, flags).
+Use `ocrText` when `erply_parse_attachment` structured fields are wrong;
+parser quality is upstream Erply. The nested `item` blob is left intact.
+
 #### Purchase inbox
 
 Typical loop: list unprocessed items (`erply_list_attachments` with no args, or
@@ -349,7 +355,7 @@ still look request-derived on other orgs (customer report).
 | Tool | API | Required |
 |------|-----|----------|
 | `erply_digitize_attachment` | `PUT /attachments/digitize/{itemId}` | `itemId` |
-| `erply_parse_attachment` | `GET /attachments/parse/{attachmentId}` | `attachmentId` |
+| `erply_parse_attachment` | `GET /attachments/parse/{attachmentId}` | `attachmentId` (optional `includeOcrText`) |
 | `erply_confirm_attachment` | `POST /attachments/confirm` | — (`attachmentId` required when `documentId` is set) |
 | `erply_attach_inbox_item_to_document` | `POST /attachments/confirm` | `attachmentId`, `documentId` |
 | `erply_mark_attachment_opened` | `PUT /attachments/mark_attachment_as_opened/{itemId}` | `itemId` |
@@ -360,6 +366,17 @@ still look request-derived on other orgs (customer report).
 `erply_confirm_attachment` sends JSON `APIDocumentConfirmationInfo`.
 `documentStatusTypeCode` defaults to `STATUS_CONFIRMED`. The live API returns HTTP 415
 for multipart on this path.
+
+##### Raw OCR fallback (E57)
+
+On Demo testbaas (2026-08-14), attachment `5383713` had accurate raw OCR at
+`items[].item.alternativeValue9` while `GET /attachments/parse/{id}` returned
+wrong invoice number, date, line items, and VAT. `erply_list_attachments`
+exposes that string as `ocrText`. `erply_parse_attachment` with
+`includeOcrText: true` makes a secondary `GET /attachments/all` lookup
+(`attachmentId` + `getEverything`) and merges `ocrText` into the parse
+response; lookup failures set `ocrText` to `null`. The OCR string is
+pipe-delimited (line items, totals, invoice number, dates, bank details).
 
 ##### Attach an existing inbox item to an existing document (E56)
 

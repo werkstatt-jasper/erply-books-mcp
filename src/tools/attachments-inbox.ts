@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { ErplyBooksClient } from "../client.js";
 import type {
+  Attachment,
   DocumentConfirmationInfo,
   ParsedAttachmentInfo,
   PurchaseOrderFromAttachmentInfo,
@@ -13,8 +14,9 @@ import {
   parseToolArgs,
   positiveInt,
 } from "../validation/tool-args.js";
+import { ocrTextFromListItems } from "./attachment-ocr.js";
 import { decodeBase64File } from "./file-base64.js";
-import { jsonToolResult, mutationToolResult } from "./list-response.js";
+import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const itemIdSchema = z.object({
   itemId: positiveInt,
@@ -28,6 +30,7 @@ const parseAttachmentSchema = z.object({
   baseDocumentIds: optionalString,
   orgId: optionalPositiveInt,
   isSalesDocument: optionalBoolean,
+  includeOcrText: optionalBoolean,
 });
 
 const DEFAULT_CONFIRM_STATUS = "STATUS_CONFIRMED";
@@ -134,7 +137,10 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
 
     erply_parse_attachment: {
       description:
-        "Read parsed invoice data from a digitized Purchase Inbox attachment (GET /attachments/parse/{attachmentId}). Requires attachmentId. Optional onlyParseTotal, isEmail, customerId, baseDocumentIds, orgId, isSalesDocument.",
+        "Read parsed invoice data from a digitized Purchase Inbox attachment (GET /attachments/parse/{attachmentId}). " +
+        "Requires attachmentId. Optional onlyParseTotal, isEmail, customerId, baseDocumentIds, orgId, isSalesDocument. " +
+        "Parse accuracy is upstream Erply; when the structured fields are wrong, pass includeOcrText=true to merge " +
+        "ocrText (raw pipe-delimited OCR from the list record, item.alternativeValue9). Lookup failures set ocrText to null.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -145,16 +151,37 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
           baseDocumentIds: { type: "string", description: "Comma-separated base document ids" },
           orgId: { type: "number" },
           isSalesDocument: { type: "boolean" },
+          includeOcrText: {
+            type: "boolean",
+            description: "Also fetch raw OCR text from the attachment list record",
+          },
         },
         required: ["attachmentId"],
       },
       handler: async (params: unknown) => {
-        const { attachmentId, ...query } = parseToolArgs(parseAttachmentSchema, params);
+        const { attachmentId, includeOcrText, ...query } = parseToolArgs(
+          parseAttachmentSchema,
+          params,
+        );
         const parsed = await client.get<ParsedAttachmentInfo>(
           `/attachments/parse/${attachmentId}`,
           query,
         );
-        return jsonToolResult(parsed);
+        if (!includeOcrText) {
+          return jsonToolResult(parsed);
+        }
+        let ocrText: string | null = null;
+        try {
+          const listResponse = await client.get("/attachments/all", {
+            attachmentId: String(attachmentId),
+            getEverything: true,
+          });
+          const { items } = unwrapListEnvelope<Attachment>(listResponse);
+          ocrText = ocrTextFromListItems(items, attachmentId);
+        } catch {
+          ocrText = null;
+        }
+        return jsonToolResult({ ...parsed, ocrText });
       },
     },
 

@@ -46,6 +46,7 @@ describe("erply_parse_attachment", () => {
       customerId: 12,
       baseDocumentIds: "55",
     });
+    expect(client.get).toHaveBeenCalledTimes(1);
     expect(client.get).toHaveBeenCalledWith("/attachments/parse/101", {
       onlyParseTotal: true,
       isEmail: undefined,
@@ -55,6 +56,64 @@ describe("erply_parse_attachment", () => {
       isSalesDocument: undefined,
     });
     expect(JSON.parse(result.content[0].text).number).toBe("INV-1");
+    expect(JSON.parse(result.content[0].text).ocrText).toBeUndefined();
+  });
+
+  it("merges ocrText from the list record when includeOcrText is true", async () => {
+    vi.mocked(client.get)
+      .mockResolvedValueOnce(attachmentsFixture.parsed)
+      .mockResolvedValueOnce(attachmentsFixture.list_page);
+    const result = await tools.erply_parse_attachment.handler({
+      attachmentId: 101,
+      includeOcrText: true,
+    });
+    expect(client.get).toHaveBeenNthCalledWith(1, "/attachments/parse/101", {
+      onlyParseTotal: undefined,
+      isEmail: undefined,
+      customerId: undefined,
+      baseDocumentIds: undefined,
+      orgId: undefined,
+      isSalesDocument: undefined,
+    });
+    expect(client.get).toHaveBeenNthCalledWith(2, "/attachments/all", {
+      attachmentId: "101",
+      getEverything: true,
+    });
+    const body = JSON.parse(result.content[0].text);
+    expect(body.number).toBe("INV-1");
+    expect(body.ocrText).toBe(attachmentsFixture.list_page.items[0].item.alternativeValue9);
+  });
+
+  it("sets ocrText to null when the secondary list lookup fails", async () => {
+    vi.mocked(client.get)
+      .mockResolvedValueOnce(attachmentsFixture.parsed)
+      .mockRejectedValueOnce(new Error("list failed"));
+    const result = await tools.erply_parse_attachment.handler({
+      attachmentId: 101,
+      includeOcrText: true,
+    });
+    const body = JSON.parse(result.content[0].text);
+    expect(body.number).toBe("INV-1");
+    expect(body.ocrText).toBeNull();
+  });
+
+  it("sets ocrText to null when the list record has no matching attachment", async () => {
+    vi.mocked(client.get)
+      .mockResolvedValueOnce(attachmentsFixture.parsed)
+      .mockResolvedValueOnce({
+        totalCount: 1,
+        items: [{ attachmentId: 999, item: { alternativeValue9: "other" } }],
+      });
+    const result = await tools.erply_parse_attachment.handler({
+      attachmentId: 101,
+      includeOcrText: true,
+    });
+    expect(JSON.parse(result.content[0].text).ocrText).toBeNull();
+  });
+
+  it("describes includeOcrText as a raw OCR fallback", () => {
+    expect(tools.erply_parse_attachment.description).toMatch(/includeOcrText/);
+    expect(tools.erply_parse_attachment.description).toMatch(/upstream Erply/);
   });
 });
 

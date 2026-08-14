@@ -29,6 +29,38 @@ describe("erply_list_attachments", () => {
     const body = JSON.parse(result.content[0].text);
     expect(body.totalCount).toBe(1);
     expect(body.items[0].attachmentId).toBe(101);
+    expect(body.items[0].ocrText).toBe(
+      attachmentsFixture.list_page.items[0].item.alternativeValue9,
+    );
+    expect(body.items[0].item.alternativeValue9).toBe(
+      attachmentsFixture.list_page.items[0].item.alternativeValue9,
+    );
+    expect(body.items[0].item.alternativeValue2).toBe("asdasda");
+  });
+
+  it("lifts ocrText from item.alternativeValue9", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    const result = await tools.erply_list_attachments.handler({});
+    const body = JSON.parse(result.content[0].text);
+    expect(body.items[0].ocrText).toMatch(/Tax \(20%\): 120.00/);
+  });
+
+  it("sets ocrText to null when item is missing", async () => {
+    vi.mocked(client.get).mockResolvedValue({
+      totalCount: 1,
+      items: [{ attachmentId: 101, filename: "no-item.pdf" }],
+    });
+    const result = await tools.erply_list_attachments.handler({});
+    expect(JSON.parse(result.content[0].text).items[0].ocrText).toBeNull();
+  });
+
+  it("sets ocrText to null when alternativeValue9 is not a string", async () => {
+    vi.mocked(client.get).mockResolvedValue({
+      totalCount: 1,
+      items: [{ attachmentId: 101, item: { alternativeValue9: 9 } }],
+    });
+    const result = await tools.erply_list_attachments.handler({});
+    expect(JSON.parse(result.content[0].text).items[0].ocrText).toBeNull();
   });
 
   it("defaults getEverything=true on an unfiltered call", async () => {
@@ -69,6 +101,8 @@ describe("erply_list_attachments", () => {
   it("describes the unfiltered getEverything default and ignored documentId", () => {
     expect(tools.erply_list_attachments.description).toMatch(/defaults to getEverything=true/);
     expect(tools.erply_list_attachments.description).toMatch(/documentId is ignored/);
+    expect(tools.erply_list_attachments.description).toMatch(/ocrText/);
+    expect(tools.erply_list_attachments.description).toMatch(/item.alternativeValue9/);
   });
 
   it("forwards Purchase Inbox list filters", async () => {
