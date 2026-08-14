@@ -15,6 +15,7 @@ import {
 import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const documentTypeSchema = z.enum(ERPLY_DOCUMENT_TYPES);
+const DEFAULT_CONFIRM_STATUS = "STATUS_CONFIRMED";
 
 /** Accept comma-separated string or non-empty number array → API string. */
 const idsQuerySchema = z.union([z.string().min(1), z.array(positiveInt).min(1)]);
@@ -49,12 +50,13 @@ const sendEinvoicesSchema = z.object({
   sendPDF: optionalBoolean,
 });
 
-const confirmInvoicesSchema = z.object({
-  ids: idsQuerySchema,
-  attachmentId: optionalPositiveInt,
-  documentStatusTypeCode: optionalString,
-  useTransactionLockIfNecessary: optionalBoolean,
-});
+const confirmInvoicesSchema = z
+  .object({
+    ids: idsQuerySchema,
+    documentStatusTypeCode: optionalString,
+    useTransactionLockIfNecessary: optionalBoolean,
+  })
+  .strict();
 
 const listPartnerInvoicesSchema = z.object({
   dateFrom: ymdDateString,
@@ -224,7 +226,10 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
 
     erply_confirm_invoices: {
       description:
-        "Confirm invoices (POST /invoices/confirm_invoices). Requires ids (comma string or number array). Optional attachmentId, documentStatusTypeCode, useTransactionLockIfNecessary.",
+        "Confirm invoices (POST /invoices/confirm_invoices). Requires ids (comma string or number array). " +
+        "documentStatusTypeCode defaults to STATUS_CONFIRMED when omitted (the live API 409s without it). " +
+        "attachmentId is not supported and is rejected — this endpoint does not link Purchase Inbox items. " +
+        "Optional useTransactionLockIfNecessary.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -232,8 +237,10 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
             description: "Invoice id(s): comma-separated string or number array (required)",
             oneOf: [{ type: "string" }, { type: "array", items: { type: "number" }, minItems: 1 }],
           },
-          attachmentId: { type: "number" },
-          documentStatusTypeCode: { type: "string" },
+          documentStatusTypeCode: {
+            type: "string",
+            description: "Document status; defaults to STATUS_CONFIRMED",
+          },
           useTransactionLockIfNecessary: { type: "boolean" },
         },
         required: ["ids"],
@@ -243,8 +250,7 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
         const ids = toIdsString(args.ids);
         const result = await client.post("/invoices/confirm_invoices", undefined, {
           ids,
-          attachmentId: args.attachmentId,
-          documentStatusTypeCode: args.documentStatusTypeCode,
+          documentStatusTypeCode: args.documentStatusTypeCode ?? DEFAULT_CONFIRM_STATUS,
           useTransactionLockIfNecessary: args.useTransactionLockIfNecessary,
         });
         return mutationToolResult(result);
