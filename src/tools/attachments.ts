@@ -43,6 +43,42 @@ const listAttachmentsSchema = z.object({
   reportGeneratorInput: optionalString,
 });
 
+type ListAttachmentsArgs = z.infer<typeof listAttachmentsSchema>;
+
+const listAttachmentsNarrowingKeys = [
+  "attachmentId",
+  "documentId",
+  "customerId",
+  "dateTo",
+  "transactionEntryId",
+  "projectId",
+  "description",
+  "activityItemId",
+  "changedSince",
+  "documentStatusType",
+  "activityItemType",
+  "getNotConnectedInvoices",
+  "getOnlyPartnerSupplierDocuments",
+  "getOnlyLocalSupplierDocuments",
+  "getOnlyNotSupplierConnectedDocuments",
+  "doNotGetInvoice",
+  "getLast10",
+  "getProjectsFromDocuments",
+  "reportGeneratorInput",
+] as const satisfies ReadonlyArray<keyof ListAttachmentsArgs>;
+
+/** Default getEverything=true so an unfiltered list returns Purchase Inbox items. */
+function listAttachmentsQuery(args: ListAttachmentsArgs): ListAttachmentsArgs {
+  if (args.getEverything !== undefined) {
+    return args;
+  }
+  const hasNarrowing = listAttachmentsNarrowingKeys.some((key) => args[key] !== undefined);
+  if (hasNarrowing) {
+    return args;
+  }
+  return { ...args, getEverything: true };
+}
+
 const getAttachmentSchema = z.object({
   attachmentId: positiveInt,
   noDownload: optionalPositiveInt,
@@ -85,17 +121,34 @@ export function createAttachmentTools(client: ErplyBooksClient) {
   return {
     erply_list_attachments: {
       description:
-        "List attachments including Purchase Inbox items (GET /attachments/all). Optional filters: attachmentId, documentId, customerId, dateTo, transactionEntryId, projectId, getEverything, start/limit, activity filters, and inbox-style flags (getNotConnectedInvoices, getOnlyPartnerSupplierDocuments, getOnlyLocalSupplierDocuments, getOnlyNotSupplierConnectedDocuments, doNotGetInvoice, getLast10, getProjectsFromDocuments, reportGeneratorInput). Returns { totalCount, items } when available.",
+        "List attachments including Purchase Inbox items (GET /attachments/all). " +
+        "An unfiltered call defaults to getEverything=true (the live API returns totalCount: 0 without it). " +
+        "Pagination (start/limit) still gets that default. Passing an explicit getEverything or any narrowing " +
+        "filter (attachmentId, documentId, customerId, dateTo, transactionEntryId, projectId, description, " +
+        "activityItemId, changedSince, documentStatusType, activityItemType, or inbox flags) opts out. " +
+        "documentId is ignored by the live API (alone: empty; with getEverything: full inbox). " +
+        "attachmentId works only together with getEverything. Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
-          attachmentId: { type: "string", description: "Attachment id filter" },
-          documentId: { type: "number", description: "Document id filter" },
+          attachmentId: {
+            type: "string",
+            description: "Attachment id filter; live API honours it only with getEverything=true",
+          },
+          documentId: {
+            type: "number",
+            description:
+              "Document id filter. Ignored by the live API: alone returns empty; with getEverything still returns the full inbox",
+          },
           customerId: { type: "number", description: "Customer id filter" },
           dateTo: { type: "string", description: "End date filter" },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
-          getEverything: { type: "boolean" },
+          getEverything: {
+            type: "boolean",
+            description:
+              "When omitted on an unfiltered call, defaults to true so Purchase Inbox items are returned",
+          },
           transactionEntryId: { type: "number" },
           projectId: { type: "string", description: "Project id filter (API string)" },
           description: { type: "string" },
@@ -130,7 +183,7 @@ export function createAttachmentTools(client: ErplyBooksClient) {
       },
       handler: async (params: unknown) => {
         const args = parseToolArgs(listAttachmentsSchema, params);
-        const response = await client.get("/attachments/all", args);
+        const response = await client.get("/attachments/all", listAttachmentsQuery(args));
         return jsonToolResult(unwrapListEnvelope<Attachment>(response));
       },
     },

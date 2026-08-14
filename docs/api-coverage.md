@@ -44,7 +44,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `DELETE` | `/attachments/{attachmentId}` | covered: `erply_delete_attachment` |
 | `GET` | `/attachments/{attachmentId}/child` | covered: `erply_get_attachment_child` |
 | `POST` | `/attachments/add_purchase_order` | covered: `erply_create_purchase_order_from_attachment` |
-| `GET` | `/attachments/all` | covered: `erply_list_attachments` |
+| `GET` | `/attachments/all` | covered: `erply_list_attachments` (unfiltered defaults `getEverything`; `documentId` ignored live) |
 | `DELETE` | `/attachments/all/{activityItemAttachmentId}` | covered: `erply_delete_activity_attachment` |
 | `GET` | `/attachments/all/{attachmentId}` | covered: `erply_get_attachment` |
 | `GET` | `/attachments/all/get_single` | skipped (GoERP `get_single` alias / base list) |
