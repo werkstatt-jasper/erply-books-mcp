@@ -11,7 +11,12 @@ import {
   positiveInt,
 } from "../validation/tool-args.js";
 import { normalizeFileBase64 } from "./file-base64.js";
-import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
+import {
+  bytesToolResult,
+  jsonToolResult,
+  mutationToolResult,
+  unwrapListEnvelope,
+} from "./list-response.js";
 
 const listAttachmentsSchema = z.object({
   attachmentId: optionalString,
@@ -132,7 +137,7 @@ export function createAttachmentTools(client: ErplyBooksClient) {
 
     erply_get_attachment: {
       description:
-        "Get a single attachment (GET /attachments/all/{attachmentId}). Optional noDownload (integer). Response is APIAttachmentInfo JSON; includes base64 when downloaded.",
+        'Get a single attachment (GET /attachments/all/{attachmentId}). Optional noDownload (integer). Response is JSON when the API returns JSON; otherwise UTF-8 text or base64 (encoding: "base64").',
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -147,10 +152,10 @@ export function createAttachmentTools(client: ErplyBooksClient) {
       handler: async (params: unknown) => {
         const args = parseToolArgs(getAttachmentSchema, params);
         const { attachmentId, noDownload } = args;
-        const attachment = await client.get<Attachment>(`/attachments/all/${attachmentId}`, {
+        const bytes = await client.getArrayBuffer(`/attachments/all/${attachmentId}`, {
           noDownload,
         });
-        return jsonToolResult(attachment);
+        return bytesToolResult(bytes);
       },
     },
 

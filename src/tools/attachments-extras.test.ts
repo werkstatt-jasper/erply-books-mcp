@@ -126,14 +126,33 @@ describe("erply_get_attachment_child", () => {
     await expect(tools.erply_get_attachment_child.handler({})).rejects.toThrow(/attachmentId/);
   });
 
-  it("GETs /attachments/{id}/child", async () => {
-    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.child);
+  it("GETs /attachments/{id}/child and parses JSON bytes", async () => {
+    const jsonBytes = Buffer.from(JSON.stringify(attachmentsFixture.child));
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      jsonBytes.buffer.slice(jsonBytes.byteOffset, jsonBytes.byteOffset + jsonBytes.byteLength),
+    );
     const result = await tools.erply_get_attachment_child.handler({
       attachmentId: 101,
       noDownload: 1,
     });
-    expect(client.get).toHaveBeenCalledWith("/attachments/101/child", { noDownload: 1 });
+    expect(client.getArrayBuffer).toHaveBeenCalledWith("/attachments/101/child", { noDownload: 1 });
     expect(JSON.parse(result.content[0].text).filename).toBe("einvoice.xml");
+  });
+
+  it("returns base64 for a binary child file body", async () => {
+    const pdf = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x01, 0x00, 0xff, 0x00, 0x00]);
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength),
+    );
+    const result = await tools.erply_get_attachment_child.handler({ attachmentId: 101 });
+    const body = JSON.parse(result.content[0].text) as {
+      encoding: string;
+      byteLength: number;
+      data: string;
+    };
+    expect(body.encoding).toBe("base64");
+    expect(body.byteLength).toBe(pdf.length);
+    expect(Buffer.from(body.data, "base64").equals(pdf)).toBe(true);
   });
 });
 

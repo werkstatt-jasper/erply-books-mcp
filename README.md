@@ -272,6 +272,10 @@ The Erply Books Purchase Inbox is the attachments surface: there is no dedicated
 | `erply_create_attachment` | `POST /attachments` | `fileBase64`, `fileName` |
 | `erply_delete_attachment` | `DELETE /attachments/{attachmentId}` | `attachmentId` |
 
+`erply_get_attachment` (and `erply_get_attachment_child`) return JSON when the API
+responds with JSON. File downloads that are not JSON come back as UTF-8 text or
+`{ encoding: "base64", byteLength, data }`.
+
 Create maps `fileName`/`fileBase64` to API fields `filename`/`base64`. Three POST modes:
 
 1. **Attach to an existing invoice** — pass `documentId`, keep `total` null.
