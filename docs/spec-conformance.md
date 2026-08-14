@@ -41,7 +41,9 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
   `separator`. Spec gap — live verification under #189.
 - `erply_link_attachment_to_erply_invoice` (`documentId`): false positive of the
   diff — `documentId` is the path param of the PUT variant; the POST variant's
-  query params (`attachmentId`, `baseDocumentIds`) match the spec.
+  query params (`attachmentId`, `baseDocumentIds`) match the spec. `attachmentId`
+  is not the inbox-link path (live API links waybills / orders only); the tool
+  description now says base documents. See #194 (E55).
 
 ## D-class policy (tool stricter than spec)
 

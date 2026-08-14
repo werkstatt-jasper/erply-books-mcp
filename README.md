@@ -353,12 +353,13 @@ still look request-derived on other orgs (customer report).
 | `erply_mark_attachment_opened` | `PUT /attachments/mark_attachment_as_opened/{itemId}` | `itemId` |
 | `erply_mark_attachment_not_digitizable` | `PUT /attachments/not_digitizable/{itemId}` | `itemId` |
 | `erply_create_purchase_order_from_attachment` | `POST /attachments/add_purchase_order` | — |
-| `erply_link_attachment_to_erply_invoice` | `POST /attachments/erply_invoice_only` or `PUT …/{documentId}` | — |
+| `erply_link_attachment_to_erply_invoice` | `POST /attachments/erply_invoice_only` or `PUT …/{documentId}` | — (base documents, not inbox items) |
 
 `erply_confirm_attachment` sends JSON `APIDocumentConfirmationInfo`
 (`attachmentId`, `waitingForUserId`, `additionalMessage`, `customEmail`, `sendEmail`, …).
 The live API returns HTTP 415 for multipart on this path. `erply_link_attachment_to_erply_invoice`
-uses PUT when `documentId` is set.
+links **base documents** (waybills / orders) to an invoice via `baseDocumentIds` or the
+`documentId` path. It does **not** attach a Purchase Inbox item to a document.
 
 #### File helpers
 

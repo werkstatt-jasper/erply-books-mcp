@@ -236,7 +236,9 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
 
     erply_link_attachment_to_erply_invoice: {
       description:
-        "Connect a Purchase Inbox attachment to an Erply invoice (POST /attachments/erply_invoice_only, or PUT /attachments/erply_invoice_only/{documentId} when documentId is set). Optional attachmentId and baseDocumentIds.",
+        "Link base documents (waybills / orders) to an invoice (POST /attachments/erply_invoice_only, or PUT /attachments/erply_invoice_only/{documentId} when documentId is set). " +
+        "Pass baseDocumentIds (comma-separated document ids) or the documentId path. " +
+        "attachmentId is a spec query param but does not attach a Purchase Inbox item to a document — that flow is not exposed (see E56).",
       inputSchema: {
         type: "object" as const,
         properties: {
