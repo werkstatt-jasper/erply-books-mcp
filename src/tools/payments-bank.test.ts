@@ -186,6 +186,13 @@ describe("erply_list_pending_payments", () => {
     tools = createPaymentBankTools(client);
   });
 
+  it("describes the unmatched bank-import feed", () => {
+    expect(tools.erply_list_pending_payments.description).toMatch(/unmatched bank-import/);
+    expect(tools.erply_list_pending_payments.description).toMatch(
+      /GET \/payments\/import does not exist/,
+    );
+  });
+
   it("GETs pending payments with filters", async () => {
     vi.mocked(client.get).mockResolvedValue(paymentsFixture.pending_page);
     const result = await tools.erply_list_pending_payments.handler({

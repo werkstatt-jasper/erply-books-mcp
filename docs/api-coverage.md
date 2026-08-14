@@ -217,6 +217,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/payments/delete` | gap: E44 #183 |
 | `POST` | `/payments/delete_all_payments` | gap: E44 #183 |
 | `POST` | `/payments/import` | covered: `erply_import_payment` |
+| `GET` | `/payments/import` | not in swagger; live 405 — unmatched rows are `GET /payments/pending_payments` (E52 #191) |
 | `GET` | `/payments/pending_payments` | covered: `erply_list_pending_payments` |
 | `POST` | `/payments/remove_lock_simple` | gap: E44 #183 |
 | `POST` | `/payments/remove_lock/{paymentId}` | gap: E44 #183 |
