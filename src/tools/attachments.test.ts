@@ -24,9 +24,51 @@ describe("erply_list_attachments", () => {
       "/attachments/all",
       expect.objectContaining({ documentId: 55, start: 0, limit: 10 }),
     );
+    const query = vi.mocked(client.get).mock.calls[0]?.[1] as { getEverything?: boolean };
+    expect(query.getEverything).toBeUndefined();
     const body = JSON.parse(result.content[0].text);
     expect(body.totalCount).toBe(1);
     expect(body.items[0].attachmentId).toBe(101);
+  });
+
+  it("defaults getEverything=true on an unfiltered call", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    await tools.erply_list_attachments.handler({});
+    expect(client.get).toHaveBeenCalledWith(
+      "/attachments/all",
+      expect.objectContaining({ getEverything: true }),
+    );
+  });
+
+  it("defaults getEverything=true when only pagination is set", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    await tools.erply_list_attachments.handler({ start: 0, limit: 10 });
+    expect(client.get).toHaveBeenCalledWith(
+      "/attachments/all",
+      expect.objectContaining({ start: 0, limit: 10, getEverything: true }),
+    );
+  });
+
+  it("forwards explicit getEverything=false", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    await tools.erply_list_attachments.handler({ getEverything: false });
+    expect(client.get).toHaveBeenCalledWith(
+      "/attachments/all",
+      expect.objectContaining({ getEverything: false }),
+    );
+  });
+
+  it("does not add getEverything when a narrowing filter is set", async () => {
+    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.list_page);
+    await tools.erply_list_attachments.handler({ customerId: 99 });
+    const query = vi.mocked(client.get).mock.calls[0]?.[1] as { getEverything?: boolean };
+    expect(query).toEqual(expect.objectContaining({ customerId: 99 }));
+    expect(query.getEverything).toBeUndefined();
+  });
+
+  it("describes the unfiltered getEverything default and ignored documentId", () => {
+    expect(tools.erply_list_attachments.description).toMatch(/defaults to getEverything=true/);
+    expect(tools.erply_list_attachments.description).toMatch(/documentId is ignored/);
   });
 
   it("forwards Purchase Inbox list filters", async () => {
@@ -54,6 +96,8 @@ describe("erply_list_attachments", () => {
         reportGeneratorInput: "{}",
       }),
     );
+    const query = vi.mocked(client.get).mock.calls[0]?.[1] as { getEverything?: boolean };
+    expect(query.getEverything).toBeUndefined();
   });
 });
 

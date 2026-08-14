@@ -25,7 +25,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
 | E | Type mismatch | 34 | 1 real issue ([#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)); 33 benign |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 8 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52) |
+| G | Prose docs vs swagger vs observed behavior | 9 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -90,6 +90,13 @@ does not express. Full list in appendix D.
    (`erply_list_pending_payments`). `GET /payments` (even with
    `getEverything=true`) returns confirmed `APIPaymentInfo` records, not import
    rows. See #191 (E52).
+9. `GET /attachments/all`: without `getEverything=true` the live API returns
+   `totalCount: 0` even when Purchase Inbox items exist. `erply_list_attachments`
+   therefore defaults `getEverything` to `true` on unfiltered calls. `documentId`
+   is ignored (alone: empty; with `getEverything`: full inbox). `attachmentId`
+   works only with `getEverything`. `documentStatusTypeCode` was
+   `STATUS_CONFIRMED` across those inbox probes and can look request-derived.
+   See #192 (E53).
 
 ## Cosmetic notes (no action)
 

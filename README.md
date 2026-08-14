@@ -295,7 +295,7 @@ The Erply Books Purchase Inbox is the attachments surface: there is no dedicated
 
 | Tool | API | Required |
 |------|-----|----------|
-| `erply_list_attachments` | `GET /attachments/all` | — |
+| `erply_list_attachments` | `GET /attachments/all` | — (unfiltered defaults `getEverything=true`) |
 | `erply_get_attachment` | `GET /attachments/all/{attachmentId}` | `attachmentId` |
 | `erply_create_attachment` | `POST /attachments` | `fileBase64`, `fileName` |
 | `erply_delete_attachment` | `DELETE /attachments/{attachmentId}` | `attachmentId` |
@@ -315,9 +315,35 @@ List accepts inbox-style filters: `getNotConnectedInvoices`,
 `getOnlyNotSupplierConnectedDocuments`, `doNotGetInvoice`, `getLast10`,
 `getProjectsFromDocuments`, `reportGeneratorInput`.
 
+An unfiltered `erply_list_attachments` call defaults to `getEverything=true`
+(pagination `start`/`limit` still get that default). Without that flag the live
+API returns `totalCount: 0` even when Purchase Inbox items exist. Passing an
+explicit `getEverything` or any narrowing filter opts out of the default.
+
+`documentId` is in swagger but **ignored** on the live API: alone it returns
+empty; with `getEverything` it still returns the full inbox. `attachmentId`
+works only together with `getEverything`. Inbox flags such as
+`getNotConnectedInvoices` also need `getEverything` (flag alone → empty).
+
 #### Purchase inbox
 
-Typical loop: list unprocessed items → digitize → parse → confirm or convert.
+Typical loop: list unprocessed items (`erply_list_attachments` with no args, or
+`getEverything` plus an inbox flag) → digitize → parse → confirm or convert.
+
+##### Listing the Purchase Inbox (E53)
+
+On Demo testbaas (2026-08-14):
+
+- No args / no `getEverything` → `totalCount: 0`.
+- `getEverything: true` → 10 Purchase Inbox items (all `documentId: 0`).
+- `documentId` (unknown `83959278` or a real invoice id) alone → `totalCount: 0`.
+- `documentId` + `getEverything: true` → still the full inbox (filter ignored).
+- `attachmentId` alone → `totalCount: 0`; `attachmentId` + `getEverything: true` → 1 item.
+- `getNotConnectedInvoices` alone → `totalCount: 0`; with `getEverything` → 6 items.
+
+`documentStatusTypeCode` on those inbox rows was `STATUS_CONFIRMED` for both
+`getEverything` and `getNotConnectedInvoices`+`getEverything`. The field can
+still look request-derived on other orgs (customer report).
 
 | Tool | API | Required |
 |------|-----|----------|
