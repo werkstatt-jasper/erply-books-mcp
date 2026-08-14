@@ -83,31 +83,97 @@ describe("erply_connect_payment_with_documents", () => {
     );
     await expect(
       tools.erply_connect_payment_with_documents.handler({ paymentId: 77 }),
-    ).rejects.toThrow(/invoiceId or invoiceNumber/);
+    ).rejects.toThrow(/linkedInvoiceInfo, invoiceId, or invoiceNumber/);
   });
 
-  it("POSTs match body", async () => {
+  it("maps invoiceId and amount into linkedInvoiceInfo", async () => {
+    vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
+    await tools.erply_connect_payment_with_documents.handler({
+      paymentId: 77,
+      invoiceId: 100,
+      amount: 50,
+    });
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      paymentId: 77,
+      amount: 50,
+      linkedInvoiceInfo: [{ invoiceId: 100, sumPaid: 50 }],
+    });
+  });
+
+  it("maps invoiceId without amount (no sumPaid)", async () => {
     vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
     await tools.erply_connect_payment_with_documents.handler({
       paymentId: 77,
       invoiceId: 100,
     });
-    expect(client.post).toHaveBeenCalledWith(
-      "/payments/connect_payment_with_documents",
-      expect.objectContaining({ paymentId: 77, invoiceId: 100 }),
-    );
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      paymentId: 77,
+      linkedInvoiceInfo: [{ invoiceId: 100 }],
+    });
   });
 
-  it("accepts pending import row id and invoice number", async () => {
+  it("maps invoiceNumber into linkedInvoiceInfo.number", async () => {
     vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
     await tools.erply_connect_payment_with_documents.handler({
       id: 120066906,
       invoiceNumber: "WT324639",
     });
-    expect(client.post).toHaveBeenCalledWith(
-      "/payments/connect_payment_with_documents",
-      expect.objectContaining({ id: 120066906, invoiceNumber: "WT324639" }),
-    );
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      id: 120066906,
+      linkedInvoiceInfo: [{ number: "WT324639" }],
+    });
+  });
+
+  it("maps invoiceNumber and amount into linkedInvoiceInfo", async () => {
+    vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
+    await tools.erply_connect_payment_with_documents.handler({
+      id: 120066906,
+      invoiceNumber: "WT324639",
+      amount: 40,
+    });
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      id: 120066906,
+      amount: 40,
+      linkedInvoiceInfo: [{ number: "WT324639", sumPaid: 40 }],
+    });
+  });
+
+  it("forwards caller-supplied linkedInvoiceInfo and strips top-level invoiceId", async () => {
+    vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
+    await tools.erply_connect_payment_with_documents.handler({
+      id: 120066911,
+      paymentId: 12198913,
+      amount: 500,
+      invoiceId: 82579018,
+      linkedInvoiceInfo: [{ invoiceId: 82579018, sumPaid: 500 }],
+    });
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      id: 120066911,
+      paymentId: 12198913,
+      amount: 500,
+      linkedInvoiceInfo: [{ invoiceId: 82579018, sumPaid: 500 }],
+    });
+  });
+
+  it("accepts linkedInvoiceInfo without invoiceId or invoiceNumber", async () => {
+    vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
+    await tools.erply_connect_payment_with_documents.handler({
+      id: 9,
+      linkedInvoiceInfo: [{ invoiceId: 11, sumPaid: 25 }],
+    });
+    expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
+      id: 9,
+      linkedInvoiceInfo: [{ invoiceId: 11, sumPaid: 25 }],
+    });
+  });
+
+  it("rejects an empty linkedInvoiceInfo without invoiceId or invoiceNumber", async () => {
+    await expect(
+      tools.erply_connect_payment_with_documents.handler({
+        paymentId: 77,
+        linkedInvoiceInfo: [],
+      }),
+    ).rejects.toThrow(/linkedInvoiceInfo, invoiceId, or invoiceNumber/);
   });
 });
 

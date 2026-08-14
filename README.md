@@ -214,7 +214,7 @@ Opposite/split/partner-update bodies accept extra spec fields via passthrough. `
 | `erply_delete_payment` | `DELETE /payments/{paymentId}` | `paymentId` |
 | `erply_import_payment` | `POST /payments/import` | `date`, `amount`, `typeCode` |
 | `erply_save_all_payment_imports` | `POST /payments/save_all_payments` | `items` |
-| `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | payment id + document id |
+| `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | payment id + `linkedInvoiceInfo` (or `invoiceId` / `invoiceNumber`) |
 | `erply_list_pending_payments` | `GET /payments/pending_payments` | — |
 | `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
@@ -229,14 +229,32 @@ The accountant workflow after importing a bank statement is:
 
 1. **Import** with `erply_bank_import` / `erply_bank_import_v2` or create rows with `erply_import_payment`.
 2. **List unmatched** with `erply_list_pending_payments`.
-3. **Link to invoice/order** by updating the created payment:
-   - `erply_update_payment` with `paymentId`, `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, `currencyCode`.
-   - This sets `sumPaid` on the invoice and reduces `sumLeftToPay`.
+3. **Link to invoice/order:**
+   - `erply_connect_payment_with_documents` with the pending-row fields from step 2 plus `linkedInvoiceInfo: [{ invoiceId, sumPaid }]`. Top-level `invoiceId` / `invoiceNumber` are accepted by the tool and mapped into that array. A successful call sets `importValidated` and fills `linkedInvoiceInfo`.
+   - To change invoice balances (`sumPaid` / `sumLeftToPay`), use `erply_update_payment` with `paymentId`, `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, `currencyCode`.
 4. **Verify** with `erply_get_invoice`.
 
-`erply_connect_payment_with_documents` is intended for step 3, but on Demo testbaas it consistently returns **409** `DataConflictException` with `messageCode`: `The list of documents is empty` for every combination of pending import id, payment id, invoice id, sales order id, and document number we tested. Use the `erply_update_payment` workaround below until Erply clarifies the expected payload.
+`erply_connect_payment_with_documents` reads documents from `linkedInvoiceInfo` on `APIPaymentImportInfo`. Sending only a top-level `invoiceId` yields **409** `The list of documents is empty`. A sparse body (id + documents only) can **500**; include pending-row fields (`date`, `typeCode`, `debit`, `customerId`, `debitAccountId`, `creditAccountId`, `amount`). On Demo testbaas the connect succeeds but does **not** move invoice `sumPaid` / `sumLeftToPay` — use `erply_update_payment` for that.
 
-##### Working example: link an imported payment to an invoice
+##### Working example: connect a pending import row
+
+```json
+// erply_connect_payment_with_documents
+{
+  "id": 120066911,
+  "paymentId": 12198913,
+  "amount": 500,
+  "date": "2026-04-07",
+  "typeCode": "MONEY_IN_TRANSACTION",
+  "debit": "C",
+  "customerId": 15534644,
+  "debitAccountId": 1307870,
+  "creditAccountId": 621746,
+  "linkedInvoiceInfo": [{ "invoiceId": 82579018, "sumPaid": 500 }]
+}
+```
+
+##### Working example: apply the payment to invoice balances
 
 ```json
 // erply_update_payment

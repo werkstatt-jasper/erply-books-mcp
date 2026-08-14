@@ -42,6 +42,14 @@ const saveAllPaymentImportsSchema = z.object({
   items: z.array(z.record(z.string(), z.unknown())).min(1),
 });
 
+const linkedInvoiceInfoItemSchema = z
+  .object({
+    invoiceId: optionalPositiveInt,
+    number: optionalString,
+    sumPaid: optionalNumber,
+  })
+  .passthrough();
+
 const connectPaymentSchema = z
   .object({
     id: optionalPositiveInt,
@@ -49,6 +57,7 @@ const connectPaymentSchema = z
     pendingPaymentId: optionalPositiveInt,
     invoiceId: optionalPositiveInt,
     invoiceNumber: optionalString,
+    linkedInvoiceInfo: z.array(linkedInvoiceInfoItemSchema).optional(),
     customerId: optionalPositiveInt,
     amount: optionalNumber,
     date: optionalString,
@@ -62,9 +71,27 @@ const connectPaymentSchema = z
     "id, paymentId, or pendingPaymentId is required",
   )
   .refine(
-    (v) => v.invoiceId !== undefined || v.invoiceNumber !== undefined,
-    "invoiceId or invoiceNumber is required",
+    (v) =>
+      (v.linkedInvoiceInfo !== undefined && v.linkedInvoiceInfo.length > 0) ||
+      v.invoiceId !== undefined ||
+      v.invoiceNumber !== undefined,
+    "linkedInvoiceInfo, invoiceId, or invoiceNumber is required",
   );
+
+function connectPaymentBody(
+  args: z.infer<typeof connectPaymentSchema>,
+): ConnectPaymentWithDocumentsRequest {
+  const { invoiceId, invoiceNumber, linkedInvoiceInfo, ...rest } = args;
+  if (linkedInvoiceInfo !== undefined && linkedInvoiceInfo.length > 0) {
+    return { ...rest, linkedInvoiceInfo };
+  }
+  const sumPaid = args.amount;
+  const link =
+    invoiceId !== undefined
+      ? { invoiceId, ...(sumPaid !== undefined ? { sumPaid } : {}) }
+      : { number: invoiceNumber as string, ...(sumPaid !== undefined ? { sumPaid } : {}) };
+  return { ...rest, linkedInvoiceInfo: [link] };
+}
 
 const listPendingPaymentsSchema = z.object({
   dateFrom: optionalString,
@@ -251,10 +278,11 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_connect_payment_with_documents: {
       description:
-        "Link a bank-import/pending payment to an invoice or sales order (POST /payments/connect_payment_with_documents). " +
-        "Requires a payment identifier (id = pending import row id, paymentId, or pendingPaymentId) and a document identifier (invoiceId or invoiceNumber). " +
-        "Uses PaymentImportInfo field names. " +
-        "NOTE: On Demo testbaas this endpoint consistently returns 409 'The list of documents is empty' even for freshly created pending import + invoice; use erply_update_payment with invoiceId as a working alternative.",
+        "Link a bank-import/pending payment to invoice(s) (POST /payments/connect_payment_with_documents). " +
+        "Requires a payment identifier (id = pending import row id, paymentId, or pendingPaymentId) and documents in linkedInvoiceInfo " +
+        "(or invoiceId / invoiceNumber, which are mapped into that array — do not send them as top-level API fields). " +
+        "Send the pending-row fields from erply_list_pending_payments (date, typeCode, debit, customerId, debitAccountId, creditAccountId, amount) together with the link; a sparse body can 500. " +
+        "A successful call sets importValidated and fills linkedInvoiceInfo. It does not reliably change invoice sumPaid/sumLeftToPay; use erply_update_payment with invoiceId to apply balances.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -267,8 +295,27 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
             description: "Payment id (same as pendingPaymentId for pending rows)",
           },
           pendingPaymentId: { type: "number", description: "Pending payment id" },
-          invoiceId: { type: "number", description: "Invoice/document id to link" },
-          invoiceNumber: { type: "string", description: "Invoice/document number to link" },
+          invoiceId: {
+            type: "number",
+            description: "Invoice/document id; mapped into linkedInvoiceInfo (not sent top-level)",
+          },
+          invoiceNumber: {
+            type: "string",
+            description: "Invoice/document number; mapped into linkedInvoiceInfo.number",
+          },
+          linkedInvoiceInfo: {
+            type: "array",
+            description:
+              "Documents to link (APILinkedPaymentImportInfo). Preferred: [{ invoiceId, sumPaid }]",
+            items: {
+              type: "object",
+              properties: {
+                invoiceId: { type: "number" },
+                number: { type: "string" },
+                sumPaid: { type: "number" },
+              },
+            },
+          },
           customerId: { type: "number" },
           amount: { type: "number" },
           date: { type: "string" },
@@ -281,7 +328,7 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
         const args = parseToolArgs(connectPaymentSchema, params);
         const result = await client.post<PaymentImport>(
           "/payments/connect_payment_with_documents",
-          args as ConnectPaymentWithDocumentsRequest,
+          connectPaymentBody(args),
         );
         return mutationToolResult(result);
       },
@@ -433,4 +480,9 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 }
 
 /** Exported for unit tests. */
-export const __test__ = { decodeBase64File, bankImportV2Body, bankImportV2Schema };
+export const __test__ = {
+  decodeBase64File,
+  bankImportV2Body,
+  bankImportV2Schema,
+  connectPaymentBody,
+};
