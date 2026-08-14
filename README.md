@@ -328,7 +328,8 @@ works only together with `getEverything`. Inbox flags such as
 #### Purchase inbox
 
 Typical loop: list unprocessed items (`erply_list_attachments` with no args, or
-`getEverything` plus an inbox flag) → digitize → parse → confirm or convert.
+`getEverything` plus an inbox flag) → digitize → parse → confirm, attach to an
+existing document, or convert.
 
 ##### Listing the Purchase Inbox (E53)
 
@@ -349,17 +350,32 @@ still look request-derived on other orgs (customer report).
 |------|-----|----------|
 | `erply_digitize_attachment` | `PUT /attachments/digitize/{itemId}` | `itemId` |
 | `erply_parse_attachment` | `GET /attachments/parse/{attachmentId}` | `attachmentId` |
-| `erply_confirm_attachment` | `POST /attachments/confirm` | — |
+| `erply_confirm_attachment` | `POST /attachments/confirm` | — (`attachmentId` required when `documentId` is set) |
+| `erply_attach_inbox_item_to_document` | `POST /attachments/confirm` | `attachmentId`, `documentId` |
 | `erply_mark_attachment_opened` | `PUT /attachments/mark_attachment_as_opened/{itemId}` | `itemId` |
 | `erply_mark_attachment_not_digitizable` | `PUT /attachments/not_digitizable/{itemId}` | `itemId` |
 | `erply_create_purchase_order_from_attachment` | `POST /attachments/add_purchase_order` | — |
 | `erply_link_attachment_to_erply_invoice` | `POST /attachments/erply_invoice_only` or `PUT …/{documentId}` | — (base documents, not inbox items) |
 
-`erply_confirm_attachment` sends JSON `APIDocumentConfirmationInfo`
-(`attachmentId`, `waitingForUserId`, `additionalMessage`, `customEmail`, `sendEmail`, …).
-The live API returns HTTP 415 for multipart on this path. `erply_link_attachment_to_erply_invoice`
-links **base documents** (waybills / orders) to an invoice via `baseDocumentIds` or the
-`documentId` path. It does **not** attach a Purchase Inbox item to a document.
+`erply_confirm_attachment` sends JSON `APIDocumentConfirmationInfo`.
+`documentStatusTypeCode` defaults to `STATUS_CONFIRMED`. The live API returns HTTP 415
+for multipart on this path.
+
+##### Attach an existing inbox item to an existing document (E56)
+
+On Demo testbaas (2026-08-14) the working call is `POST /attachments/confirm` with
+**only** `attachmentId` (the list field, not `id` / `activityItemId`) + `documentId` +
+`documentStatusTypeCode: STATUS_CONFIRMED`. `erply_attach_inbox_item_to_document`
+is that recipe. Adding `activityItemId` 409s `"Cannot Find File Information"`
+(the customer report). Confirm writes a confirmation log on the inbox item; the
+inbox row `documentId` stays `0` and `GET /invoices/{id}` `attachments` may still
+be null. `GET /attachments/all/{id}` returns truncated `NO_CONTENT` JSON, so
+re-uploading the original inbox file is not possible. To put a **new** file on a
+document, use `erply_create_attachment` with `documentId`.
+
+`erply_link_attachment_to_erply_invoice` links **base documents** (waybills / orders)
+to an invoice via `baseDocumentIds` or the `documentId` path. It does **not** attach
+a Purchase Inbox item to a document.
 
 #### File helpers
 

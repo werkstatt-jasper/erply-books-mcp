@@ -67,7 +67,7 @@ describe("erply_confirm_attachment", () => {
     tools = createAttachmentInboxTools(client);
   });
 
-  it("POSTs JSON confirmation fields", async () => {
+  it("POSTs JSON confirmation fields and defaults STATUS_CONFIRMED", async () => {
     vi.mocked(client.post).mockResolvedValue(attachmentsFixture.confirm_response);
     const result = await tools.erply_confirm_attachment.handler({
       attachmentId: 101,
@@ -80,9 +80,95 @@ describe("erply_confirm_attachment", () => {
         attachmentId: 101,
         waitingForUserId: 7,
         sendEmail: true,
+        documentStatusTypeCode: "STATUS_CONFIRMED",
       }),
     );
     expect(JSON.parse(result.content[0].text).waitingForUserId).toBe(7);
+  });
+
+  it("requires attachmentId when documentId is set", async () => {
+    await expect(tools.erply_confirm_attachment.handler({ documentId: 55 })).rejects.toThrow(
+      /attachmentId is required when documentId is set/,
+    );
+  });
+
+  it("rejects activityItemId when documentId is set", async () => {
+    await expect(
+      tools.erply_confirm_attachment.handler({
+        attachmentId: 101,
+        activityItemId: 9,
+        documentId: 55,
+      }),
+    ).rejects.toThrow(/omit activityItemId/);
+  });
+
+  it("forwards an explicit documentStatusTypeCode", async () => {
+    vi.mocked(client.post).mockResolvedValue(attachmentsFixture.confirm_response);
+    await tools.erply_confirm_attachment.handler({
+      attachmentId: 101,
+      documentId: 55,
+      documentStatusTypeCode: "STATUS_PENDING",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/attachments/confirm",
+      expect.objectContaining({
+        attachmentId: 101,
+        documentId: 55,
+        documentStatusTypeCode: "STATUS_PENDING",
+      }),
+    );
+  });
+});
+
+describe("erply_attach_inbox_item_to_document", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createAttachmentInboxTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createAttachmentInboxTools(client);
+  });
+
+  it("requires attachmentId and documentId", async () => {
+    await expect(tools.erply_attach_inbox_item_to_document.handler({})).rejects.toThrow(
+      /attachmentId|documentId/,
+    );
+  });
+
+  it("POSTs confirm with attachmentId, documentId, and default status", async () => {
+    vi.mocked(client.post).mockResolvedValue(attachmentsFixture.confirm_response);
+    const result = await tools.erply_attach_inbox_item_to_document.handler({
+      attachmentId: 101,
+      documentId: 55,
+    });
+    expect(client.post).toHaveBeenCalledWith("/attachments/confirm", {
+      attachmentId: 101,
+      documentId: 55,
+      documentStatusTypeCode: "STATUS_CONFIRMED",
+    });
+    expect(JSON.parse(result.content[0].text).attachmentId).toBe(101);
+  });
+
+  it("forwards an explicit documentStatusTypeCode", async () => {
+    vi.mocked(client.post).mockResolvedValue(attachmentsFixture.confirm_response);
+    await tools.erply_attach_inbox_item_to_document.handler({
+      attachmentId: 101,
+      documentId: 55,
+      documentStatusTypeCode: "STATUS_PENDING",
+    });
+    expect(client.post).toHaveBeenCalledWith("/attachments/confirm", {
+      attachmentId: 101,
+      documentId: 55,
+      documentStatusTypeCode: "STATUS_PENDING",
+    });
+  });
+
+  it("describes the confirm recipe and activityItemId pitfall", () => {
+    expect(tools.erply_attach_inbox_item_to_document.description).toMatch(
+      /POST \/attachments\/confirm/,
+    );
+    expect(tools.erply_attach_inbox_item_to_document.description).toMatch(/activityItemId/);
+    expect(tools.erply_attach_inbox_item_to_document.description).toMatch(/documentId stays 0/);
   });
 });
 
@@ -216,6 +302,9 @@ describe("erply_link_attachment_to_erply_invoice", () => {
     );
     expect(tools.erply_link_attachment_to_erply_invoice.description).toMatch(
       /does not attach a Purchase Inbox item/,
+    );
+    expect(tools.erply_link_attachment_to_erply_invoice.description).toMatch(
+      /erply_attach_inbox_item_to_document/,
     );
   });
 });

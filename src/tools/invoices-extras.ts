@@ -228,7 +228,8 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
       description:
         "Confirm invoices (POST /invoices/confirm_invoices). Requires ids (comma string or number array). " +
         "documentStatusTypeCode defaults to STATUS_CONFIRMED when omitted (the live API 409s without it). " +
-        "attachmentId is not supported and is rejected — this endpoint does not link Purchase Inbox items. " +
+        "attachmentId is not supported and is rejected — this endpoint does not link Purchase Inbox items " +
+        "(use erply_attach_inbox_item_to_document). " +
         "Optional useTransactionLockIfNecessary.",
       inputSchema: {
         type: "object" as const,

@@ -88,6 +88,7 @@ describe("buildAllTools", () => {
     expect(tools.erply_digitize_attachment).toBeDefined();
     expect(tools.erply_parse_attachment).toBeDefined();
     expect(tools.erply_confirm_attachment).toBeDefined();
+    expect(tools.erply_attach_inbox_item_to_document).toBeDefined();
     expect(tools.erply_mark_attachment_opened).toBeDefined();
     expect(tools.erply_mark_attachment_not_digitizable).toBeDefined();
     expect(tools.erply_create_purchase_order_from_attachment).toBeDefined();
