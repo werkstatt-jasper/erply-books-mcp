@@ -81,6 +81,42 @@ describe("report tools", () => {
     expect(JSON.parse(result.content[0].text).reportType).toBe("general_ledger");
   });
 
+  it("erply_general_ledger passes integer reportType", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.general_ledger);
+    await tools.erply_general_ledger.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      reportType: 2,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/general_ledger",
+      expect.objectContaining({ reportType: 2 }),
+    );
+  });
+
+  it("erply_general_ledger coerces numeric-string reportType", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.general_ledger);
+    await tools.erply_general_ledger.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      reportType: "2",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/general_ledger",
+      expect.objectContaining({ reportType: 2 }),
+    );
+  });
+
+  it("erply_general_ledger rejects non-numeric reportType", async () => {
+    await expect(
+      tools.erply_general_ledger.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        reportType: "abc",
+      }),
+    ).rejects.toThrow(/reportType/);
+  });
+
   it("erply_daybook requires dates and GETs /reports/daybook", async () => {
     await expect(tools.erply_daybook.handler({})).rejects.toThrow(/dateFrom|dateTo/);
     vi.mocked(client.get).mockResolvedValue(reportsFixture.daybook);
