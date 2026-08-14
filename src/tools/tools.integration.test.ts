@@ -423,6 +423,10 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     });
   });
 
+  it("erply_get_attachment succeeds or returns a structured error", async () => {
+    await expectOkOrApiError(() => tools.erply_get_attachment.handler({ attachmentId: 1 }));
+  });
+
   it("attachment extras (zip/html/child/digi/kyc aliases) succeed or return structured errors", async () => {
     await expectOkOrApiError(() =>
       tools.erply_get_attachment_html_template.handler({ attachmentId: 1 }),

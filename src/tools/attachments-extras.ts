@@ -9,7 +9,7 @@ import {
   positiveInt,
 } from "../validation/tool-args.js";
 import { decodeBase64File, normalizeFileBase64 } from "./file-base64.js";
-import { jsonToolResult, mutationToolResult } from "./list-response.js";
+import { bytesToolResult, jsonToolResult, mutationToolResult } from "./list-response.js";
 
 const attachmentIdSchema = z.object({
   attachmentId: positiveInt,
@@ -203,7 +203,7 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
 
     erply_get_attachment_child: {
       description:
-        "Get a child / e-invoice attachment (GET /attachments/{attachmentId}/child). Requires attachmentId. Optional noDownload.",
+        'Get a child / e-invoice attachment (GET /attachments/{attachmentId}/child). Requires attachmentId. Optional noDownload. Response is JSON when the API returns JSON; otherwise UTF-8 text or base64 (encoding: "base64").',
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -217,10 +217,10 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
       },
       handler: async (params: unknown) => {
         const { attachmentId, noDownload } = parseToolArgs(childSchema, params);
-        const result = await client.get<Attachment>(`/attachments/${attachmentId}/child`, {
+        const bytes = await client.getArrayBuffer(`/attachments/${attachmentId}/child`, {
           noDownload,
         });
-        return jsonToolResult(result);
+        return bytesToolResult(bytes);
       },
     },
 
