@@ -68,6 +68,7 @@ export function createPaymentTools(client: ErplyBooksClient) {
     erply_list_payments: {
       description:
         "List confirmed Erply Books payments (GET /payments). Requires dateFrom and dateTo. " +
+        "paymentType is not required by the live API, but omitting it returns a small default set even with a wide date range — pass a PAYMENT_TYPE dictionary code for a complete list. " +
         "Does not include unmatched bank-import rows — use erply_list_pending_payments for the Bank Import feed. " +
         "Note: some Erply Books price plans return HTTP 409 (MODULE_PAID_MONEY_REPORT) for this endpoint. Returns { totalCount, items } when available.",
       inputSchema: {

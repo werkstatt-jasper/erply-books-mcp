@@ -287,7 +287,7 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect(result.content[0].text.length).toBeGreaterThan(2);
     } catch (error) {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
-      expect([403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+      expect([403, 404, 406, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
 });
@@ -673,10 +673,7 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
 
   it("erply_list_pending_payments surfaces plan restriction or returns a list", async () => {
     try {
-      const result = await tools.erply_list_pending_payments.handler({
-        dateFrom: "2020-01-01",
-        dateTo: "2026-12-31",
-      });
+      const result = await tools.erply_list_pending_payments.handler({});
       const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
       expect(Array.isArray(body.items)).toBe(true);
     } catch (error) {

@@ -25,7 +25,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54) |
+| G | Prose docs vs swagger vs observed behavior | 12 | items 1–7 probed live 2026-08-15 on Demo testbaas (org 9493) in [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); item 11 in #195 (E56); item 12 in #196 (E57) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -68,24 +68,19 @@ does not express. Full list in appendix D.
 
 ## G-class details (docs vs reality) — verification list for #189
 
-1. `GET /payments`: prose says "PaymentType is required!"; the tool requires
-   `dateFrom`/`dateTo` instead; swagger requires nothing.
-2. `sort` vs `sortBy`: prose uses `sortBy` (`/customers`, `/payments`); swagger
-   uses `sort`; tools follow swagger.
-3. `GET /customers/v2`: documented ("customers have two API versions") but
-   returns 405 with the current sandbox token; tool uses v1 `/customers`.
-4. `POST /payments/connect_payment_with_documents`: documents must be in
-   `linkedInvoiceInfo` (not top-level `invoiceId`); otherwise 409 "The list of
-   documents is empty". Sparse bodies can 500 — send pending-row fields. Connect
-   sets `importValidated` but does not change invoice `sumPaid`/`sumLeftToPay`
-   on the demo org; use `erply_update_payment` to apply balances (#190 / E51,
-   related #189 / E50).
-5. `POST /payments/save_all_payments`: does not link payments to invoices (only
-   updates import rows) — see README.
-6. `POST /payments/bank_import/v2`: undocumented in swagger (see C-class).
-7. PUT full-replace semantics: prose for `/invoices` says "All previous data is
-   deleted and replaced" — update-tool descriptions should warn that `rows` must
-   be resent if this holds on the live API.
+Probed 2026-08-15 against Demo testbaas (org id 9493) via
+`src/tools/spec-probes.integration.test.ts`.
+
+| # | Conflict | Observed | Disposition |
+|---|----------|----------|-------------|
+| 1 | `GET /payments` required params | All four variants **200**. No params → `totalCount` 5. `paymentType` only → 264. `dateFrom`/`dateTo` only (2020–2026) → 5. Dates + `paymentType` → 264. Prose "PaymentType is required!" is **false**. Dates are not required either. Omitting `paymentType` returns a small default set even with a wide date range. | Tool still requires dates (D-class). Description warns that `paymentType` is needed for a complete list. Follow-up #200 (E61). |
+| 2 | `sort` vs `sortBy` | `GET /customers` accepts both (`sort`, `sortBy`, `name`, `id`, `-name`) as **200**. First-page id order **identical** to the unsorted baseline in every variant. `GET /payments` also accepts both. Live API silently ignores both names on this org. | Keep swagger `sort`. No tool change. Erply support: which sort expressions are honored? |
+| 3 | `GET /customers/v2` | **405**, empty body. | Keep v1 `/customers`. Erply support: plan/token scope for v2? |
+| 4 | `connect_payment_with_documents` | No new mutation. #190 / 2026-08-14: documents must be in `linkedInvoiceInfo` (top-level `invoiceId` → 409 "The list of documents is empty"); sparse body can 500; connect sets `importValidated` but does not change invoice `sumPaid`/`sumLeftToPay` on the demo org. Reconfirmed `GET /payments/pending_payments` without dates → 265 rows. `dateFrom`/`dateTo` as `YYYY-MM-DD` or `dd.MM.yyyy` → **409** "Could not parse date"; ISO datetime (`2020-01-01T00:00:00`) → **200**. | Paid-plan connect behavior is an Erply support question (#190). Date-format follow-up #201 (E62). |
+| 5 | `save_all_payments` | Created own customer + `DOCUMENT_SELL` invoice + import row (`debit`/`credit` accounts required; otherwise 409 "debit and credit account ei saa olla tühi"). `POST /payments/save_all_payments` **200**. Invoice afterwards: `sumPaid` 0, `sumLeftToPay` 10. `importValidated` stayed false. | Confirmed. Tool/README already say this does not apply balances. |
+| 6 | `bank_import/v2` contract | Empty `{}` → **500** `NullPointerException`. Body with `apiAttachmentInfo` `{filename, base64}` (generic CSV) → **409** empty `messageCode`. Same with `everything`/`missing`/`separator`/`accountId`. Pending-row count unchanged (265); no leftover ids. | Reverse-engineered fields get past the NPE; a valid bank file/type is still required. Erply support: real contract? |
+| 7 | PUT `/invoices` full-replace | Created invoice with 2 rows. Sparse PUT (no `code`) → **409** `error_string_value_empty(fieldName=code)`. Full-document PUT with 1 row → **200**, second row **dropped**. PUT omitting `rows` → **409** "Palun lisage 'Invoice Rows'". | Prose is correct. `erply_update_invoice` description now warns: resend `code` + every row to keep. |
+
 8. `GET /payments/import`: not in swagger; live **405** on Demo testbaas
    (2026-08-14) with or without `dateFrom`/`dateTo`/`reconciled`/`accountId`.
    Unmatched bank-import rows are `GET /payments/pending_payments`

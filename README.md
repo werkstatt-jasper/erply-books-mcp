@@ -164,7 +164,7 @@ Note: `GET /customers/v2` returns **405** on current tokens — list uses `/cust
 | `erply_list_invoices` | `GET /invoices` | `dateFrom`, `dateTo`, `documentType` |
 | `erply_get_invoice` | `GET /invoices/{documentId}` | `documentId` |
 | `erply_create_invoice` | `POST /invoices` | `typeCode`, `date`, and `customerId` or `customer` |
-| `erply_update_invoice` | `PUT /invoices/{documentId}` | `documentId` |
+| `erply_update_invoice` | `PUT /invoices/{documentId}` | `documentId` (full replace: resend `code` + all `rows` to keep) |
 | `erply_delete_invoice` | `DELETE /invoices/{invoiceId}` | `invoiceId` |
 | `erply_get_invoice_pdf` | `GET /invoices/pdf/v2/{documentId}` | `documentId` |
 | `erply_send_invoice_email` | `POST /invoices/email/simple` | `documentId`, `receiver` |
@@ -180,6 +180,10 @@ Note: `GET /customers/v2` returns **405** on current tokens — list uses `/cust
 codes (e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`). Optional query `registrationCode` on
 create/update/delete. PDF uses **v2 JSON** (not binary `/invoices/pdf/{id}`). `documentIds` / `ids`
 accept a comma-separated string or a number array.
+
+`PUT /invoices/{id}` is a **full replace** (verified 2026-08-15 on Demo testbaas): sending
+fewer `rows` deletes the rest; omitting `rows` **409s** ("Please add Invoice Rows"); a sparse
+body without `code` **409s** (`error_string_value_empty`). Resend `code` plus every row to keep.
 
 #### Invoice workflow
 
@@ -208,27 +212,27 @@ Opposite/split/partner-update bodies accept extra spec fields via passthrough. `
 
 | Tool | API | Required |
 |------|-----|----------|
-| `erply_list_payments` | `GET /payments` | `dateFrom`, `dateTo` (confirmed payments only) |
+| `erply_list_payments` | `GET /payments` | `dateFrom`, `dateTo` (confirmed payments only; pass `paymentType` for a complete list) |
 | `erply_create_payment` | `POST /payments` | `opDate`, `sumPaid` |
 | `erply_update_payment` | `PUT /payments/{paymentId}` | `paymentId` |
 | `erply_delete_payment` | `DELETE /payments/{paymentId}` | `paymentId` |
 | `erply_import_payment` | `POST /payments/import` | `date`, `amount`, `typeCode` |
 | `erply_save_all_payment_imports` | `POST /payments/save_all_payments` | `items` |
 | `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | payment id + `linkedInvoiceInfo` (or `invoiceId` / `invoiceNumber`) |
-| `erply_list_pending_payments` | `GET /payments/pending_payments` | — (unmatched bank-import rows) |
+| `erply_list_pending_payments` | `GET /payments/pending_payments` | — (unmatched bank-import rows; `dateFrom`/`dateTo` must be ISO datetimes) |
 | `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
 | `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
 | `erply_bank_import_v2` | `POST /payments/bank_import/v2` | `fileBase64`+`fileName` or `attachmentId` |
 
-`erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
+`erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`. Empty `{}` **500s** (`NullPointerException`); a generic CSV still **409s** — a real bank-statement file/type is required (probed 2026-08-15).
 
 #### Bank-import reconciliation workflow (verified on Demo testbaas)
 
 The accountant workflow after importing a bank statement is:
 
 1. **Import** with `erply_bank_import` / `erply_bank_import_v2` or create rows with `erply_import_payment`.
-2. **List unmatched** with `erply_list_pending_payments` (`GET /payments/pending_payments`). There is no `GET /payments/import` (live **405**). Do not use `erply_list_payments` for this — it only returns confirmed payments.
+2. **List unmatched** with `erply_list_pending_payments` (`GET /payments/pending_payments`). There is no `GET /payments/import` (live **405**). Do not use `erply_list_payments` for this — it only returns confirmed payments, and without `paymentType` the live API returns a small default set (5 rows on Demo testbaas) even with a wide date range.
 3. **Link to invoice/order:**
    - `erply_connect_payment_with_documents` with the pending-row fields from step 2 plus `linkedInvoiceInfo: [{ invoiceId, sumPaid }]`. Top-level `invoiceId` / `invoiceNumber` are accepted by the tool and mapped into that array. A successful call sets `importValidated` and fills `linkedInvoiceInfo`.
    - To change invoice balances (`sumPaid` / `sumLeftToPay`), use `erply_update_payment` with `paymentId`, `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, `currencyCode`.
@@ -239,7 +243,7 @@ The accountant workflow after importing a bank statement is:
 The Bank Import UI (`/bankimport`) shows pending feed rows that have no `invoiceId` / `customerId` yet. Those rows are **not** on `GET /payments`. On Demo testbaas (2026-08-14):
 
 - `GET /payments/import` (with or without `dateFrom`/`dateTo`, `reconciled=false`, `accountId`) returns **405** and is absent from swagger.
-- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`).
+- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`). `dateFrom`/`dateTo` as `YYYY-MM-DD` or `dd.MM.yyyy` **409** ("Could not parse date"); ISO datetimes (`2020-01-01T00:00:00`) succeed.
 - `GET /payments?getEverything=true` still returns `APIPaymentInfo` payment records, not `APIPaymentImportInfo` import rows.
 
 Use `erply_list_pending_payments` to list unmatched bank-import rows.

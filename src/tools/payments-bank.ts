@@ -340,13 +340,20 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
         "Rows typically have invoiceId 0, customerId 0, and importValidated false until connected. " +
         "This is the list surface for unmatched imports; GET /payments/import does not exist (405). " +
         "erply_list_payments returns confirmed payments only and will look empty for this use case. " +
-        "Optional filters: dateFrom, dateTo, status (must be a DocumentStatusType enum; UNMATCHED/PENDING are invalid), accountId, paymentId. " +
+        "Optional filters: dateFrom, dateTo (ISO datetimes such as 2020-01-01T00:00:00 — YYYY-MM-DD and dd.MM.yyyy 409 Could not parse date), " +
+        "status (must be a DocumentStatusType enum; UNMATCHED/PENDING are invalid), accountId, paymentId. " +
         "A reconciled=false query param is ignored (rows often have reconciled true). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
-          dateFrom: { type: "string", description: "Start date filter" },
-          dateTo: { type: "string", description: "End date filter" },
+          dateFrom: {
+            type: "string",
+            description: "Start datetime (ISO, e.g. 2020-01-01T00:00:00). YYYY-MM-DD 409s.",
+          },
+          dateTo: {
+            type: "string",
+            description: "End datetime (ISO, e.g. 2026-12-31T23:59:59). YYYY-MM-DD 409s.",
+          },
           status: { type: "string", description: "Pending payment status filter" },
           accountId: { type: "number", description: "Bank/cash account id" },
           paymentId: { type: "string", description: "Payment id filter" },
@@ -446,7 +453,7 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_bank_import_v2: {
       description:
-        "Bank statement import v2 (POST /payments/bank_import/v2 JSON). Provide either fileBase64+fileName (nested as apiAttachmentInfo) or attachmentId from erply_create_attachment. Tool args getEverything/getMissing/separatorField map to API fields everything/missing/separator.",
+        "Bank statement import v2 (POST /payments/bank_import/v2 JSON). Provide either fileBase64+fileName (nested as apiAttachmentInfo) or attachmentId from erply_create_attachment. Tool args getEverything/getMissing/separatorField map to API fields everything/missing/separator. Empty body 500s (NullPointerException); a generic CSV still 409s — a real bank-statement file/type is required.",
       inputSchema: {
         type: "object" as const,
         properties: {

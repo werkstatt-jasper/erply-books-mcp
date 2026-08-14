@@ -164,6 +164,11 @@ describe("erply_update_invoice", () => {
     tools = createInvoiceTools(client);
   });
 
+  it("warns that PUT is a full replace and rows must be resent", () => {
+    expect(tools.erply_update_invoice.description).toMatch(/full replace/);
+    expect(tools.erply_update_invoice.description).toMatch(/every row you want to keep/);
+  });
+
   it("requires documentId", async () => {
     await expect(tools.erply_update_invoice.handler({})).rejects.toThrow(/documentId/);
   });

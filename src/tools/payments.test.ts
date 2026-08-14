@@ -17,6 +17,8 @@ describe("erply_list_payments", () => {
   it("points unmatched bank-import rows at erply_list_pending_payments", () => {
     expect(tools.erply_list_payments.description).toMatch(/Does not include unmatched bank-import/);
     expect(tools.erply_list_payments.description).toMatch(/erply_list_pending_payments/);
+    expect(tools.erply_list_payments.description).toMatch(/paymentType/);
+    expect(tools.erply_list_payments.description).toMatch(/small default set/);
   });
 
   it("requires dateFrom and dateTo", async () => {

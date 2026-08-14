@@ -191,6 +191,7 @@ describe("erply_list_pending_payments", () => {
     expect(tools.erply_list_pending_payments.description).toMatch(
       /GET \/payments\/import does not exist/,
     );
+    expect(tools.erply_list_pending_payments.description).toMatch(/ISO datetimes/);
   });
 
   it("GETs pending payments with filters", async () => {
@@ -305,6 +306,11 @@ describe("erply_bank_import_v2", () => {
   beforeEach(() => {
     client = createMockClient();
     tools = createPaymentBankTools(client);
+  });
+
+  it("describes the reverse-engineered JSON contract", () => {
+    expect(tools.erply_bank_import_v2.description).toMatch(/apiAttachmentInfo/);
+    expect(tools.erply_bank_import_v2.description).toMatch(/NullPointerException/);
   });
 
   it("rejects when neither file nor attachmentId is provided", async () => {

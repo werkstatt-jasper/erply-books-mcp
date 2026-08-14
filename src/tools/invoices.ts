@@ -192,7 +192,10 @@ export function createInvoiceTools(client: ErplyBooksClient) {
 
     erply_update_invoice: {
       description:
-        "Update an Erply Books document (PUT /invoices/{documentId}). Requires documentId. Optional registrationCode query. Extra APIInvoiceInfo fields may be passed through.",
+        "Update an Erply Books document (PUT /invoices/{documentId}). Requires documentId. " +
+        "PUT is a full replace: sending fewer rows deletes the rest. Omitting rows 409s (Please add Invoice Rows). " +
+        "Resend code plus every row you want to keep. A sparse body without code 409s (error_string_value_empty fieldName=code). " +
+        "Optional registrationCode query. Extra APIInvoiceInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {
