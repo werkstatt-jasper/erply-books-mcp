@@ -14,6 +14,21 @@ export const ymdDateString = z
 export const optionalYmd = ymdDateString.nullish().transform((v) => v ?? undefined);
 
 /**
+ * Optional date filter: a real calendar `YYYY-MM-DD` is coerced to an ISO datetime
+ * (`suffix` e.g. `T00:00:00`); ISO datetimes and other strings pass through so the
+ * API can reject them. `null`/`undefined` are omitted.
+ */
+export function optionalYmdOrIsoDateTime(timeSuffix: "T00:00:00" | "T23:59:59") {
+  return z
+    .string()
+    .nullish()
+    .transform((v) => v ?? undefined)
+    .transform((v) =>
+      v !== undefined && ymdDateString.safeParse(v).success ? `${v}${timeSuffix}` : v,
+    );
+}
+
+/**
  * Positive integer IDs and similar. Uses coercion so string `"42"` from JSON-ish clients still validates.
  */
 export const positiveInt = z.coerce.number().int().positive();

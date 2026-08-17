@@ -94,6 +94,10 @@ does not express. Full list in appendix D.
    (`erply_list_pending_payments`). `GET /payments` (even with
    `getEverything=true`) returns confirmed `APIPaymentInfo` records, not import
    rows. See #191 (E52).
+   `GET /payments/pending_payments` 409s `Could not parse date from: …` for
+   bare `YYYY-MM-DD` and `dd.MM.yyyy`; `YYYY-MM-DDTHH:mm:ss` (no `Z`) works.
+   `erply_list_pending_payments` coerces `YYYY-MM-DD` to `T00:00:00` /
+   `T23:59:59` client-side. Verified 2026-08-17 on Demo testbaas. See #201 (E62).
 9. `GET /attachments/all`: without `getEverything=true` the live API returns
    `totalCount: 0` even when Purchase Inbox items exist. `erply_list_attachments`
    therefore defaults `getEverything` to `true` on unfiltered calls. `documentId`

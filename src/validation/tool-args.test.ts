@@ -8,6 +8,7 @@ import {
   optionalNumber,
   optionalString,
   optionalYmd,
+  optionalYmdOrIsoDateTime,
   parseToolArgs,
   positiveInt,
   ymdDateString,
@@ -62,6 +63,39 @@ describe("parseToolArgs", () => {
     const schema = z.object({ start: optionalYmd });
     expect(parseToolArgs(schema, { start: "2024-06-01" })).toEqual({ start: "2024-06-01" });
     expect(parseToolArgs(schema, {})).toEqual({ start: undefined });
+  });
+
+  it("coerces YYYY-MM-DD to ISO datetime and passes other values through", () => {
+    const schema = z.object({
+      dateFrom: optionalYmdOrIsoDateTime("T00:00:00"),
+      dateTo: optionalYmdOrIsoDateTime("T23:59:59"),
+    });
+    expect(parseToolArgs(schema, { dateFrom: "2020-01-01", dateTo: "2026-12-31" })).toEqual({
+      dateFrom: "2020-01-01T00:00:00",
+      dateTo: "2026-12-31T23:59:59",
+    });
+    expect(
+      parseToolArgs(schema, {
+        dateFrom: "2020-01-01T00:00:00",
+        dateTo: "2026-12-31T23:59:59",
+      }),
+    ).toEqual({
+      dateFrom: "2020-01-01T00:00:00",
+      dateTo: "2026-12-31T23:59:59",
+    });
+    expect(parseToolArgs(schema, { dateFrom: "01.01.2020" })).toEqual({
+      dateFrom: "01.01.2020",
+      dateTo: undefined,
+    });
+    expect(parseToolArgs(schema, { dateFrom: "2024-02-30" })).toEqual({
+      dateFrom: "2024-02-30",
+      dateTo: undefined,
+    });
+    expect(parseToolArgs(schema, { dateFrom: null, dateTo: null })).toEqual({
+      dateFrom: undefined,
+      dateTo: undefined,
+    });
+    expect(parseToolArgs(schema, {})).toEqual({ dateFrom: undefined, dateTo: undefined });
   });
 
   it("accepts optional non-negative start offsets", () => {

@@ -12,6 +12,7 @@ import {
   optionalNumber,
   optionalPositiveInt,
   optionalString,
+  optionalYmdOrIsoDateTime,
   parseToolArgs,
 } from "../validation/tool-args.js";
 import { decodeBase64File, normalizeFileBase64 } from "./file-base64.js";
@@ -94,8 +95,8 @@ function connectPaymentBody(
 }
 
 const listPendingPaymentsSchema = z.object({
-  dateFrom: optionalString,
-  dateTo: optionalString,
+  dateFrom: optionalYmdOrIsoDateTime("T00:00:00"),
+  dateTo: optionalYmdOrIsoDateTime("T23:59:59"),
   status: optionalString,
   accountId: optionalPositiveInt,
   paymentId: optionalString,
@@ -340,13 +341,22 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
         "Rows typically have invoiceId 0, customerId 0, and importValidated false until connected. " +
         "This is the list surface for unmatched imports; GET /payments/import does not exist (405). " +
         "erply_list_payments returns confirmed payments only and will look empty for this use case. " +
-        "Optional filters: dateFrom, dateTo, status (must be a DocumentStatusType enum; UNMATCHED/PENDING are invalid), accountId, paymentId. " +
+        "Optional filters: dateFrom, dateTo (YYYY-MM-DD coerced to T00:00:00 / T23:59:59; ISO datetimes such as 2020-01-01T00:00:00 pass through; dd.MM.yyyy 409s Could not parse date), " +
+        "status (must be a DocumentStatusType enum; UNMATCHED/PENDING are invalid), accountId, paymentId. " +
         "A reconciled=false query param is ignored (rows often have reconciled true). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
-          dateFrom: { type: "string", description: "Start date filter" },
-          dateTo: { type: "string", description: "End date filter" },
+          dateFrom: {
+            type: "string",
+            description:
+              "Start date/datetime. YYYY-MM-DD coerced to T00:00:00; ISO datetime passed through.",
+          },
+          dateTo: {
+            type: "string",
+            description:
+              "End date/datetime. YYYY-MM-DD coerced to T23:59:59; ISO datetime passed through.",
+          },
           status: { type: "string", description: "Pending payment status filter" },
           accountId: { type: "number", description: "Bank/cash account id" },
           paymentId: { type: "string", description: "Payment id filter" },

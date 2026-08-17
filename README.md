@@ -273,7 +273,7 @@ return a JSON array, not a list envelope.
 | `erply_import_payment` | `POST /payments/import` | `date`, `amount`, `typeCode` |
 | `erply_save_all_payment_imports` | `POST /payments/save_all_payments` | `items` |
 | `erply_connect_payment_with_documents` | `POST /payments/connect_payment_with_documents` | payment id + `linkedInvoiceInfo` (or `invoiceId` / `invoiceNumber`) |
-| `erply_list_pending_payments` | `GET /payments/pending_payments` | — (unmatched bank-import rows) |
+| `erply_list_pending_payments` | `GET /payments/pending_payments` | — (unmatched bank-import rows; `dateFrom`/`dateTo` optional) |
 | `erply_settle_prepayments` | `POST /payments/settle_prepayments` | `paymentId`, `paymentId2`, or `ids` |
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
 | `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
@@ -297,7 +297,7 @@ The accountant workflow after importing a bank statement is:
 The Bank Import UI (`/bankimport`) shows pending feed rows that have no `invoiceId` / `customerId` yet. Those rows are **not** on `GET /payments`. On Demo testbaas (2026-08-14):
 
 - `GET /payments/import` (with or without `dateFrom`/`dateTo`, `reconciled=false`, `accountId`) returns **405** and is absent from swagger.
-- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`).
+- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`). Date filters accept `YYYY-MM-DD` (coerced to `T00:00:00` / `T23:59:59`) or ISO datetimes; bare `dd.MM.yyyy` still **409**s.
 - `GET /payments?getEverything=true` still returns `APIPaymentInfo` payment records, not `APIPaymentImportInfo` import rows.
 
 Use `erply_list_pending_payments` to list unmatched bank-import rows.
