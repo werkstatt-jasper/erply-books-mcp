@@ -154,8 +154,43 @@ structured `ErplyBooksApiError`.
 | `erply_create_customer` | `POST /customers` | `name` |
 | `erply_update_customer` | `PUT /customers/{customerId}` | `customerId` |
 | `erply_delete_customer` | `DELETE /customers/{customerId}` | `customerId` |
+| `erply_create_customer_v2` | `POST /customers/v2` | `name` |
+| `erply_update_customer_v2` | `PUT /customers/v2/{customerId}` | `customerId` |
+| `erply_delete_customers` | `POST /customers/delete` | `customerId` |
+| `erply_mark_customer_anonymous` | `PUT /customers/mark_as_anonymous/{customerId}` | `customerId` |
+| `erply_update_all_customer_tax_rates` | `POST /customers/update_all_tax_rate` | `wrongTaxRateId`, `correctTaxRateId` |
 
 Note: `GET /customers/v2` returns **405** on current tokens — list uses `/customers`.
+`POST /customers/v2` and `PUT /customers/v2/{id}` work. `erply_delete_customers`
+is the POST-based alternate to `erply_delete_customer`.
+`erply_mark_customer_anonymous` is destructive and irreversible.
+
+#### Customer bank accounts
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_list_customer_bank_accounts` | `GET /customers/bank_accounts/{customerId}` | `customerId` |
+| `erply_get_customer_bank_account` | `GET /customers/bank_accounts/{bankAccountId}/customerId/{customerId}` | `bankAccountId`, `customerId` |
+| `erply_create_customer_bank_account` | `POST /customers/bank_accounts/{customerId}` | `customerId` |
+| `erply_update_customer_bank_account` | `PUT /customers/bank_accounts/{customerId}` | `customerId`, `bankAccountId` |
+| `erply_delete_customer_bank_account` | `DELETE /customers/bank_accounts/{bankAccountId}/customerId/{id}` | `bankAccountId`, `customerId` |
+
+Creates send `id: 0` and default `entityId` to `customerId` (needed for the row
+to persist). PUT is a **full replace** — resend `iban` / `accountNumber` /
+`bankName` or they are cleared. The single-get path often returns a stub with
+`id: 0`; prefer the list tool.
+
+#### Customer balances / report
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_get_entity_balance` | `GET /customers/entity_balance` | `entityIds` |
+| `erply_get_project_balance` | `GET /customers/project_balance` | `projectIds` |
+| `erply_get_customer_report` | `GET /customers/report/{customerId}` | `customerId` |
+
+`entityIds` / `projectIds` accept a comma-separated string or a number array.
+Balance endpoints return a JSON array (often empty). The customer report returns
+a list envelope `{ items, totalCount, organisation }`.
 
 ### Invoices / documents
 

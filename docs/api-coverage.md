@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-14 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (121 tools).
+Generated 2026-08-17 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (134 tools).
 
-- **Covered:** 122 operations
-- **Gap (tracked as GitLab issues):** 218 operations
+- **Covered:** 135 operations
+- **Gap (tracked as GitLab issues):** 205 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -89,22 +89,22 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/customers` | covered: `erply_create_customer` |
 | `DELETE` | `/customers/{customerId}` | covered: `erply_delete_customer` |
 | `PUT` | `/customers/{customerId}` | covered: `erply_update_customer` |
-| `GET` | `/customers/bank_accounts/{bankAccountId}/customerId/{customerId}` | gap: E29 #168 |
-| `DELETE` | `/customers/bank_accounts/{bankAccountId}/customerId/{id}` | gap: E29 #168 |
-| `GET` | `/customers/bank_accounts/{customerId}` | gap: E29 #168 |
-| `POST` | `/customers/bank_accounts/{customerId}` | gap: E29 #168 |
-| `PUT` | `/customers/bank_accounts/{customerId}` | gap: E29 #168 |
+| `GET` | `/customers/bank_accounts/{bankAccountId}/customerId/{customerId}` | covered: `erply_get_customer_bank_account` |
+| `DELETE` | `/customers/bank_accounts/{bankAccountId}/customerId/{id}` | covered: `erply_delete_customer_bank_account` |
+| `GET` | `/customers/bank_accounts/{customerId}` | covered: `erply_list_customer_bank_accounts` |
+| `POST` | `/customers/bank_accounts/{customerId}` | covered: `erply_create_customer_bank_account` |
+| `PUT` | `/customers/bank_accounts/{customerId}` | covered: `erply_update_customer_bank_account` |
 | `GET` | `/customers/bank_accounts/get_single` | skipped (GoERP `get_single` alias / base list) |
 | `GET` | `/customers/bank_accounts/get_single/v2` | skipped (GoERP `get_single` alias / base list) |
-| `POST` | `/customers/delete` | gap: E29 #168 |
-| `GET` | `/customers/entity_balance` | gap: E29 #168 |
-| `PUT` | `/customers/mark_as_anonymous/{customerId}` | gap: E29 #168 |
-| `GET` | `/customers/project_balance` | gap: E29 #168 |
-| `GET` | `/customers/report/{customerId}` | gap: E29 #168 |
+| `POST` | `/customers/delete` | covered: `erply_delete_customers` |
+| `GET` | `/customers/entity_balance` | covered: `erply_get_entity_balance` |
+| `PUT` | `/customers/mark_as_anonymous/{customerId}` | covered: `erply_mark_customer_anonymous` |
+| `GET` | `/customers/project_balance` | covered: `erply_get_project_balance` |
+| `GET` | `/customers/report/{customerId}` | covered: `erply_get_customer_report` |
 | `GET` | `/customers/report/get_single` | skipped (GoERP `get_single` alias / base list) |
-| `POST` | `/customers/update_all_tax_rate` | gap: E29 #168 |
-| `POST` | `/customers/v2` | gap: E29 #168 |
-| `PUT` | `/customers/v2/{customerId}` | gap: E29 #168 |
+| `POST` | `/customers/update_all_tax_rate` | covered: `erply_update_all_customer_tax_rates` |
+| `POST` | `/customers/v2` | covered: `erply_create_customer_v2` |
+| `PUT` | `/customers/v2/{customerId}` | covered: `erply_update_customer_v2` |
 | `POST` | `/integrations/add_einvoice_channel` | gap: E46 #185 |
 | `POST` | `/integrations/integrate/{partnerType}` | gap: E46 #185 |
 | `POST` | `/integrations/process_custom_api` | gap: E46 #185 |
