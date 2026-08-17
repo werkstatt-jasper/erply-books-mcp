@@ -11,6 +11,7 @@ import { createAttachmentTools } from "./tools/attachments.js";
 import { createAttachmentExtraTools } from "./tools/attachments-extras.js";
 import { createAttachmentInboxTools } from "./tools/attachments-inbox.js";
 import { createCustomerTools } from "./tools/customers.js";
+import { createCustomerExtraTools } from "./tools/customers-extras.js";
 import { createDictionaryTools } from "./tools/dictionaries.js";
 import { createInvoiceTools } from "./tools/invoices.js";
 import { createInvoiceExtraTools } from "./tools/invoices-extras.js";
@@ -45,6 +46,7 @@ export function buildAllTools(client: ErplyBooksClient): ToolRecord {
     ...createAccountTools(client),
     ...createTaxRateTools(client),
     ...createCustomerTools(client),
+    ...createCustomerExtraTools(client),
     ...createInvoiceTools(client),
     ...createInvoiceExtraTools(client),
     ...createInvoiceWorkflowTools(client),

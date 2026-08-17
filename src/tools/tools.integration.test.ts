@@ -752,6 +752,112 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
       }
     }
   });
+
+  it("customer extras reads succeed or return structured errors", async () => {
+    let customerId = 1;
+    try {
+      const listed = await tools.erply_list_customers.handler({ start: 0, limit: 1 });
+      const page = JSON.parse(listed.content[0].text) as { items: Array<{ id?: number }> };
+      if (typeof page.items[0]?.id === "number") {
+        customerId = page.items[0].id;
+      }
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+    }
+
+    const extrasStatuses = [400, 403, 404, 405, 406, 409, 415, 500];
+    await expectOkOrApiError(
+      () => tools.erply_list_customer_bank_accounts.handler({ customerId, start: 0, limit: 5 }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () => tools.erply_get_customer_bank_account.handler({ bankAccountId: 1, customerId }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () => tools.erply_get_entity_balance.handler({ entityIds: [customerId], sales: true }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () => tools.erply_get_project_balance.handler({ projectIds: [1], sales: true }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () =>
+        tools.erply_get_customer_report.handler({
+          customerId,
+          dateFrom: "2025-01-01",
+          dateTo: "2026-12-31",
+          start: 0,
+          limit: 5,
+        }),
+      extrasStatuses,
+    );
+  });
+
+  it("erply_create_customer_bank_account then delete (or plan/module error)", async () => {
+    let customerId: number | undefined;
+    let bankAccountId: number | undefined;
+    try {
+      const listed = await tools.erply_list_customers.handler({ start: 0, limit: 1 });
+      const page = JSON.parse(listed.content[0].text) as { items: Array<{ id?: number }> };
+      customerId = page.items[0]?.id;
+      if (typeof customerId !== "number") {
+        return;
+      }
+      const created = await tools.erply_create_customer_bank_account.handler({
+        customerId,
+        iban: "EE382200221020145685",
+        bankName: "MCP E29 probe",
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      bankAccountId = body.id;
+      expect(typeof bankAccountId).toBe("number");
+      await tools.erply_delete_customer_bank_account.handler({
+        bankAccountId,
+        customerId,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([400, 403, 405, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (bankAccountId && customerId) {
+        try {
+          await tools.erply_delete_customer_bank_account.handler({
+            bankAccountId,
+            customerId,
+          });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
+  });
+
+  it("erply_create_customer_v2 then delete (or 405/plan error)", async () => {
+    let customerId: number | undefined;
+    try {
+      const created = await tools.erply_create_customer_v2.handler({
+        name: `MCP E29 v2 ${Date.now()}`,
+        customer: true,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      customerId = body.id;
+      expect(typeof customerId).toBe("number");
+      await tools.erply_delete_customer.handler({ customerId });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([400, 403, 405, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (customerId) {
+        try {
+          await tools.erply_delete_customer.handler({ customerId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
+  });
 });
 
 describe.skipIf(hasToken)("read tools live MVP (no token)", () => {

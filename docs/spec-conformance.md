@@ -11,7 +11,7 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 89 tools call real spec operations with the correct HTTP
+**Headline result:** all 134 tools call real spec operations with the correct HTTP
 method and path (zero class-A mismatches). The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
@@ -25,7 +25,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54) |
+| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -73,7 +73,9 @@ does not express. Full list in appendix D.
 2. `sort` vs `sortBy`: prose uses `sortBy` (`/customers`, `/payments`); swagger
    uses `sort`; tools follow swagger.
 3. `GET /customers/v2`: documented ("customers have two API versions") but
-   returns 405 with the current sandbox token; tool uses v1 `/customers`.
+   returns 405 with the current sandbox token; list uses v1 `/customers`.
+   `POST /customers/v2` and `PUT /customers/v2/{customerId}` work live
+   (2026-08-17, Demo testbaas). See #168 (E29).
 4. `POST /payments/connect_payment_with_documents`: documents must be in
    `linkedInvoiceInfo` (not top-level `invoiceId`); otherwise 409 "The list of
    documents is empty". Sparse bodies can 500 — send pending-row fields. Connect
@@ -119,6 +121,20 @@ does not express. Full list in appendix D.
     `erply_list_attachments` lifts that field to `ocrText`.
     `erply_parse_attachment` does not return it unless `includeOcrText=true`
     (secondary list lookup; failures → `ocrText: null`). See #196 (E57).
+13. `GET /customers/bank_accounts/{bankAccountId}/customerId/{customerId}`
+    returns a stub `{ id: 0, …null fields }` even when the id exists on
+    `GET /customers/bank_accounts/{customerId}`. Prefer the list tool.
+    `POST /customers/bank_accounts/{customerId}` needs `entityId` (defaulted
+    to `customerId`) or the 201 body id does not appear on the subsequent
+    list. `PUT` is a full replace (omitted `iban`/`accountNumber` are
+    cleared). Verified 2026-08-17 on Demo testbaas. See #168 (E29).
+14. `GET /customers/entity_balance` and `GET /customers/project_balance`
+    return a JSON **array** (often `[]`), not a list envelope. Verified
+    2026-08-17 on Demo testbaas. See #168 (E29).
+15. `GET /customers/report/{customerId}` returns the standard list envelope
+    `{ items, totalCount, organisation }`. `POST /customers/delete` is a
+    working alternate to `DELETE /customers/{id}` (409 `Cannot find customer`
+    for a missing id). Verified 2026-08-17 on Demo testbaas. See #168 (E29).
 
 ## Cosmetic notes (no action)
 

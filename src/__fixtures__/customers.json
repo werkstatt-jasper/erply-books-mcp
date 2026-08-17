@@ -15,5 +15,68 @@
     "name": "Acme Updated",
     "code": "ACME",
     "email": "a@example.com"
+  },
+  "bank_account_list": {
+    "items": [
+      {
+        "id": 21,
+        "entityId": 10,
+        "iban": "EE382200221020145685",
+        "accountNumber": "221020145685",
+        "bankName": "Swedbank",
+        "swift": "HABAEE2X",
+        "ifMainAccount": true
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "bank_account_single": {
+    "id": 21,
+    "entityId": 10,
+    "iban": "EE382200221020145685",
+    "accountNumber": "221020145685",
+    "bankName": "Swedbank",
+    "swift": "HABAEE2X",
+    "ifMainAccount": true
+  },
+  "bank_account_create": {
+    "id": 21,
+    "entityId": 10,
+    "iban": "EE382200221020145685",
+    "bankName": "Swedbank",
+    "ifMainAccount": true
+  },
+  "entity_balance": {
+    "entityIds": "10,11",
+    "sales": true,
+    "balance": 1250.5
+  },
+  "project_balance": {
+    "projectIds": "3",
+    "sales": false,
+    "balance": 80
+  },
+  "customer_report": {
+    "customerId": 10,
+    "openAmount": 199.99,
+    "items": [{ "documentId": 55, "sumLeftToPay": 199.99 }]
+  },
+  "customer_v2": {
+    "id": 10,
+    "name": "Acme OÜ",
+    "code": "ACME",
+    "email": "a@example.com",
+    "taxRateId": 1
+  },
+  "anonymous_response": {
+    "id": 10,
+    "name": "Anonymous",
+    "email": ""
+  },
+  "update_all_tax_rate": {
+    "ok": true,
+    "wrongTaxRateId": 1,
+    "correctTaxRateId": 2
   }
 }
