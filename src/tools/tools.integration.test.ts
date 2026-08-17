@@ -671,7 +671,7 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
-  it("erply_list_pending_payments surfaces plan restriction or returns a list", async () => {
+  it("erply_list_pending_payments accepts YYYY-MM-DD date filters", async () => {
     try {
       const result = await tools.erply_list_pending_payments.handler({
         dateFrom: "2020-01-01",
@@ -679,9 +679,13 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
       });
       const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };
       expect(Array.isArray(body.items)).toBe(true);
+      expect(typeof body.totalCount).toBe("number");
     } catch (error) {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
-      expect([403, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+      const apiError = error as ErplyBooksApiError;
+      const detail = `${apiError.message} ${apiError.bodySnippet ?? ""}`;
+      expect(detail).not.toMatch(/Could not parse date/);
+      expect([403, 409, 500]).toContain(apiError.httpStatus);
     }
   });
 

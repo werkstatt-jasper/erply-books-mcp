@@ -191,9 +191,16 @@ describe("erply_list_pending_payments", () => {
     expect(tools.erply_list_pending_payments.description).toMatch(
       /GET \/payments\/import does not exist/,
     );
+    expect(tools.erply_list_pending_payments.description).toMatch(/YYYY-MM-DD coerced/);
+    expect(tools.erply_list_pending_payments.inputSchema.properties.dateFrom.description).toMatch(
+      /T00:00:00/,
+    );
+    expect(tools.erply_list_pending_payments.inputSchema.properties.dateTo.description).toMatch(
+      /T23:59:59/,
+    );
   });
 
-  it("GETs pending payments with filters", async () => {
+  it("GETs pending payments and coerces YYYY-MM-DD dateFrom", async () => {
     vi.mocked(client.get).mockResolvedValue(paymentsFixture.pending_page);
     const result = await tools.erply_list_pending_payments.handler({
       dateFrom: "2025-01-01",
@@ -201,9 +208,51 @@ describe("erply_list_pending_payments", () => {
     });
     expect(client.get).toHaveBeenCalledWith(
       "/payments/pending_payments",
-      expect.objectContaining({ dateFrom: "2025-01-01", accountId: 42 }),
+      expect.objectContaining({ dateFrom: "2025-01-01T00:00:00", accountId: 42 }),
     );
     expect(JSON.parse(result.content[0].text).totalCount).toBe(1);
+  });
+
+  it("coerces YYYY-MM-DD dateTo to end-of-day ISO datetime", async () => {
+    vi.mocked(client.get).mockResolvedValue(paymentsFixture.pending_page);
+    await tools.erply_list_pending_payments.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+    });
+    expect(client.get).toHaveBeenCalledWith("/payments/pending_payments", {
+      dateFrom: "2025-01-01T00:00:00",
+      dateTo: "2025-12-31T23:59:59",
+      status: undefined,
+      accountId: undefined,
+      paymentId: undefined,
+    });
+  });
+
+  it("passes ISO datetimes through unchanged", async () => {
+    vi.mocked(client.get).mockResolvedValue(paymentsFixture.pending_page);
+    await tools.erply_list_pending_payments.handler({
+      dateFrom: "2020-01-01T00:00:00",
+      dateTo: "2026-12-31T23:59:59",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/payments/pending_payments",
+      expect.objectContaining({
+        dateFrom: "2020-01-01T00:00:00",
+        dateTo: "2026-12-31T23:59:59",
+      }),
+    );
+  });
+
+  it("omits date filters when they are not provided", async () => {
+    vi.mocked(client.get).mockResolvedValue(paymentsFixture.pending_page);
+    await tools.erply_list_pending_payments.handler({});
+    expect(client.get).toHaveBeenCalledWith("/payments/pending_payments", {
+      dateFrom: undefined,
+      dateTo: undefined,
+      status: undefined,
+      accountId: undefined,
+      paymentId: undefined,
+    });
   });
 });
 
