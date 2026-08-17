@@ -834,6 +834,90 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("invoice template extras reads succeed or return structured errors", async () => {
+    const extrasStatuses = [400, 403, 404, 405, 406, 409, 415, 500];
+    await expectOkOrApiError(
+      () => tools.erply_list_invoice_templates.handler({ start: 0, limit: 5 }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () => tools.erply_get_next_invoice_number.handler({ typeCode: "DOCUMENT_SELL" }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () =>
+        tools.erply_list_parsed_invoice_validations.handler({
+          documentType: "DOCUMENT_SELL",
+          year: 2026,
+          month: 8,
+          start: 0,
+          limit: 5,
+        }),
+      extrasStatuses,
+    );
+
+    try {
+      const listed = await tools.erply_list_invoices.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+        documentType: "DOCUMENT_POS_SELL",
+        start: 0,
+        limit: 1,
+      });
+      const page = JSON.parse(listed.content[0].text) as { items: Array<{ id?: number }> };
+      const documentId = page.items[0]?.id;
+      if (typeof documentId === "number") {
+        await expectOkOrApiError(
+          () => tools.erply_get_invoice_history.handler({ documentId }),
+          extrasStatuses,
+        );
+      }
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+    }
+  });
+
+  it("erply_create_invoice_template then delete (or plan/module error)", async () => {
+    let documentInfoId: number | undefined;
+    try {
+      const created = await tools.erply_create_invoice_template.handler({
+        documentName: `MCP E30 probe ${Date.now()}`,
+        languageCode: "LANGUAGE_EN",
+        templateId: "18098",
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      documentInfoId = body.id;
+      expect(typeof documentInfoId).toBe("number");
+      await tools.erply_delete_invoice_template.handler({ documentInfoId });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([400, 403, 405, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (documentInfoId) {
+        try {
+          await tools.erply_delete_invoice_template.handler({ documentInfoId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
+  });
+
+  it("erply_check_invoice_number returns exists flag or structured error", async () => {
+    try {
+      const result = await tools.erply_check_invoice_number.handler({
+        number: `MCP-E30-${Date.now()}`,
+        typeCode: "DOCUMENT_SELL",
+        date: "2026-08-17",
+      });
+      const body = JSON.parse(result.content[0].text) as { exists?: boolean };
+      expect(typeof body.exists).toBe("boolean");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect([400, 403, 405, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
   it("erply_create_customer_v2 then delete (or 405/plan error)", async () => {
     let customerId: number | undefined;
     try {

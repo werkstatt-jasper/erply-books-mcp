@@ -1,0 +1,84 @@
+{
+  "template_list": {
+    "items": [
+      {
+        "id": 35386,
+        "documentName": "MAIN|Invoice",
+        "languageCode": "LANGUAGE_EN",
+        "templateId": "20324"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "template_single": {
+    "id": 35386,
+    "documentName": "MAIN|Invoice",
+    "languageCode": "LANGUAGE_EN",
+    "templateId": "20324"
+  },
+  "template_create": {
+    "id": 426715,
+    "documentName": "MCP E30 probe",
+    "languageCode": "LANGUAGE_EN",
+    "templateId": "18098"
+  },
+  "template_update": {
+    "id": 426715,
+    "documentName": "MCP E30 probe updated",
+    "languageCode": "LANGUAGE_EN",
+    "templateId": "18098"
+  },
+  "history": [
+    {
+      "id": 190328106,
+      "typeCode": "OP_ADD_DOCUMENT",
+      "origin": "API",
+      "identifier": 0,
+      "userId": 41429,
+      "date": "2026-08-11T14:58:22Z",
+      "edit": "",
+      "username": "tarvi.tameri@numeri.ee",
+      "queueId": 0
+    }
+  ],
+  "new_number": {
+    "id": 0,
+    "number": "24-15000",
+    "customerId": 0,
+    "exists": false,
+    "typeCode": null,
+    "date": null,
+    "existingDocumentId": 0
+  },
+  "check_number_exists": {
+    "id": 0,
+    "number": "MCP-REC-1786460302855",
+    "customerId": 15709245,
+    "exists": true,
+    "typeCode": "DOCUMENT_SELL",
+    "date": "2026-08-11",
+    "existingDocumentId": 83896285
+  },
+  "check_number_missing": {
+    "id": 0,
+    "number": "MCP-E30-MISSING",
+    "customerId": 0,
+    "exists": false,
+    "typeCode": "DOCUMENT_SELL",
+    "date": "2026-08-17",
+    "existingDocumentId": 0
+  },
+  "parsed_validations": [
+    {
+      "id": 0,
+      "invoiceVerified": false,
+      "parseSuccessful": false,
+      "invoice": {
+        "id": 84007315,
+        "number": "MCP-REC-1786741685019",
+        "typeCode": "DOCUMENT_SELL"
+      }
+    }
+  ]
+}

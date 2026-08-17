@@ -26,3 +26,38 @@ export interface Invoice {
   customerId?: number;
   [key: string]: unknown;
 }
+
+/** Invoice text/template row (`APIDocumentTextsInfo`). */
+export interface InvoiceTemplate {
+  id?: number;
+  documentName?: string | null;
+  languageCode?: string;
+  templateId?: string;
+  [key: string]: unknown;
+}
+
+/** Next-number / existence check row (`APIInvoiceInitialData`). */
+export interface InvoiceInitialData {
+  id?: number;
+  number?: string;
+  customerId?: number;
+  exists?: boolean;
+  typeCode?: string | null;
+  date?: string | null;
+  existingDocumentId?: number;
+  [key: string]: unknown;
+}
+
+/** Document history row from `GET /invoices/history`. */
+export interface InvoiceHistoryEntry {
+  id?: number;
+  typeCode?: string;
+  origin?: string;
+  identifier?: number;
+  userId?: number;
+  date?: string;
+  edit?: string;
+  username?: string;
+  queueId?: number;
+  [key: string]: unknown;
+}
