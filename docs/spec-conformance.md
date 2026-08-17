@@ -11,7 +11,7 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 134 tools call real spec operations with the correct HTTP
+**Headline result:** all 144 tools call real spec operations with the correct HTTP
 method and path (zero class-A mismatches). The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
@@ -25,7 +25,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29) |
+| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -135,6 +135,24 @@ does not express. Full list in appendix D.
     `{ items, totalCount, organisation }`. `POST /customers/delete` is a
     working alternate to `DELETE /customers/{id}` (409 `Cannot find customer`
     for a missing id). Verified 2026-08-17 on Demo testbaas. See #168 (E29).
+16. `GET /invoices/templates?languageCode=` requires a `LANGUAGE_*` dictionary
+    code (`LANGUAGE_EN` works; ISO `en`/`et` returns **404** empty).
+    `POST /invoices/templates` 409s `No enum in dao.Language for en` for ISO
+    codes. `DELETE` returns **204** and drops the row from the list, but
+    `GET /invoices/templates/{id}` may still return the deleted object.
+    Verified 2026-08-17 on Demo testbaas. See #169 (E30).
+17. `GET /invoices/new_number` requires `typeCode`. Bare `YYYY-MM-DD` 409s
+    `Could not parse date from: …`; `YYYY-MM-DDTHH:mm:ss` (no `Z`) works.
+    `erply_get_next_invoice_number` normalizes `YYYY-MM-DD` to
+    `YYYY-MM-DDT00:00:00`. `POST /invoices/new_number` accepts `YYYY-MM-DD`
+    and returns `exists` + `existingDocumentId`. Verified 2026-08-17 on
+    Demo testbaas. See #169 (E30).
+18. `GET /invoices/history` requires `documentId` (409 `Palun lisage
+    'document ID'`) and returns a JSON **array**.
+    `GET /invoices/parsed_invoice_info_validation` requires `documentType`
+    plus `year`+`month` (missing range 409 `Invalid date range`; missing
+    type 409 `Enum key is required for type dao.DocumentType`) and also
+    returns a JSON array. Verified 2026-08-17 on Demo testbaas. See #169 (E30).
 
 ## Cosmetic notes (no action)
 

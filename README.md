@@ -239,6 +239,29 @@ accept a comma-separated string or a number array.
 
 Opposite/split/partner-update bodies accept extra spec fields via passthrough. `erply_delete_invoice_via_post` is the POST alias of `erply_delete_invoice`. Destructive tools require an explicit id.
 
+#### Invoice templates / numbering / history
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_list_invoice_templates` | `GET /invoices/templates` | — |
+| `erply_get_invoice_template` | `GET /invoices/templates/{documentInfoId}` | `documentInfoId` |
+| `erply_create_invoice_template` | `POST /invoices/templates` | `documentName`, `languageCode` |
+| `erply_update_invoice_template` | `PUT /invoices/templates/{documentInfoId}` | `documentInfoId` |
+| `erply_delete_invoice_template` | `DELETE /invoices/templates/{documentInfoId}` | `documentInfoId` |
+| `erply_get_invoice_history` | `GET /invoices/history` | `documentId` |
+| `erply_get_next_invoice_number` | `GET /invoices/new_number` | `typeCode` |
+| `erply_check_invoice_number` | `POST /invoices/new_number` | `number` |
+| `erply_list_parsed_invoice_validations` | `GET /invoices/parsed_invoice_info_validation` | `documentType`, `year`, `month` |
+
+`languageCode` must be a `LANGUAGE_*` dictionary code (`LANGUAGE_EN`). ISO
+`en`/`et` 404s on list and 409s on create. After delete, GET may still return
+the object; the list no longer includes it.
+
+`erply_get_next_invoice_number` sends `date` as `YYYY-MM-DDTHH:mm:ss` (bare
+`YYYY-MM-DD` 409s). `erply_check_invoice_number` accepts `YYYY-MM-DD` and
+returns `exists` + `existingDocumentId`. History and parsed-validation GETs
+return a JSON array, not a list envelope.
+
 ### Payments
 
 | Tool | API | Required |

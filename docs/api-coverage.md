@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-17 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (134 tools).
+Generated 2026-08-17 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (144 tools).
 
-- **Covered:** 135 operations
-- **Gap (tracked as GitLab issues):** 205 operations
+- **Covered:** 144 operations
+- **Gap (tracked as GitLab issues):** 196 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -160,13 +160,13 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/invoices/email/simple` | covered: `erply_send_invoice_email` |
 | `POST` | `/invoices/forward_to_user` | covered: `erply_forward_invoice_to_user` |
 | `GET` | `/invoices/get_single` | skipped (GoERP `get_single` alias / base list) |
-| `GET` | `/invoices/history` | gap: E30 #169 |
+| `GET` | `/invoices/history` | covered: `erply_get_invoice_history` |
 | `POST` | `/invoices/import/file` | gap: E32 #171 |
 | `POST` | `/invoices/import/formsubmit` | gap: E32 #171 |
-| `GET` | `/invoices/new_number` | gap: E30 #169 |
-| `POST` | `/invoices/new_number` | gap: E30 #169 |
+| `GET` | `/invoices/new_number` | covered: `erply_get_next_invoice_number` |
+| `POST` | `/invoices/new_number` | covered: `erply_check_invoice_number` |
 | `POST` | `/invoices/override` | covered: `erply_override_invoice_fields` |
-| `GET` | `/invoices/parsed_invoice_info_validation` | gap: E30 #169 |
+| `GET` | `/invoices/parsed_invoice_info_validation` | covered: `erply_list_parsed_invoice_validations` |
 | `DELETE` | `/invoices/partner` | covered: `erply_delete_partner_invoice` |
 | `GET` | `/invoices/partner` | covered: `erply_list_partner_invoices` |
 | `POST` | `/invoices/partner` | covered: `erply_create_partner_invoice` |
@@ -183,11 +183,11 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/invoices/send_erply_invoices` | gap: E32 #171 |
 | `POST` | `/invoices/split_rows` | covered: `erply_split_invoice_rows` |
 | `PUT` | `/invoices/split_rows/{documentId}` | covered: `erply_update_invoice_split_rows` |
-| `GET` | `/invoices/templates` | gap: E30 #169 |
-| `POST` | `/invoices/templates` | gap: E30 #169 |
-| `DELETE` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
-| `GET` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
-| `PUT` | `/invoices/templates/{documentInfoId}` | gap: E30 #169 |
+| `GET` | `/invoices/templates` | covered: `erply_list_invoice_templates` |
+| `POST` | `/invoices/templates` | covered: `erply_create_invoice_template` |
+| `DELETE` | `/invoices/templates/{documentInfoId}` | covered: `erply_delete_invoice_template` |
+| `GET` | `/invoices/templates/{documentInfoId}` | covered: `erply_get_invoice_template` |
+| `PUT` | `/invoices/templates/{documentInfoId}` | covered: `erply_update_invoice_template`
 | `GET` | `/invoices/templates/get_single` | skipped (GoERP `get_single` alias / base list) |
 | `POST` | `/invoices/use_prepayment` | covered: `erply_use_invoice_prepayment` |
 | `POST` | `/messages/send_sms` | gap: E46 #185 |

@@ -82,6 +82,15 @@ describe("buildAllTools", () => {
     expect(tools.erply_delete_partner_invoice).toBeDefined();
     expect(tools.erply_update_partner_invoice).toBeDefined();
     expect(tools.erply_delete_invoice_row).toBeDefined();
+    expect(tools.erply_list_invoice_templates).toBeDefined();
+    expect(tools.erply_get_invoice_template).toBeDefined();
+    expect(tools.erply_create_invoice_template).toBeDefined();
+    expect(tools.erply_update_invoice_template).toBeDefined();
+    expect(tools.erply_delete_invoice_template).toBeDefined();
+    expect(tools.erply_get_invoice_history).toBeDefined();
+    expect(tools.erply_get_next_invoice_number).toBeDefined();
+    expect(tools.erply_check_invoice_number).toBeDefined();
+    expect(tools.erply_list_parsed_invoice_validations).toBeDefined();
     expect(tools.erply_list_payments).toBeDefined();
     expect(tools.erply_create_payment).toBeDefined();
     expect(tools.erply_update_payment).toBeDefined();
