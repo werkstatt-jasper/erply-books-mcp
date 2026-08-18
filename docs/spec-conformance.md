@@ -11,7 +11,7 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 150 tools call real spec operations with the correct HTTP
+**Headline result:** all 155 tools call real spec operations with the correct HTTP
 method and path (zero class-A mismatches). The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
@@ -22,10 +22,10 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | A | Method/path not in spec | 0 | — |
 | B | Spec query param not exposed by tool | 213 | intentional MVP scoping; high-value subset tracked in [#188 (E49)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/188) |
 | C | Tool param absent from spec | 24 | all explained (see below) |
-| D | Tool stricter than spec (tool requires, spec optional) | 62 | deliberate policy (see below) |
+| D | Tool stricter than spec (tool requires, spec optional) | 66 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30); items 19–20 in #171 (E32) |
+| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30); items 19–20 in #171 (E32); item 21 in #172 (E33) |
 
 ## C-class details (tool params absent from spec) — all explained
 
@@ -173,6 +173,13 @@ does not express. Full list in appendix D.
     even for a nonexistent `ids` value (no existence check). A real
     document hash + `documentId` on `POST /invoices/email/{hash}/{documentId}`
     **does send**. Verified 2026-08-18 on Demo testbaas. See #171 (E32).
+21. `GET /projects/groups` returns the standard list envelope. Create
+    (`POST /projects/groups`, `name` required, `id: 0`) and delete
+    (`DELETE /projects/groups/{projectId}`) work on Demo; a second delete
+    409s. Path param is named `projectId` and is the group id.
+    `POST /projects/delete` is the GoERP alias of `DELETE /projects/{id}`
+    and 409s for a missing id. Verified 2026-08-18 on Demo testbaas. See
+    #172 (E33).
 
 ## Cosmetic notes (no action)
 
@@ -238,6 +245,10 @@ The full per-tool tables follow below.
 | `erply_list_payments` | dateFrom, dateTo |
 | `erply_create_payment` | opDate, sumPaid |
 | `erply_create_project` | name |
+| `erply_create_project_group` | name |
+| `erply_update_project_group` | projectId |
+| `erply_delete_project_group` | projectId |
+| `erply_delete_project_via_post` | id |
 | `erply_balance_sheet` | dateFrom, dateTo |
 | `erply_income_sheet` | dateFrom, dateTo |
 | `erply_aged_receivables` | dateFrom, dateTo |
@@ -286,6 +297,8 @@ The full per-tool tables follow below.
 | `erply_update_payment` | `APIPaymentInfo` | 9/29 | id, transactionIdentifier, transactionEntryId, sumWithVat, customerName, number, archivingId, code, badDebt, partnerPaymentId, originalSum, partnerDocumentId, imported, documentStatusTypeCode, statusChangeDatetime, currencyRate, projects, projectId, entityName, parentPaymentId |
 | `erply_create_project` | `APIProjectInfo` | 9/12 | id, organisationId, projectGroupName |
 | `erply_update_project` | `APIProjectInfo` | 9/12 | id, organisationId, projectGroupName |
+| `erply_create_project_group` | `APIProjectGroupInfo` | 2/3 | id |
+| `erply_update_project_group` | `APIProjectGroupInfo` | 2/3 | id |
 | `erply_create_tax_rate` | `APITaxRateInfo` | 18/20 | id, organisationId |
 | `erply_update_tax_rate` | `APITaxRateInfo` | 18/20 | id, organisationId |
 | `erply_create_transaction_entry` | `APITransactionEntryInfo` | 10/13 | id, projects, history |

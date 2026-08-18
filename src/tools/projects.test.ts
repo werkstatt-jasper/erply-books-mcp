@@ -137,3 +137,129 @@ describe("erply_delete_project", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("erply_list_project_groups", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createProjectTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createProjectTools(client);
+  });
+
+  it("GETs /projects/groups and unwraps the envelope", async () => {
+    vi.mocked(client.get).mockResolvedValue(projectsFixture.group_list_page);
+    const result = await tools.erply_list_project_groups.handler({ start: 0, limit: 5 });
+    expect(client.get).toHaveBeenCalledWith("/projects/groups", { start: 0, limit: 5 });
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      totalCount: 1,
+      items: projectsFixture.group_list_page.items,
+    });
+  });
+
+  it("unwraps null items as empty list", async () => {
+    vi.mocked(client.get).mockResolvedValue(projectsFixture.list_empty);
+    const result = await tools.erply_list_project_groups.handler({});
+    const body = JSON.parse(result.content[0].text);
+    expect(body.items).toEqual([]);
+    expect(body.totalCount).toBe(0);
+  });
+});
+
+describe("erply_create_project_group", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createProjectTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createProjectTools(client);
+  });
+
+  it("requires name", async () => {
+    await expect(tools.erply_create_project_group.handler({})).rejects.toThrow(/name/);
+  });
+
+  it("POSTs with id: 0", async () => {
+    vi.mocked(client.post).mockResolvedValue(projectsFixture.group_create_response);
+    const result = await tools.erply_create_project_group.handler({
+      name: "Client work",
+      organisationId: 99,
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/projects/groups",
+      expect.objectContaining({ id: 0, name: "Client work", organisationId: 99 }),
+    );
+    expect(JSON.parse(result.content[0].text).id).toBe(7);
+  });
+});
+
+describe("erply_update_project_group", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createProjectTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createProjectTools(client);
+  });
+
+  it("requires projectId", async () => {
+    await expect(tools.erply_update_project_group.handler({ name: "X" })).rejects.toThrow(
+      /projectId/,
+    );
+  });
+
+  it("PUTs with path id winning over body id", async () => {
+    vi.mocked(client.put).mockResolvedValue(projectsFixture.group_update_response);
+    await tools.erply_update_project_group.handler({
+      projectId: 7,
+      name: "Client work updated",
+      id: 99,
+    });
+    expect(client.put).toHaveBeenCalledWith(
+      "/projects/groups/7",
+      expect.objectContaining({ id: 7, name: "Client work updated" }),
+    );
+  });
+});
+
+describe("erply_delete_project_group", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createProjectTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createProjectTools(client);
+  });
+
+  it("requires projectId", async () => {
+    await expect(tools.erply_delete_project_group.handler({})).rejects.toThrow(/projectId/);
+  });
+
+  it("DELETEs by id", async () => {
+    vi.mocked(client.delete).mockResolvedValue(undefined);
+    const result = await tools.erply_delete_project_group.handler({ projectId: 7 });
+    expect(client.delete).toHaveBeenCalledWith("/projects/groups/7");
+    expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
+  });
+});
+
+describe("erply_delete_project_via_post", () => {
+  let client: ErplyBooksClient;
+  let tools: ReturnType<typeof createProjectTools>;
+
+  beforeEach(() => {
+    client = createMockClient();
+    tools = createProjectTools(client);
+  });
+
+  it("requires id", async () => {
+    await expect(tools.erply_delete_project_via_post.handler({})).rejects.toThrow(/id/);
+  });
+
+  it("POSTs /projects/delete with id query", async () => {
+    vi.mocked(client.post).mockResolvedValue(undefined);
+    const result = await tools.erply_delete_project_via_post.handler({ id: 3 });
+    expect(client.post).toHaveBeenCalledWith("/projects/delete", undefined, { id: 3 });
+    expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
+  });
+});

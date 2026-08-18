@@ -14,3 +14,11 @@ export interface Project {
   syncErplyUsers?: boolean;
   [key: string]: unknown;
 }
+
+/** Project group row from `/projects/groups` (`APIProjectGroupInfo`). */
+export interface ProjectGroup {
+  id?: number;
+  organisationId?: number;
+  name?: string;
+  [key: string]: unknown;
+}
