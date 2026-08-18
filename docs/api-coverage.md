@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (150 tools).
+Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (155 tools).
 
-- **Covered:** 150 operations
-- **Gap (tracked as GitLab issues):** 190 operations
+- **Covered:** 155 operations
+- **Gap (tracked as GitLab issues):** 185 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -231,11 +231,11 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/projects` | covered: `erply_create_project` |
 | `DELETE` | `/projects/{projectId}` | covered: `erply_delete_project` |
 | `PUT` | `/projects/{projectId}` | covered: `erply_update_project` |
-| `POST` | `/projects/delete` | gap: E33 #172 |
-| `GET` | `/projects/groups` | gap: E33 #172 |
-| `POST` | `/projects/groups` | gap: E33 #172 |
-| `DELETE` | `/projects/groups/{projectId}` | gap: E33 #172 |
-| `PUT` | `/projects/groups/{projectId}` | gap: E33 #172 |
+| `POST` | `/projects/delete` | covered: `erply_delete_project_via_post` |
+| `GET` | `/projects/groups` | covered: `erply_list_project_groups` |
+| `POST` | `/projects/groups` | covered: `erply_create_project_group` |
+| `DELETE` | `/projects/groups/{projectId}` | covered: `erply_delete_project_group` |
+| `PUT` | `/projects/groups/{projectId}` | covered: `erply_update_project_group` |
 | `POST` | `/report_generator` | covered: `erply_run_custom_report` |
 | `GET` | `/report_generator/average_inventory_report` | gap: E35 #174 |
 | `GET` | `/report_generator/columns` | covered: `erply_list_custom_report_columns` |

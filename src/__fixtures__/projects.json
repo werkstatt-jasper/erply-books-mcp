@@ -19,5 +19,20 @@
     "id": 3,
     "name": "Website rebuild updated",
     "affirmed": true
+  },
+  "group_list_page": {
+    "items": [{ "id": 7, "name": "Client work", "organisationId": 99 }],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "group_create_response": {
+    "id": 7,
+    "name": "Client work",
+    "organisationId": 99
+  },
+  "group_update_response": {
+    "id": 7,
+    "name": "Client work updated",
+    "organisationId": 99
   }
 }

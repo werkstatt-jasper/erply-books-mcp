@@ -515,6 +515,11 @@ for this call; `Accept: application/json` yields HTTP 406.
 | `erply_create_project` | `POST /projects` | `name` |
 | `erply_update_project` | `PUT /projects/{projectId}` | `projectId` |
 | `erply_delete_project` | `DELETE /projects/{projectId}` | `projectId` |
+| `erply_delete_project_via_post` | `POST /projects/delete` | `id` |
+| `erply_list_project_groups` | `GET /projects/groups` | — |
+| `erply_create_project_group` | `POST /projects/groups` | `name` |
+| `erply_update_project_group` | `PUT /projects/groups/{projectId}` | `projectId` |
+| `erply_delete_project_group` | `DELETE /projects/groups/{projectId}` | `projectId` |
 
 Project create/update use body field `affirmed` (list filter remains `isAffirmed`). `/projects/groups` is not shipped yet.
 

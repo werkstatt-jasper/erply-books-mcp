@@ -144,6 +144,11 @@ describe("buildAllTools", () => {
     expect(tools.erply_create_project).toBeDefined();
     expect(tools.erply_update_project).toBeDefined();
     expect(tools.erply_delete_project).toBeDefined();
+    expect(tools.erply_list_project_groups).toBeDefined();
+    expect(tools.erply_create_project_group).toBeDefined();
+    expect(tools.erply_update_project_group).toBeDefined();
+    expect(tools.erply_delete_project_group).toBeDefined();
+    expect(tools.erply_delete_project_via_post).toBeDefined();
     expect(tools.erply_list_account_entries).toBeDefined();
     expect(tools.erply_list_transaction_entries).toBeDefined();
     expect(tools.erply_get_transaction_entry).toBeDefined();

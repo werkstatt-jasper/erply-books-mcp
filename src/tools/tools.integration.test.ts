@@ -380,6 +380,40 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     }
   });
 
+  it("project group extras succeed or return structured errors", async () => {
+    const extrasStatuses = [400, 403, 404, 405, 409, 500];
+    await expectOkOrApiError(
+      () => tools.erply_list_project_groups.handler({ start: 0, limit: 5 }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () => tools.erply_delete_project_via_post.handler({ id: 999999999 }),
+      extrasStatuses,
+    );
+
+    let projectId: number | undefined;
+    try {
+      const created = await tools.erply_create_project_group.handler({
+        name: `MCP E33 probe ${Date.now()}`,
+      });
+      const body = JSON.parse(created.content[0].text) as { id?: number };
+      projectId = body.id;
+      expect(typeof projectId).toBe("number");
+      await tools.erply_delete_project_group.handler({ projectId });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
+      expect(extrasStatuses).toContain((error as ErplyBooksApiError).httpStatus);
+    } finally {
+      if (projectId) {
+        try {
+          await tools.erply_delete_project_group.handler({ projectId });
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    }
+  });
+
   it("erply_list_attachments accepts Purchase Inbox filters or structured error", async () => {
     try {
       const result = await tools.erply_list_attachments.handler({
