@@ -1,0 +1,16 @@
+{
+  "email_response": {
+    "ok": true,
+    "hash": "abc123",
+    "receiver": "billing@example.com"
+  },
+  "send_erply_response": {
+    "ok": true,
+    "sent": 1
+  },
+  "send_erply_bulk_response": {
+    "ok": true,
+    "sent": 2
+  },
+  "import_html": "<html><body>preview ok</body></html>"
+}

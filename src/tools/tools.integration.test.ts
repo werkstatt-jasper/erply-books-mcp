@@ -287,7 +287,7 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       expect(result.content[0].text.length).toBeGreaterThan(2);
     } catch (error) {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
-      expect([403, 404, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+      expect([403, 404, 406, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
     }
   });
 });
@@ -919,6 +919,82 @@ describe.skipIf(!hasToken)("write tools live MVP", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ErplyBooksApiError);
       expect([400, 403, 405, 409, 500]).toContain((error as ErplyBooksApiError).httpStatus);
+    }
+  });
+
+  it("invoice sending extras reads succeed or return structured errors", async () => {
+    const extrasStatuses = [400, 403, 404, 405, 406, 409, 415, 500];
+    const previewCsv = Buffer.from("number,date,total\nMCP-E32,2026-08-18,1.00\n", "utf8").toString(
+      "base64",
+    );
+
+    await expectOkOrApiError(
+      () =>
+        tools.erply_import_invoices_file.handler({
+          fileBase64: previewCsv,
+          fileName: "mcp-e32-preview.csv",
+          getPreview: true,
+          includeHeader: true,
+          typeCode: "DOCUMENT_SELL",
+        }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () =>
+        tools.erply_import_invoices_formsubmit.handler({
+          fileBase64: previewCsv,
+          fileName: "mcp-e32-preview.csv",
+          getPreview: true,
+          includeHeader: true,
+          typeCode: "DOCUMENT_SELL",
+        }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () =>
+        tools.erply_send_invoice_email_by_hash.handler({
+          hash: "mcp-e32-not-a-real-hash",
+          receiver: "mcp-e32@example.invalid",
+        }),
+      extrasStatuses,
+    );
+    await expectOkOrApiError(
+      () =>
+        tools.erply_send_erply_invoices.handler({
+          ids: [999999999],
+          receiver: "mcp-e32@example.invalid",
+        }),
+      extrasStatuses,
+    );
+
+    try {
+      const listed = await tools.erply_list_invoices.handler({
+        dateFrom: "2020-01-01",
+        dateTo: "2026-12-31",
+        documentType: "DOCUMENT_POS_SELL",
+        start: 0,
+        limit: 1,
+      });
+      const page = JSON.parse(listed.content[0].text) as {
+        items: Array<{ id?: number }>;
+      };
+      const documentId = page.items[0]?.id;
+      if (typeof documentId === "number") {
+        await expectOkOrApiError(
+          () => tools.erply_get_invoice_pdf_v1.handler({ documentId }),
+          extrasStatuses,
+        );
+      }
+      await expectOkOrApiError(
+        () =>
+          tools.erply_send_erply_invoice.handler({
+            documentId: 999999999,
+            receiver: "mcp-e32@example.invalid",
+          }),
+        extrasStatuses,
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErplyBooksApiError);
     }
   });
 

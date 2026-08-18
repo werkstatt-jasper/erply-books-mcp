@@ -91,6 +91,12 @@ describe("buildAllTools", () => {
     expect(tools.erply_get_next_invoice_number).toBeDefined();
     expect(tools.erply_check_invoice_number).toBeDefined();
     expect(tools.erply_list_parsed_invoice_validations).toBeDefined();
+    expect(tools.erply_get_invoice_pdf_v1).toBeDefined();
+    expect(tools.erply_send_invoice_email_by_hash).toBeDefined();
+    expect(tools.erply_import_invoices_file).toBeDefined();
+    expect(tools.erply_import_invoices_formsubmit).toBeDefined();
+    expect(tools.erply_send_erply_invoice).toBeDefined();
+    expect(tools.erply_send_erply_invoices).toBeDefined();
     expect(tools.erply_list_payments).toBeDefined();
     expect(tools.erply_create_payment).toBeDefined();
     expect(tools.erply_update_payment).toBeDefined();
