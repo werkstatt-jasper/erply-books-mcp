@@ -11,7 +11,7 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 144 tools call real spec operations with the correct HTTP
+**Headline result:** all 150 tools call real spec operations with the correct HTTP
 method and path (zero class-A mismatches). The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
@@ -22,16 +22,17 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | A | Method/path not in spec | 0 | — |
 | B | Spec query param not exposed by tool | 213 | intentional MVP scoping; high-value subset tracked in [#188 (E49)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/188) |
 | C | Tool param absent from spec | 24 | all explained (see below) |
-| D | Tool stricter than spec (tool requires, spec optional) | 56 | deliberate policy (see below) |
+| D | Tool stricter than spec (tool requires, spec optional) | 62 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
 | F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
-| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30) |
+| G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30); items 19–20 in #171 (E32) |
 
 ## C-class details (tool params absent from spec) — all explained
 
 - `fileBase64` / `fileName` / `files` on upload tools (`erply_create_attachment`,
   `erply_create_attachment_simple`, `erply_create_digi_*`, `erply_submit_kyc*`,
-  `erply_create_purchase_order_from_attachment`, `erply_bank_import*`): MCP has no
+  `erply_create_purchase_order_from_attachment`, `erply_bank_import*`,
+  `erply_import_invoices_file`, `erply_import_invoices_formsubmit`): MCP has no
   file upload, so tools accept base64 and convert to the multipart form the spec
   models. Intentional transport adaptation.
 - `erply_bank_import_v2` (`attachmentId`, `getEverything`, `getMissing`,
@@ -157,6 +158,21 @@ does not express. Full list in appendix D.
     plus `year`+`month` (missing range 409 `Invalid date range`; missing
     type 409 `Enum key is required for type dao.DocumentType`) and also
     returns a JSON array. Verified 2026-08-17 on Demo testbaas. See #169 (E30).
+19. `GET /invoices/pdf/{documentId}` (v1) and `GET /invoices/pdf/v2/{id}`
+    both 409 on Demo testbaas for `DOCUMENT_POS_SELL` (plan/module). When
+    the call succeeds, v1 is binary `application/pdf` and
+    `erply_get_invoice_pdf_v1` wraps it via `bytesToolResult`. Prefer v2
+    JSON (`erply_get_invoice_pdf`). Verified 2026-08-18 on Demo testbaas.
+    See #171 (E32).
+20. `POST /invoices/import/file` and `POST /invoices/import/formsubmit`
+    409 on Demo with `getPreview=true` (plan/module or CSV mapping). Both
+    return `text/html` on success; the tools wrap
+    `{ contentType: "text/html", body }`. Fake-hash
+    `POST /invoices/email/{hash}` 409s. `POST /invoices/send_erply_invoice/{id}`
+    409s for a missing id. `POST /invoices/send_erply_invoices` returns 200
+    even for a nonexistent `ids` value (no existence check). A real
+    document hash + `documentId` on `POST /invoices/email/{hash}/{documentId}`
+    **does send**. Verified 2026-08-18 on Demo testbaas. See #171 (E32).
 
 ## Cosmetic notes (no action)
 
@@ -203,6 +219,12 @@ The full per-tool tables follow below.
 | `erply_delete_attachment_via_post` | id |
 | `erply_create_customer` | name |
 | `erply_send_invoice_email` | documentId, receiver |
+| `erply_get_invoice_pdf_v1` | documentId |
+| `erply_send_invoice_email_by_hash` | hash |
+| `erply_import_invoices_file` | fileBase64, fileName |
+| `erply_import_invoices_formsubmit` | fileBase64, fileName |
+| `erply_send_erply_invoice` | documentId |
+| `erply_send_erply_invoices` | ids or partnerDocumentIds |
 | `erply_get_einvoice` | documentIds |
 | `erply_send_einvoices` | documentIds |
 | `erply_confirm_invoices` | ids |
@@ -246,6 +268,10 @@ The full per-tool tables follow below.
 | `erply_create_customer` | `APICustomerInfo` | 10/37 | id, legalCountryCode, legalPostcode, deadlineDays, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |
 | `erply_update_customer` | `APICustomerInfo` | 11/37 | id, legalCountryCode, legalPostcode, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |
 | `erply_send_invoice_email` | `APIEmailInfo` | 6/7 | id |
+| `erply_send_invoice_email_by_hash` | `APIEmailInfo` | 6/7 | id |
+| `erply_import_invoices_formsubmit` | `APIAttachmentInfo` | 2/21 | id, documentId, attachmentId, partnerDocumentId, attributeId, folder, typeCode, number, contactName, expenseType, netTotal, taxSum, taxRateId, total, date, description, organisationId, exceptionInfo, attribute |
+| `erply_send_erply_invoice` | `APIEmailInfo` | 6/7 | id |
+| `erply_send_erply_invoices` | `APIEmailInfo` | 6/7 | id |
 | `erply_create_partner_invoice` | `APIPartnerInvoiceInfo` | 9/50 | id, customerName, discountPercent, languageCode, vatPercent, referenceNumber, deadlineDate, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, projects, projectNames, payments, attachments, payer, payerName, payerCustomerId, documentConnections, username, attributes, history |
 | `erply_create_recurring_invoice` | `APIRecurringInvoiceInfo` | 9/11 | id, articles |
 | `erply_update_recurring_invoice` | `APIRecurringInvoiceInfo` | 9/11 | id, articles |

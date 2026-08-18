@@ -213,8 +213,26 @@ a list envelope `{ items, totalCount, organisation }`.
 
 `documentType` / `typeCode` use [API Dictionary](https://www.erplybooks.com/api-dictionary/)
 codes (e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`). Optional query `registrationCode` on
-create/update/delete. PDF uses **v2 JSON** (not binary `/invoices/pdf/{id}`). `documentIds` / `ids`
-accept a comma-separated string or a number array.
+create/update/delete. Prefer **v2 JSON** PDF (`erply_get_invoice_pdf`); v1 returns binary
+bytes as base64. `documentIds` / `ids` accept a comma-separated string or a number array.
+
+#### Invoice sending / import
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_get_invoice_pdf_v1` | `GET /invoices/pdf/{documentId}` | `documentId` |
+| `erply_send_invoice_email_by_hash` | `POST /invoices/email/{hash}` or `/{hash}/{documentId}` | `hash` |
+| `erply_import_invoices_file` | `POST /invoices/import/file` | `fileBase64`, `fileName` |
+| `erply_import_invoices_formsubmit` | `POST /invoices/import/formsubmit` | `fileBase64`, `fileName` |
+| `erply_send_erply_invoice` | `POST /invoices/send_erply_invoice/{documentId}` | `documentId` |
+| `erply_send_erply_invoices` | `POST /invoices/send_erply_invoices` | `ids` or `partnerDocumentIds` |
+
+CSV import query options include `encoding`, `dateFormatCode`, `separatorField`,
+`decimalSeparator`, `useDot`, `detectDateFormatAutomatically`, `projectId`,
+`type`, `typeCode`, `opDate`, `order`, `includeHeader`, `syncWarehouse`, and
+`getPreview`. Prefer `getPreview=true` until the mapping looks correct. Import
+responses are `text/html`. `fileBase64`/`fileName` map to the multipart `file`
+field (file) or `filename`/`base64` (formsubmit).
 
 #### Invoice workflow
 

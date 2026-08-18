@@ -15,6 +15,7 @@ import { createCustomerExtraTools } from "./tools/customers-extras.js";
 import { createDictionaryTools } from "./tools/dictionaries.js";
 import { createInvoiceTools } from "./tools/invoices.js";
 import { createInvoiceExtraTools } from "./tools/invoices-extras.js";
+import { createInvoiceSendingTools } from "./tools/invoices-sending.js";
 import { createInvoiceTemplateTools } from "./tools/invoices-templates.js";
 import { createInvoiceWorkflowTools } from "./tools/invoices-workflow.js";
 import { createOrganisationTools } from "./tools/organisation.js";
@@ -52,6 +53,7 @@ export function buildAllTools(client: ErplyBooksClient): ToolRecord {
     ...createInvoiceExtraTools(client),
     ...createInvoiceWorkflowTools(client),
     ...createInvoiceTemplateTools(client),
+    ...createInvoiceSendingTools(client),
     ...createPaymentTools(client),
     ...createPaymentBankTools(client),
     ...createAttachmentTools(client),
