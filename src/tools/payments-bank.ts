@@ -9,6 +9,7 @@ import type {
 } from "../types/payments.js";
 import {
   optionalBoolean,
+  optionalNonNegativeInt,
   optionalNumber,
   optionalPositiveInt,
   optionalString,
@@ -51,31 +52,42 @@ const linkedInvoiceInfoItemSchema = z
   })
   .passthrough();
 
+function isPresentId(value: number | undefined): boolean {
+  return value !== undefined && value > 0;
+}
+
 const connectPaymentSchema = z
   .object({
     id: optionalPositiveInt,
-    paymentId: optionalPositiveInt,
-    pendingPaymentId: optionalPositiveInt,
-    invoiceId: optionalPositiveInt,
+    /** Real payment id, or 0 on unmatched pending rows. */
+    paymentId: optionalNonNegativeInt,
+    /** Pending-feed id; 0 means none. */
+    pendingPaymentId: optionalNonNegativeInt,
+    invoiceId: optionalNonNegativeInt,
     invoiceNumber: optionalString,
     linkedInvoiceInfo: z.array(linkedInvoiceInfoItemSchema).optional(),
-    customerId: optionalPositiveInt,
+    customerId: optionalNonNegativeInt,
     amount: optionalNumber,
     date: optionalString,
     typeCode: optionalString,
+    debit: optionalString,
+    debitAccountId: optionalPositiveInt,
+    creditAccountId: optionalPositiveInt,
+    currencyCode: optionalString,
+    reconciled: optionalBoolean,
     referenceNumber: optionalString,
     description: optionalString,
   })
   .passthrough()
   .refine(
-    (v) => v.id !== undefined || v.paymentId !== undefined || v.pendingPaymentId !== undefined,
+    (v) => isPresentId(v.id) || isPresentId(v.paymentId) || isPresentId(v.pendingPaymentId),
     "id, paymentId, or pendingPaymentId is required",
   )
   .refine(
     (v) =>
       (v.linkedInvoiceInfo !== undefined && v.linkedInvoiceInfo.length > 0) ||
-      v.invoiceId !== undefined ||
-      v.invoiceNumber !== undefined,
+      isPresentId(v.invoiceId) ||
+      (v.invoiceNumber !== undefined && v.invoiceNumber.length > 0),
     "linkedInvoiceInfo, invoiceId, or invoiceNumber is required",
   );
 
@@ -87,10 +99,9 @@ function connectPaymentBody(
     return { ...rest, linkedInvoiceInfo };
   }
   const sumPaid = args.amount;
-  const link =
-    invoiceId !== undefined
-      ? { invoiceId, ...(sumPaid !== undefined ? { sumPaid } : {}) }
-      : { number: invoiceNumber as string, ...(sumPaid !== undefined ? { sumPaid } : {}) };
+  const link = isPresentId(invoiceId)
+    ? { invoiceId, ...(sumPaid !== undefined ? { sumPaid } : {}) }
+    : { number: invoiceNumber as string, ...(sumPaid !== undefined ? { sumPaid } : {}) };
   return { ...rest, linkedInvoiceInfo: [link] };
 }
 
@@ -216,7 +227,9 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
   return {
     erply_import_payment: {
       description:
-        "Create a bank/payment import row (POST /payments/import). Requires date, amount, and typeCode (e.g. MONEY_OUT_TRANSACTION). Sends id: 0. Use for already-matched bank lines; pair with erply_connect_payment_with_documents and erply_save_all_payment_imports. Extra APIPaymentImportInfo fields may be passed through.",
+        "Create a bank/payment import row (POST /payments/import). Requires date, amount, and typeCode (e.g. MONEY_IN_TRANSACTION). Sends id: 0. " +
+        "Typically returns a real paymentId (not a pending-feed row). Connecting that row is a match preview only; " +
+        "erply_save_all_payment_imports does not complete reconciliation. Extra APIPaymentImportInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -257,8 +270,10 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_save_all_payment_imports: {
       description:
-        "Batch-save payment import rows (POST /payments/save_all_payments). Body is { items: [...] } of APIPaymentImportInfo objects. " +
-        "Updates import row fields only; it does not create a linked payment or change invoice totals. Use erply_update_payment with invoiceId for that.",
+        "Batch-save payment import row metadata (POST /payments/save_all_payments). Body is { items: [...] } of APIPaymentImportInfo objects. " +
+        "HTTP 200 can still include a per-item errorMessage (on Demo testbaas, connect responses often return " +
+        "'debit and credit account ei saa olla tühi' even when debitAccountId/creditAccountId are set). " +
+        "Does not persist a Bank Import match or change invoice sumPaid/sumLeftToPay. Callers must re-list pending rows and GET the invoice to verify.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -279,11 +294,12 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
 
     erply_connect_payment_with_documents: {
       description:
-        "Link a bank-import/pending payment to invoice(s) (POST /payments/connect_payment_with_documents). " +
-        "Requires a payment identifier (id = pending import row id, paymentId, or pendingPaymentId) and documents in linkedInvoiceInfo " +
+        "Calculate a Bank Import match preview (POST /payments/connect_payment_with_documents). " +
+        "Requires a payment identifier (id = pending import row id, a real paymentId, or pendingPaymentId) and documents in linkedInvoiceInfo " +
         "(or invoiceId / invoiceNumber, which are mapped into that array — do not send them as top-level API fields). " +
-        "Send the pending-row fields from erply_list_pending_payments (date, typeCode, debit, customerId, debitAccountId, creditAccountId, amount) together with the link; a sparse body can 500. " +
-        "A successful call sets importValidated and fills linkedInvoiceInfo. It does not reliably change invoice sumPaid/sumLeftToPay; use erply_update_payment with invoiceId to apply balances.",
+        "Send the full pending-row fields from erply_list_pending_payments (date, typeCode, debit, customerId, debitAccountId, creditAccountId, currencyCode, amount, reconciled) together with the link; a sparse body can 500. " +
+        "HTTP 200 with importValidated true / filled linkedInvoiceInfo is a response-body preview only on Demo testbaas: the pending feed, invoice sumPaid/sumLeftToPay, and GET /payments stay unchanged. " +
+        "pendingPaymentId is not a real payment id and cannot be passed to erply_update_payment.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -293,9 +309,14 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
           },
           paymentId: {
             type: "number",
-            description: "Payment id (same as pendingPaymentId for pending rows)",
+            description:
+              "Real payment id when one exists. On unmatched pending rows this is 0 — send pendingPaymentId separately.",
           },
-          pendingPaymentId: { type: "number", description: "Pending payment id" },
+          pendingPaymentId: {
+            type: "number",
+            description:
+              "Pending-feed identifier. Not a real payment id; erply_update_payment rejects it with 409.",
+          },
           invoiceId: {
             type: "number",
             description: "Invoice/document id; mapped into linkedInvoiceInfo (not sent top-level)",
@@ -321,6 +342,21 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
           amount: { type: "number" },
           date: { type: "string" },
           typeCode: { type: "string" },
+          debit: {
+            type: "string",
+            description: "D or C (debit/credit side); required to avoid sparse-body 500",
+          },
+          debitAccountId: {
+            type: "number",
+            description: "Debit account id from the pending row; required to avoid sparse-body 500",
+          },
+          creditAccountId: {
+            type: "number",
+            description:
+              "Credit account id from the pending row; required to avoid sparse-body 500",
+          },
+          currencyCode: { type: "string" },
+          reconciled: { type: "boolean" },
           referenceNumber: { type: "string" },
           description: { type: "string" },
         },
@@ -338,7 +374,8 @@ export function createPaymentBankTools(client: ErplyBooksClient) {
     erply_list_pending_payments: {
       description:
         "List unmatched bank-import rows (GET /payments/pending_payments) — the Bank Import UI feed. " +
-        "Rows typically have invoiceId 0, customerId 0, and importValidated false until connected. " +
+        "Rows typically have invoiceId 0, customerId 0, paymentId 0, and importValidated false. " +
+        "A connect HTTP 200 does not remove them from this feed on Demo testbaas. " +
         "This is the list surface for unmatched imports; GET /payments/import does not exist (405). " +
         "erply_list_payments returns confirmed payments only and will look empty for this use case. " +
         "Optional filters: dateFrom, dateTo (YYYY-MM-DD coerced to T00:00:00 / T23:59:59; ISO datetimes such as 2020-01-01T00:00:00 pass through; dd.MM.yyyy 409s Could not parse date), " +

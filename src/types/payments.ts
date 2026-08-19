@@ -30,7 +30,9 @@ export interface LinkedPaymentImportInfo {
 /** Payment import / bank-match row from `POST /payments/import` and related endpoints. */
 export interface PaymentImport {
   id?: number;
+  /** Real payment id. `0` on unmatched pending-feed rows. */
   paymentId?: number;
+  /** Pending-feed identifier. Not a payment id; cannot be used with PUT /payments/{id}. */
   pendingPaymentId?: number;
   date?: string;
   amount?: number;
@@ -54,10 +56,21 @@ export interface PaymentImport {
 export interface ConnectPaymentWithDocumentsRequest {
   /** Pending import row id (`/payments/pending_payments` → `id`). */
   id?: number;
-  /** Payment id (same value as `pendingPaymentId` on pending rows). */
+  /**
+   * Real payment id when one exists. On unmatched pending rows this is 0;
+   * send the pending-feed id in `pendingPaymentId`, not in this field.
+   */
   paymentId?: number;
-  /** Pending payment id. */
+  /**
+   * Pending-feed identifier. Not a real payment id; PUT /payments/{id} with
+   * this value 409s "Ei leidnud 'payment'".
+   */
   pendingPaymentId?: number;
+  debit?: string;
+  debitAccountId?: number;
+  creditAccountId?: number;
+  currencyCode?: string;
+  reconciled?: boolean;
   /** Invoice or document id to link (mapped into `linkedInvoiceInfo` by the tool). */
   invoiceId?: number;
   /** Invoice or document number to link (mapped into `linkedInvoiceInfo.number`). */

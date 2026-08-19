@@ -79,12 +79,22 @@ does not express. Full list in appendix D.
    (2026-08-17, Demo testbaas). See #168 (E29).
 4. `POST /payments/connect_payment_with_documents`: documents must be in
    `linkedInvoiceInfo` (not top-level `invoiceId`); otherwise 409 "The list of
-   documents is empty". Sparse bodies can 500 — send pending-row fields. Connect
-   sets `importValidated` but does not change invoice `sumPaid`/`sumLeftToPay`
-   on the demo org; use `erply_update_payment` to apply balances (#190 / E51,
-   related #189 / E50).
-5. `POST /payments/save_all_payments`: does not link payments to invoices (only
-   updates import rows) — see README.
+   documents is empty". Sparse bodies can 500 — send pending-row fields
+   (`debit`, `debitAccountId`, `creditAccountId`, `currencyCode`, `reconciled`,
+   plus date/typeCode/customerId/amount). HTTP 200 with `importValidated: true`
+   is a **response-body preview only** on Demo testbaas: the pending feed,
+   invoice `sumPaid`/`sumLeftToPay`, and `GET /payments` stay unchanged.
+   `pendingPaymentId` is not a payment id; `erply_update_payment` requires a
+   real `paymentId` and 409s pending ids. Tenant "Save payments from bank
+   import automatically" is enabled on Demo testbaas (confirmed 2026-08-19)
+   and does not make connect persist. Persistence postconditions: pending row
+   gone/validated, invoice balances change, confirmed payment on GET /payments.
+   #190 / E51; related #189 / E50.
+5. `POST /payments/save_all_payments`: HTTP 200 can include per-item
+   `errorMessage` (`debit and credit account ei saa olla tühi` even when
+   debit/credit account ids are set). Does not persist a Bank Import match
+   or change invoice totals. Callers must re-list pending rows and GET the
+   invoice. See README.
 6. `POST /payments/bank_import/v2`: undocumented in swagger (see C-class).
 7. PUT full-replace semantics: prose for `/invoices` says "All previous data is
    deleted and replaced" — update-tool descriptions should warn that `rows` must
@@ -290,7 +300,7 @@ The full per-tool tables follow below.
 | `erply_update_invoice` | `APIInvoiceInfo` | 7/42 | id, customerName, discountPercent, languageCode, vatPercent, referenceNumber, deadlineDate, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, partnerDocumentId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, payments, attachments, customer, history |
 | `erply_import_payment` | `APIPaymentImportInfo` | 16/51 | id, paymentId, archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, beneficiaryRemitterId, employeeId, importValidated, category, checkNumber, linkedInvoiceInfo, linkedDescription, invoiceSum, transactionEntryId, pendingChequePaymentId, projects, partnerAccountId, currencyRate, taxRateId, vatPercent, yellow, oldImportDetails, code, parentPaymentId, activityItems, reconciledItems, pendingPaymentId, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
 | `erply_save_all_payment_imports` | `APIPaymentImportListInfo` | 1/1 | — |
-| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 12/51 | archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, debit, currencyCode, beneficiaryRemitterId, employeeId, debitAccountId, creditAccountId, importValidated, category, checkNumber, linkedDescription, invoiceSum, transactionEntryId, findCustomerMatch, pendingChequePaymentId, projectId, projects, partnerAccountId, currencyRate, calculateCurrencyRate, taxRateId, vatPercent, yellow, oldImportDetails, reconciled, code, parentPaymentId, activityItems, reconciledItems, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
+| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 17/51 | archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, beneficiaryRemitterId, employeeId, importValidated, category, checkNumber, linkedDescription, invoiceSum, transactionEntryId, findCustomerMatch, pendingChequePaymentId, projectId, projects, partnerAccountId, currencyRate, calculateCurrencyRate, taxRateId, vatPercent, yellow, oldImportDetails, code, parentPaymentId, activityItems, reconciledItems, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
 | `erply_sepa_payments` | `APIPaymentImportFileInfo` | 11/25 | id, invoiceCustomers, memos, customerNames, addRefNrSeparately, erplyClientCode, erplySessionKey, useBban, paymentUrgency, chargesBearer, invoiceDiscounts, doNotAdd, doNotAddSameContactDocuments, code2fa |
 | `erply_bank_import_v2` | `APIBankImportInfo` | 7/12 | id, apiAttachmentInfo, everything, missing, separator |
 | `erply_create_payment` | `APIPaymentInfo` | 11/29 | id, transactionIdentifier, transactionEntryId, sumWithVat, customerName, number, archivingId, code, badDebt, partnerPaymentId, partnerDocumentId, imported, documentStatusTypeCode, statusChangeDatetime, currencyRate, projects, entityName, parentPaymentId |

@@ -18,6 +18,10 @@ describe("erply_import_payment", () => {
     await expect(tools.erply_import_payment.handler({})).rejects.toThrow(/date|amount|typeCode/);
   });
 
+  it("does not claim save_all completes reconciliation", () => {
+    expect(tools.erply_import_payment.description).toMatch(/does not complete reconciliation/);
+  });
+
   it("POSTs with id: 0", async () => {
     vi.mocked(client.post).mockResolvedValue(paymentsFixture.import_response);
     const result = await tools.erply_import_payment.handler({
@@ -57,14 +61,31 @@ describe("erply_save_all_payment_imports", () => {
     );
   });
 
-  it("POSTs items envelope", async () => {
-    vi.mocked(client.post).mockResolvedValue(paymentsFixture.save_all_response);
-    await tools.erply_save_all_payment_imports.handler({
-      items: [{ id: 501, amount: 500 }],
+  it("warns that HTTP 200 can include per-item errorMessage", () => {
+    expect(tools.erply_save_all_payment_imports.description).toMatch(/errorMessage/);
+    expect(tools.erply_save_all_payment_imports.description).toMatch(/re-list/);
+  });
+
+  it("POSTs items envelope and returns per-item errorMessage unchanged", async () => {
+    vi.mocked(client.post).mockResolvedValue({
+      items: [
+        {
+          id: 501,
+          debitAccountId: 1307870,
+          creditAccountId: 621746,
+          errorMessage: "debit and credit account ei saa olla tühi",
+        },
+      ],
+    });
+    const result = await tools.erply_save_all_payment_imports.handler({
+      items: [{ id: 501, debitAccountId: 1307870, creditAccountId: 621746 }],
     });
     expect(client.post).toHaveBeenCalledWith("/payments/save_all_payments", {
-      items: [{ id: 501, amount: 500 }],
+      items: [{ id: 501, debitAccountId: 1307870, creditAccountId: 621746 }],
     });
+    expect(JSON.parse(result.content[0].text).items[0].errorMessage).toBe(
+      "debit and credit account ei saa olla tühi",
+    );
   });
 });
 
@@ -77,12 +98,44 @@ describe("erply_connect_payment_with_documents", () => {
     tools = createPaymentBankTools(client);
   });
 
+  it("describes connect as a preview and pendingPaymentId as not a payment id", () => {
+    expect(tools.erply_connect_payment_with_documents.description).toMatch(/preview/);
+    expect(tools.erply_connect_payment_with_documents.description).toMatch(
+      /pendingPaymentId is not a real payment id/,
+    );
+    expect(tools.erply_connect_payment_with_documents.inputSchema.properties).toMatchObject({
+      debit: expect.any(Object),
+      debitAccountId: expect.any(Object),
+      creditAccountId: expect.any(Object),
+      currencyCode: expect.any(Object),
+      reconciled: expect.any(Object),
+    });
+  });
+
   it("requires a payment identifier and a document identifier", async () => {
     await expect(tools.erply_connect_payment_with_documents.handler({})).rejects.toThrow(
       /id, paymentId, or pendingPaymentId/,
     );
     await expect(
       tools.erply_connect_payment_with_documents.handler({ paymentId: 77 }),
+    ).rejects.toThrow(/linkedInvoiceInfo, invoiceId, or invoiceNumber/);
+  });
+
+  it("does not treat paymentId 0 as a real payment identifier", async () => {
+    await expect(
+      tools.erply_connect_payment_with_documents.handler({
+        paymentId: 0,
+        linkedInvoiceInfo: [{ invoiceId: 82579018, sumPaid: 500 }],
+      }),
+    ).rejects.toThrow(/id, paymentId, or pendingPaymentId/);
+  });
+
+  it("does not treat invoiceId 0 as a document identifier", async () => {
+    await expect(
+      tools.erply_connect_payment_with_documents.handler({
+        id: 120066911,
+        invoiceId: 0,
+      }),
     ).rejects.toThrow(/linkedInvoiceInfo, invoiceId, or invoiceNumber/);
   });
 
@@ -138,19 +191,37 @@ describe("erply_connect_payment_with_documents", () => {
     });
   });
 
-  it("forwards caller-supplied linkedInvoiceInfo and strips top-level invoiceId", async () => {
+  it("forwards pending-row fields and keeps pendingPaymentId distinct from paymentId", async () => {
     vi.mocked(client.post).mockResolvedValue(paymentsFixture.connect_response);
     await tools.erply_connect_payment_with_documents.handler({
       id: 120066911,
-      paymentId: 12198913,
+      paymentId: 0,
+      pendingPaymentId: 12198913,
       amount: 500,
-      invoiceId: 82579018,
+      date: "2026-04-07",
+      typeCode: "MONEY_IN_TRANSACTION",
+      debit: "C",
+      customerId: 0,
+      invoiceId: 0,
+      debitAccountId: 1307870,
+      creditAccountId: 621746,
+      currencyCode: "CURRENCY_EUR",
+      reconciled: true,
       linkedInvoiceInfo: [{ invoiceId: 82579018, sumPaid: 500 }],
     });
     expect(client.post).toHaveBeenCalledWith("/payments/connect_payment_with_documents", {
       id: 120066911,
-      paymentId: 12198913,
+      paymentId: 0,
+      pendingPaymentId: 12198913,
       amount: 500,
+      date: "2026-04-07",
+      typeCode: "MONEY_IN_TRANSACTION",
+      debit: "C",
+      customerId: 0,
+      debitAccountId: 1307870,
+      creditAccountId: 621746,
+      currencyCode: "CURRENCY_EUR",
+      reconciled: true,
       linkedInvoiceInfo: [{ invoiceId: 82579018, sumPaid: 500 }],
     });
   });
@@ -190,6 +261,9 @@ describe("erply_list_pending_payments", () => {
     expect(tools.erply_list_pending_payments.description).toMatch(/unmatched bank-import/);
     expect(tools.erply_list_pending_payments.description).toMatch(
       /GET \/payments\/import does not exist/,
+    );
+    expect(tools.erply_list_pending_payments.description).toMatch(
+      /connect HTTP 200 does not remove them/,
     );
     expect(tools.erply_list_pending_payments.description).toMatch(/YYYY-MM-DD coerced/);
     expect(tools.erply_list_pending_payments.inputSchema.properties.dateFrom.description).toMatch(

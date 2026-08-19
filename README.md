@@ -299,51 +299,18 @@ return a JSON array, not a list envelope.
 
 `erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
 
-#### Bank-import reconciliation workflow (verified on Demo testbaas)
+#### Bank-import reconciliation
 
-The accountant workflow after importing a bank statement is:
+There are two different payment objects. Do not mix their identifiers.
 
-1. **Import** with `erply_bank_import` / `erply_bank_import_v2` or create rows with `erply_import_payment`.
-2. **List unmatched** with `erply_list_pending_payments` (`GET /payments/pending_payments`). There is no `GET /payments/import` (live **405**). Do not use `erply_list_payments` for this — it only returns confirmed payments.
-3. **Link to invoice/order:**
-   - `erply_connect_payment_with_documents` with the pending-row fields from step 2 plus `linkedInvoiceInfo: [{ invoiceId, sumPaid }]`. Top-level `invoiceId` / `invoiceNumber` are accepted by the tool and mapped into that array. A successful call sets `importValidated` and fills `linkedInvoiceInfo`.
-   - To change invoice balances (`sumPaid` / `sumLeftToPay`), use `erply_update_payment` with `paymentId`, `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, `currencyCode`.
-4. **Verify** with `erply_get_invoice`.
+##### Real payments (API-created)
 
-##### Unmatched bank-import rows (E52)
+`POST /payments` (`erply_create_payment`) and `POST /payments/import` (`erply_import_payment`) typically return a **real** `paymentId` (often equal to the import `id`). Those rows are **not** the Bank Import pending feed.
 
-The Bank Import UI (`/bankimport`) shows pending feed rows that have no `invoiceId` / `customerId` yet. Those rows are **not** on `GET /payments`. On Demo testbaas (2026-08-14):
-
-- `GET /payments/import` (with or without `dateFrom`/`dateTo`, `reconciled=false`, `accountId`) returns **405** and is absent from swagger.
-- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`). Date filters accept `YYYY-MM-DD` (coerced to `T00:00:00` / `T23:59:59`) or ISO datetimes; bare `dd.MM.yyyy` still **409**s.
-- `GET /payments?getEverything=true` still returns `APIPaymentInfo` payment records, not `APIPaymentImportInfo` import rows.
-
-Use `erply_list_pending_payments` to list unmatched bank-import rows.
-
-`erply_connect_payment_with_documents` reads documents from `linkedInvoiceInfo` on `APIPaymentImportInfo`. Sending only a top-level `invoiceId` yields **409** `The list of documents is empty`. A sparse body (id + documents only) can **500**; include pending-row fields (`date`, `typeCode`, `debit`, `customerId`, `debitAccountId`, `creditAccountId`, `amount`). On Demo testbaas the connect succeeds but does **not** move invoice `sumPaid` / `sumLeftToPay` — use `erply_update_payment` for that.
-
-##### Working example: connect a pending import row
+To apply a real payment to an invoice, use `erply_update_payment` with that `paymentId` plus `invoiceId`, `opDate`, `sumPaid`, `typeCode`, `accountId`, `customerId`, and `currencyCode`. Verified on Demo testbaas: after this, `GET /invoices/{id}` shows updated `sumPaid` / `sumLeftToPay`.
 
 ```json
-// erply_connect_payment_with_documents
-{
-  "id": 120066911,
-  "paymentId": 12198913,
-  "amount": 500,
-  "date": "2026-04-07",
-  "typeCode": "MONEY_IN_TRANSACTION",
-  "debit": "C",
-  "customerId": 15534644,
-  "debitAccountId": 1307870,
-  "creditAccountId": 621746,
-  "linkedInvoiceInfo": [{ "invoiceId": 82579018, "sumPaid": 500 }]
-}
-```
-
-##### Working example: apply the payment to invoice balances
-
-```json
-// erply_update_payment
+// erply_update_payment — real paymentId only
 {
   "paymentId": 120662763,
   "opDate": "2026-08-11",
@@ -358,9 +325,67 @@ Use `erply_list_pending_payments` to list unmatched bank-import rows.
 
 After this, `GET /invoices/83896219` returns `sumPaid: 100`, `sumLeftToPay: 0`.
 
+`pendingPaymentId` is **not** a payment id. Passing it to `erply_update_payment` returns **409** `Ei leidnud 'payment'`. Do not create a synthetic duplicate payment as a workaround.
+
+##### Pending bank-import rows (`paymentId: 0`)
+
+The Bank Import UI (`/bankimport`) lists unmatched rows from `GET /payments/pending_payments` (`erply_list_pending_payments`). There is no `GET /payments/import` (live **405**). `erply_list_payments` returns confirmed payments only.
+
+On Demo testbaas those pending rows have `paymentId: 0`, `invoiceId: 0`, `importValidated: false`. A `pendingPaymentId` may be present; it still is not a payment id.
+
+**No persistent API flow is currently verified** for converting a pending row into a real payment linked to an invoice. Treat HTTP 200 or response-only `importValidated: true` as a preview, not success. Close that gap only when all three postconditions pass:
+
+1. the pending row is gone or `importValidated` when re-listed
+2. the invoice `sumPaid` / `sumLeftToPay` change
+3. a confirmed payment appears on `GET /payments`
+
+Tenant setting **Save payments from bank import automatically** is enabled on Demo testbaas and was enabled during the failed probes; a missing prerequisite does not explain the gap. See GitLab [#190](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/190) (E51).
+
+Typical accountant steps and what they actually do:
+
+1. **Import** a statement with `erply_bank_import` / `erply_bank_import_v2`, or inspect existing unmatched rows. `erply_import_payment` creates a real payment, not a pending-feed row.
+2. **List unmatched** with `erply_list_pending_payments`.
+3. **Match preview:** `erply_connect_payment_with_documents` with the pending-row fields from step 2 plus `linkedInvoiceInfo: [{ invoiceId, sumPaid }]`. Top-level `invoiceId` / `invoiceNumber` are mapped into that array. Include `date`, `typeCode`, `debit`, `customerId`, `debitAccountId`, `creditAccountId`, `currencyCode`, `amount`, and `reconciled` (a sparse body can **500**). HTTP 200 with `importValidated: true` in the **response body only** is a preview: the pending feed, invoice balances, and `GET /payments` stay unchanged.
+4. **`erply_save_all_payment_imports`** can return HTTP 200 with a per-item `errorMessage` (on Demo testbaas: `debit and credit account ei saa olla tühi` even when those ids are set). It does not persist the match. Re-list pending rows and GET the invoice to verify.
+
+##### Unmatched bank-import rows (E52)
+
+The Bank Import UI (`/bankimport`) shows pending feed rows that have no `invoiceId` / `customerId` yet. Those rows are **not** on `GET /payments`. On Demo testbaas (2026-08-14):
+
+- `GET /payments/import` (with or without `dateFrom`/`dateTo`, `reconciled=false`, `accountId`) returns **405** and is absent from swagger.
+- `GET /payments/pending_payments` returns the unmatched feed (265 rows; all `invoiceId` 0, `customerId` 0, `importValidated` false). `reconciled=false` is ignored (every row had `reconciled: true`). `status=UNMATCHED` / `PENDING` return **409** (not a `DocumentStatusType`). Date filters accept `YYYY-MM-DD` (coerced to `T00:00:00` / `T23:59:59`) or ISO datetimes; bare `dd.MM.yyyy` still **409**s.
+- `GET /payments?getEverything=true` still returns `APIPaymentInfo` payment records, not `APIPaymentImportInfo` import rows.
+
+Use `erply_list_pending_payments` to list unmatched bank-import rows.
+
+`erply_connect_payment_with_documents` reads documents from `linkedInvoiceInfo` on `APIPaymentImportInfo`. Sending only a top-level `invoiceId` yields **409** `The list of documents is empty`. A sparse body (id + documents only) can **500**; include pending-row fields (`date`, `typeCode`, `debit`, `customerId`, `debitAccountId`, `creditAccountId`, `currencyCode`, `amount`, `reconciled`).
+
+##### Example: connect preview (does not persist)
+
+```json
+// erply_connect_payment_with_documents
+{
+  "id": 120066911,
+  "paymentId": 0,
+  "pendingPaymentId": 12198913,
+  "amount": 500,
+  "date": "2026-04-07",
+  "typeCode": "MONEY_IN_TRANSACTION",
+  "debit": "C",
+  "customerId": 15534644,
+  "debitAccountId": 1307870,
+  "creditAccountId": 621746,
+  "currencyCode": "CURRENCY_EUR",
+  "reconciled": true,
+  "linkedInvoiceInfo": [{ "invoiceId": 82579018, "sumPaid": 500 }]
+}
+```
+
+On 2026-08-19 this still left pending `120066911` unmatched (`paymentId: 0`, `importValidated: false`) and invoice `82579018` with `sumPaid: 0`, `sumLeftToPay: 500`, `payments: null`.
+
 ##### `erply_save_all_payment_imports` behavior
 
-Saving an import row with `invoiceId` via `erply_save_all_payment_imports` updates the import row only; it does **not** create a linked payment or change the invoice totals.
+Saving import-row metadata with `erply_save_all_payment_imports` can return HTTP 200 with a per-item `errorMessage`. It does **not** create a linked payment or change invoice totals. Callers must re-list pending rows and GET the invoice.
 
 ### Attachments
 
