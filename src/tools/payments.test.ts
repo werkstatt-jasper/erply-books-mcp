@@ -98,6 +98,10 @@ describe("erply_update_payment", () => {
     await expect(tools.erply_update_payment.handler({})).rejects.toThrow(/paymentId/);
   });
 
+  it("warns that pendingPaymentId is not a payment id", () => {
+    expect(tools.erply_update_payment.description).toMatch(/pendingPaymentId is not a payment id/);
+  });
+
   it("PUTs with path id", async () => {
     vi.mocked(client.put).mockResolvedValue(paymentsFixture.update_response);
     await tools.erply_update_payment.handler({ paymentId: 77, sumPaid: 15 });

@@ -124,8 +124,9 @@ export function createPaymentTools(client: ErplyBooksClient) {
 
     erply_update_payment: {
       description:
-        "Update a payment (PUT /payments/{paymentId}). Requires paymentId. Path id wins over body id. " +
-        "To link a payment to an invoice after bank import, pass invoiceId together with opDate, sumPaid, typeCode, accountId, customerId, and currencyCode.",
+        "Update a payment (PUT /payments/{paymentId}). Requires a real paymentId. Path id wins over body id. " +
+        "A pending-feed pendingPaymentId is not a payment id (409 Ei leidnud 'payment'). " +
+        "When a real payment exists, pass invoiceId together with opDate, sumPaid, typeCode, accountId, customerId, and currencyCode to change invoice balances.",
       inputSchema: {
         type: "object" as const,
         properties: {
