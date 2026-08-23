@@ -235,9 +235,14 @@ export function createAttachmentInboxTools(client: ErplyBooksClient) {
         "Requires attachmentId (from erply_list_attachments — not id or activityItemId) and documentId. " +
         "documentStatusTypeCode defaults to STATUS_CONFIRMED. " +
         "This is the live API path: do not pass activityItemId (409 Cannot Find File Information). " +
-        "Creates a confirmation on the inbox item; the inbox row documentId stays 0 and GET invoice attachments may still be null. " +
-        "To upload a new file onto a document, use erply_create_attachment with documentId. " +
-        "GET /attachments/all/{id} often returns truncated NO_CONTENT, so re-uploading the original inbox bytes is not possible.",
+        "IMPORTANT: an HTTP 200 here writes a confirmation log only — it is not a real attach. " +
+        "The inbox row documentId stays 0, the item stays in the unmatched inbox, and GET invoice attachments stays null. " +
+        "Report it to the user as a confirmation record, never as the file being attached. " +
+        "No working end-to-end path exists in the public Books API (2026-08): " +
+        "GET /attachments/all/{id} returns truncated NO_CONTENT (original bytes unreachable) and " +
+        "POST /attachments fails upstream (hangs with documentId; HTTP 500 without), so the re-upload " +
+        "workaround via erply_create_attachment is also blocked. Attaching inbox items to documents " +
+        "currently requires the Erply Books web UI.",
       inputSchema: {
         type: "object" as const,
         properties: {

@@ -219,7 +219,8 @@ export function createAttachmentTools(client: ErplyBooksClient) {
 
     erply_create_attachment: {
       description:
-        "Create/upload an attachment (POST /attachments JSON APIAttachmentInfo). Requires fileName and fileBase64 (mapped to filename/base64). Three modes: (1) attach to an existing invoice — pass documentId and keep total null; (2) add to the Purchase Inbox — omit documentId and keep total null; (3) create an expense document instantly — set total (and optional netTotal, taxRateId, contactName, expenseType, number). Extra APIAttachmentInfo fields may be passed through.",
+        "Create/upload an attachment (POST /attachments JSON APIAttachmentInfo). Requires fileName and fileBase64 (mapped to filename/base64). Three modes: (1) attach to an existing invoice — pass documentId and keep total null; (2) add to the Purchase Inbox — omit documentId and keep total null; (3) create an expense document instantly — set total (and optional netTotal, taxRateId, contactName, expenseType, number). Extra APIAttachmentInfo fields may be passed through. " +
+        "Live API caveat (observed 2026-08 on a test org): POST /attachments can hang past 120 s with documentId set and return HTTP 500 without it. Treat a timeout as failure and verify success via erply_get_invoice attachments — do not assume the upload landed.",
       inputSchema: {
         type: "object" as const,
         properties: {
