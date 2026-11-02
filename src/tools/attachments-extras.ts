@@ -9,7 +9,12 @@ import {
   positiveInt,
 } from "../validation/tool-args.js";
 import { decodeBase64File, normalizeFileBase64 } from "./file-base64.js";
-import { bytesToolResult, jsonToolResult, mutationToolResult } from "./list-response.js";
+import {
+  bytesToolResult,
+  jsonToolResult,
+  mutationToolResult,
+  zipBytesToolResult,
+} from "./list-response.js";
 
 const attachmentIdSchema = z.object({
   attachmentId: positiveInt,
@@ -166,7 +171,7 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
 
     erply_get_attachments_zip: {
       description:
-        "Download a zip of attachments for a document (GET /attachments/zip_file/{documentId}). Requires documentId.",
+        'Download a zip of attachments for a document (GET /attachments/zip_file/{documentId}). Requires documentId. A binary zip body is returned as { encoding: "base64", byteLength, data }; a JSON body is passed through as JSON.',
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -176,8 +181,8 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
       },
       handler: async (params: unknown) => {
         const { documentId } = parseToolArgs(zipSchema, params);
-        const result = await client.get(`/attachments/zip_file/${documentId}`);
-        return jsonToolResult(result);
+        const bytes = await client.getArrayBuffer(`/attachments/zip_file/${documentId}`);
+        return zipBytesToolResult(bytes);
       },
     },
 
