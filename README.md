@@ -403,7 +403,12 @@ The Erply Books Purchase Inbox is the attachments surface: there is no dedicated
 
 `erply_get_attachment` (and `erply_get_attachment_child`) return JSON when the API
 responds with JSON. File downloads that are not JSON come back as UTF-8 text or
-`{ encoding: "base64", byteLength, data }`.
+`{ encoding: "base64", byteLength, data }`. `erply_get_attachment` always uses
+base64 for PDF, image and ZIP bodies (by file signature or a binary
+`Content-Type`). An empty body or a complete `NO_CONTENT` response wrapper returns
+`{ encoding: "empty", byteLength: 0, message }`. The truncated
+`{"statusType":"NO_CONTENT","entity"` body is reported as an error, not as file
+content.
 
 Create maps `fileName`/`fileBase64` to API fields `filename`/`base64`. Three POST modes:
 

@@ -11,6 +11,8 @@ import {
 import { decodeBase64File, normalizeFileBase64 } from "./file-base64.js";
 import {
   bytesToolResult,
+  erplyResponseWrapper,
+  fileDownloadToolResult,
   jsonToolResult,
   mutationToolResult,
   zipBytesToolResult,
@@ -171,7 +173,7 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
 
     erply_get_attachments_zip: {
       description:
-        'Download a zip of attachments for a document (GET /attachments/zip_file/{documentId}). Requires documentId. A binary zip body is returned as { encoding: "base64", byteLength, data }; a JSON body is passed through as JSON.',
+        'Download a zip of attachments for a document (GET /attachments/zip_file/{documentId}). Requires documentId. A binary zip body is returned as { encoding: "base64", byteLength, data }; a JSON body is passed through as JSON. An empty body returns { encoding: "empty", byteLength: 0, message } (no ZIP produced).',
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -182,6 +184,12 @@ export function createAttachmentExtraTools(client: ErplyBooksClient) {
       handler: async (params: unknown) => {
         const { documentId } = parseToolArgs(zipSchema, params);
         const bytes = await client.getArrayBuffer(`/attachments/zip_file/${documentId}`);
+        if (bytes.byteLength === 0 || erplyResponseWrapper(Buffer.from(bytes)) !== null) {
+          return fileDownloadToolResult(bytes, {
+            subject: `the attachments ZIP of document ${documentId}`,
+            emptyMessage: `Erply returned an empty body for the attachments ZIP of document ${documentId}, so no ZIP archive was produced. The document may have no attachments.`,
+          });
+        }
         return zipBytesToolResult(bytes);
       },
     },

@@ -130,10 +130,35 @@ describe("erply_get_attachments_zip", () => {
     expect(JSON.parse(result.content[0].text).encoding).toBe("base64");
   });
 
-  it("returns an empty marker for an empty body", async () => {
+  it("returns an empty marker with a clear message for an empty body", async () => {
     vi.mocked(client.getArrayBuffer).mockResolvedValue(new ArrayBuffer(0));
     const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
-    expect(JSON.parse(result.content[0].text)).toEqual({ encoding: "empty", byteLength: 0 });
+    expect(JSON.parse(result.content[0].text)).toEqual({
+      encoding: "empty",
+      byteLength: 0,
+      message:
+        "Erply returned an empty body for the attachments ZIP of document 55, so no ZIP archive was produced. The document may have no attachments.",
+    });
+  });
+
+  it("throws a clear error for a truncated NO_CONTENT wrapper", async () => {
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      toArrayBuffer(Buffer.from('{"statusType":"NO_CONTENT","entity"', "utf8")),
+    );
+    await expect(tools.erply_get_attachments_zip.handler({ documentId: 56 })).rejects.toThrow(
+      "instead of the file for the attachments ZIP of document 56",
+    );
+  });
+
+  it("returns an empty marker for a complete NO_CONTENT wrapper", async () => {
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      toArrayBuffer(Buffer.from(JSON.stringify({ statusType: "NO_CONTENT", entity: null }))),
+    );
+    const result = await tools.erply_get_attachments_zip.handler({ documentId: 57 });
+    expect(JSON.parse(result.content[0].text)).toMatchObject({
+      encoding: "empty",
+      apiStatus: "NO_CONTENT",
+    });
   });
 });
 

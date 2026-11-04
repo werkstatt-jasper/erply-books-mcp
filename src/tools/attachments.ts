@@ -13,7 +13,7 @@ import {
 import { withLiftedOcrText } from "./attachment-ocr.js";
 import { normalizeFileBase64 } from "./file-base64.js";
 import {
-  bytesToolResult,
+  fileDownloadToolResult,
   jsonToolResult,
   mutationToolResult,
   unwrapListEnvelope,
@@ -195,7 +195,7 @@ export function createAttachmentTools(client: ErplyBooksClient) {
 
     erply_get_attachment: {
       description:
-        'Get a single attachment (GET /attachments/all/{attachmentId}). Optional noDownload (integer). Response is JSON when the API returns JSON; otherwise UTF-8 text or base64 (encoding: "base64").',
+        'Get a single attachment (GET /attachments/all/{attachmentId}). Optional noDownload (integer). Response is JSON when the API returns JSON; PDF, image and other binary files come back as { encoding: "base64", byteLength, data }; other text as UTF-8. An empty or NO_CONTENT response returns { encoding: "empty", byteLength: 0, message }; a truncated NO_CONTENT body is an error.',
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -210,10 +210,13 @@ export function createAttachmentTools(client: ErplyBooksClient) {
       handler: async (params: unknown) => {
         const args = parseToolArgs(getAttachmentSchema, params);
         const { attachmentId, noDownload } = args;
-        const bytes = await client.getArrayBuffer(`/attachments/all/${attachmentId}`, {
+        const { bytes, contentType } = await client.getBinary(`/attachments/all/${attachmentId}`, {
           noDownload,
         });
-        return bytesToolResult(bytes);
+        return fileDownloadToolResult(bytes, {
+          subject: `attachment ${attachmentId}`,
+          contentType,
+        });
       },
     },
 

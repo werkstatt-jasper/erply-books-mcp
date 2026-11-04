@@ -21,8 +21,16 @@ export interface RequestOptions {
   /**
    * Default `json`. Use `text` for HTML/plain responses such as attachment preview.
    * Use `arrayBuffer` for CSV/XLSX/XML file downloads from the report generator.
+   * Use `binary` for file downloads where the response Content-Type matters
+   * (returns {@link BinaryResponse}).
    */
-  parseAs?: "json" | "text" | "arrayBuffer";
+  parseAs?: "json" | "text" | "arrayBuffer" | "binary";
+}
+
+/** Raw response body plus its Content-Type header (null when absent). */
+export interface BinaryResponse {
+  bytes: ArrayBuffer;
+  contentType: string | null;
 }
 
 export interface ErplyBooksClientOptions {
@@ -161,7 +169,7 @@ export class ErplyBooksClient {
       if (parseAs === "text") {
         // Preview and similar endpoints return HTML and 406 if Accept is application/json.
         headers.Accept = "text/html, text/plain;q=0.9, */*;q=0.8";
-      } else if (parseAs === "arrayBuffer") {
+      } else if (parseAs === "arrayBuffer" || parseAs === "binary") {
         headers.Accept = "*/*";
       }
       const maxAttempts = 1 + maxRetries;
@@ -213,6 +221,9 @@ export class ErplyBooksClient {
           if (parseAs === "arrayBuffer") {
             return new ArrayBuffer(0) as T;
           }
+          if (parseAs === "binary") {
+            return { bytes: new ArrayBuffer(0), contentType: null } as T;
+          }
           return undefined as T;
         }
 
@@ -226,6 +237,12 @@ export class ErplyBooksClient {
           const bytes = await response.arrayBuffer();
           this.logRequest(method, path, started, undefined);
           return bytes as T;
+        }
+
+        if (parseAs === "binary") {
+          const bytes = await response.arrayBuffer();
+          this.logRequest(method, path, started, undefined);
+          return { bytes, contentType: response.headers.get("content-type") } as T;
         }
 
         const data = (await response.json()) as T;
@@ -262,6 +279,14 @@ export class ErplyBooksClient {
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<ArrayBuffer> {
     return this.request<ArrayBuffer>(path, { method: "GET", params, parseAs: "arrayBuffer" });
+  }
+
+  /** GET that returns the raw body as bytes together with the response Content-Type. */
+  async getBinary(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<BinaryResponse> {
+    return this.request<BinaryResponse>(path, { method: "GET", params, parseAs: "binary" });
   }
 
   async post<T = unknown>(
