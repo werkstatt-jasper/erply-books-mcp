@@ -75,9 +75,38 @@ export function bytesToolResult(bytes: ArrayBuffer): {
   if (looksLikeText(buf)) {
     return jsonToolResult({ encoding: "utf8", byteLength: buf.length, text: asText });
   }
+  return base64ToolResult(buf);
+}
+
+/** ZIP local-file / empty-archive / spanned signatures ("PK\x03\x04", "PK\x05\x06", "PK\x07\x08"). */
+export function isZipBytes(buf: Buffer): boolean {
+  return (
+    buf.length >= 4 &&
+    buf[0] === 0x50 &&
+    buf[1] === 0x4b &&
+    ((buf[2] === 0x03 && buf[3] === 0x04) ||
+      (buf[2] === 0x05 && buf[3] === 0x06) ||
+      (buf[2] === 0x07 && buf[3] === 0x08))
+  );
+}
+
+function base64ToolResult(buf: Buffer): {
+  content: Array<{ type: "text"; text: string }>;
+} {
   return jsonToolResult({
     encoding: "base64",
     byteLength: buf.length,
     data: buf.toString("base64"),
   });
+}
+
+/**
+ * Encode a file download for MCP. A body with a ZIP signature is always base64
+ * (never sniffed as text); anything else (e.g. a JSON envelope) uses {@link bytesToolResult}.
+ */
+export function zipBytesToolResult(bytes: ArrayBuffer): {
+  content: Array<{ type: "text"; text: string }>;
+} {
+  const buf = Buffer.from(bytes);
+  return isZipBytes(buf) ? base64ToolResult(buf) : bytesToolResult(bytes);
 }

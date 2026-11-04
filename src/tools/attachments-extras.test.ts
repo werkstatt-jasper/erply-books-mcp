@@ -4,6 +4,10 @@ import type { ErplyBooksClient } from "../client.js";
 import { __test__, createAttachmentExtraTools } from "./attachments-extras.js";
 import { createMockClient } from "./test-helpers.js";
 
+function toArrayBuffer(buf: Buffer): ArrayBuffer {
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+}
+
 const sampleBase64 = Buffer.from("test", "utf8").toString("base64");
 
 describe("toApiAttachment", () => {
@@ -80,11 +84,56 @@ describe("erply_get_attachments_zip", () => {
     await expect(tools.erply_get_attachments_zip.handler({})).rejects.toThrow(/documentId/);
   });
 
-  it("GETs /attachments/zip_file/{documentId}", async () => {
-    vi.mocked(client.get).mockResolvedValue(attachmentsFixture.zip_file);
+  it("passes a JSON envelope body through as JSON", async () => {
+    const jsonBytes = toArrayBuffer(Buffer.from(JSON.stringify(attachmentsFixture.zip_file)));
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(jsonBytes);
     const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
-    expect(client.get).toHaveBeenCalledWith("/attachments/zip_file/55");
+    expect(client.getArrayBuffer).toHaveBeenCalledWith("/attachments/zip_file/55");
+    expect(client.get).not.toHaveBeenCalled();
     expect(JSON.parse(result.content[0].text).filename).toBe("attachments.zip");
+  });
+
+  it("returns base64 for a binary zip body (PK header)", async () => {
+    // Fake archive: local file header signature + binary bytes, then printable "content".
+    const zip = Buffer.concat([
+      Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00]),
+      Buffer.from("fake-attachment.txt", "utf8"),
+    ]);
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(toArrayBuffer(zip));
+    const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
+    const body = JSON.parse(result.content[0].text) as {
+      encoding: string;
+      byteLength: number;
+      data: string;
+    };
+    expect(body.encoding).toBe("base64");
+    expect(body.byteLength).toBe(zip.length);
+    expect(Buffer.from(body.data, "base64").equals(zip)).toBe(true);
+  });
+
+  it("keeps a mostly-printable zip (stored text entries) as base64, not utf8", async () => {
+    const zip = Buffer.concat([
+      Buffer.from("PK\u0003\u0004", "latin1"),
+      Buffer.from("x".repeat(600), "utf8"),
+    ]);
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(toArrayBuffer(zip));
+    const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
+    const body = JSON.parse(result.content[0].text) as { encoding: string; data: string };
+    expect(body.encoding).toBe("base64");
+    expect(Buffer.from(body.data, "base64").equals(zip)).toBe(true);
+  });
+
+  it("returns base64 for an empty zip archive (end-of-central-directory only)", async () => {
+    const zip = Buffer.concat([Buffer.from([0x50, 0x4b, 0x05, 0x06]), Buffer.alloc(18)]);
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(toArrayBuffer(zip));
+    const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
+    expect(JSON.parse(result.content[0].text).encoding).toBe("base64");
+  });
+
+  it("returns an empty marker for an empty body", async () => {
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(new ArrayBuffer(0));
+    const result = await tools.erply_get_attachments_zip.handler({ documentId: 55 });
+    expect(JSON.parse(result.content[0].text)).toEqual({ encoding: "empty", byteLength: 0 });
   });
 });
 
