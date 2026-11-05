@@ -6,6 +6,7 @@ export function createMockClient(): ErplyBooksClient {
     get: vi.fn(),
     getText: vi.fn(),
     getArrayBuffer: vi.fn(),
+    getBinary: vi.fn(),
     post: vi.fn(),
     postBytes: vi.fn(),
     postMultipart: vi.fn(),

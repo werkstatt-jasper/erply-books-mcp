@@ -148,33 +148,103 @@ describe("erply_get_attachment", () => {
     await expect(tools.erply_get_attachment.handler({})).rejects.toThrow(/attachmentId/);
   });
 
+  function bodyOf(buf: Buffer): ArrayBuffer {
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+  }
+
+  function mockBody(buf: Buffer, contentType: string | null = null) {
+    vi.mocked(client.getBinary).mockResolvedValue({ bytes: bodyOf(buf), contentType });
+  }
+
+  function parsed(result: { content: Array<{ text: string }> }) {
+    return JSON.parse(result.content[0]?.text ?? "") as Record<string, unknown>;
+  }
+
   it("GETs /attachments/all/{id} and parses JSON bytes", async () => {
-    const jsonBytes = Buffer.from(JSON.stringify(attachmentsFixture.single));
-    vi.mocked(client.getArrayBuffer).mockResolvedValue(
-      jsonBytes.buffer.slice(jsonBytes.byteOffset, jsonBytes.byteOffset + jsonBytes.byteLength),
-    );
+    mockBody(Buffer.from(JSON.stringify(attachmentsFixture.single)), "application/json");
     const result = await tools.erply_get_attachment.handler({
       attachmentId: 101,
       noDownload: 1,
     });
-    expect(client.getArrayBuffer).toHaveBeenCalledWith("/attachments/all/101", { noDownload: 1 });
-    expect(JSON.parse(result.content[0].text).filename).toBe("receipt.pdf");
+    expect(client.getBinary).toHaveBeenCalledWith("/attachments/all/101", { noDownload: 1 });
+    expect(parsed(result).filename).toBe("receipt.pdf");
   });
 
   it("returns base64 for a binary file body", async () => {
     const pdf = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x01, 0x00, 0xff, 0x00, 0x00]);
-    vi.mocked(client.getArrayBuffer).mockResolvedValue(
-      pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength),
-    );
-    const result = await tools.erply_get_attachment.handler({ attachmentId: 101 });
-    const body = JSON.parse(result.content[0].text) as {
-      encoding: string;
-      byteLength: number;
-      data: string;
-    };
+    mockBody(pdf);
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 101 }));
     expect(body.encoding).toBe("base64");
     expect(body.byteLength).toBe(pdf.length);
-    expect(Buffer.from(body.data, "base64").equals(pdf)).toBe(true);
+    expect(Buffer.from(body.data as string, "base64").equals(pdf)).toBe(true);
+  });
+
+  it("returns base64 for a mostly-printable PDF instead of utf8 text", async () => {
+    const pdf = Buffer.from(
+      `%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n${"% fake ".repeat(80)}`,
+      "latin1",
+    );
+    mockBody(pdf, null);
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 102 }));
+    expect(body.encoding).toBe("base64");
+    expect(Buffer.from(body.data as string, "base64").equals(pdf)).toBe(true);
+  });
+
+  it.each([
+    ["application/pdf"],
+    ["application/octet-stream"],
+    ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  ])("returns base64 for a printable body with Content-Type %s", async (contentType) => {
+    const text = Buffer.from("fake printable file body ".repeat(30), "utf8");
+    mockBody(text, contentType);
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 103 }));
+    expect(body.encoding).toBe("base64");
+  });
+
+  it("keeps printable text as utf8 when the Content-Type is text", async () => {
+    mockBody(Buffer.from("plain fake note", "utf8"), "text/plain; charset=utf-8");
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 104 }));
+    expect(body).toEqual({ encoding: "utf8", byteLength: 15, text: "plain fake note" });
+  });
+
+  it("throws a clear error for the truncated NO_CONTENT wrapper", async () => {
+    const truncated = Buffer.from('{"statusType":"NO_CONTENT","entity"', "utf8");
+    expect(truncated.length).toBe(35);
+    mockBody(truncated, "application/json");
+    await expect(tools.erply_get_attachment.handler({ attachmentId: 105 })).rejects.toThrow(
+      'Erply returned a truncated NO_CONTENT response (35 bytes: "{\\"statusType\\":\\"NO_CONTENT\\",\\"entity\\"") instead of the file for attachment 105.',
+    );
+  });
+
+  it("returns an empty marker for a complete NO_CONTENT wrapper", async () => {
+    mockBody(
+      Buffer.from(JSON.stringify({ statusType: "NO_CONTENT", entity: null, status: 204 })),
+      "application/json",
+    );
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 106 }));
+    expect(body).toEqual({
+      encoding: "empty",
+      byteLength: 0,
+      apiStatus: "NO_CONTENT",
+      message: "Erply reported NO_CONTENT for attachment 106: no file content was returned.",
+    });
+  });
+
+  it("passes a complete non-NO_CONTENT wrapper through as JSON", async () => {
+    const wrapper = { statusType: "OK", entity: { filename: "fake.pdf" } };
+    mockBody(Buffer.from(JSON.stringify(wrapper)), "application/json");
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 107 }));
+    expect(body).toEqual(wrapper);
+  });
+
+  it("returns an empty marker with a message for an empty body", async () => {
+    vi.mocked(client.getBinary).mockResolvedValue({ bytes: new ArrayBuffer(0), contentType: null });
+    const body = parsed(await tools.erply_get_attachment.handler({ attachmentId: 108 }));
+    expect(body).toEqual({
+      encoding: "empty",
+      byteLength: 0,
+      message: "Erply returned an empty body for attachment 108.",
+    });
   });
 });
 

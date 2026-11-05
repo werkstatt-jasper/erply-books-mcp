@@ -181,6 +181,28 @@ describe("ErplyBooksClient", () => {
       expect(fetchMock.mock.calls[0][1].headers.Accept).toBe("*/*");
     });
 
+    it("getBinary returns bytes with the response Content-Type", async () => {
+      fetchMock.mockResolvedValue(
+        new Response(Buffer.from("%PDF-1.4"), {
+          status: 200,
+          headers: { "Content-Type": "application/pdf" },
+        }),
+      );
+      const { bytes, contentType } = await client.getBinary("/attachments/all/1", {
+        noDownload: 0,
+      });
+      expect(Buffer.from(bytes).toString("latin1")).toBe("%PDF-1.4");
+      expect(contentType).toBe("application/pdf");
+      expect(fetchMock.mock.calls[0][1].headers.Accept).toBe("*/*");
+    });
+
+    it("getBinary returns an empty body and null Content-Type on 204", async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+      const { bytes, contentType } = await client.getBinary("/attachments/all/2");
+      expect(bytes.byteLength).toBe(0);
+      expect(contentType).toBeNull();
+    });
+
     it("postBytes POSTs JSON and returns bytes", async () => {
       fetchMock.mockResolvedValue(
         new Response("a,b\n1,2\n", {
