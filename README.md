@@ -12,6 +12,18 @@ without the hosted SaaS product.
 > in this package. Track product work in the GitLab milestone *Erply Books*
 > (`werkstatt.ee/e-financials-mcp`); this GitHub repo is the OSS code host.
 
+## Hosted: werkzeug.ee
+
+No install needed. [Sign up](https://werkzeug.ee/dashboard/signup) at
+[werkzeug.ee](https://werkzeug.ee), get your personal company connector URL
+(`https://werkzeug.ee/mcp/c/<id>`) and paste it into Claude, ChatGPT, Cursor, or
+Grok Bot as a remote MCP server.
+Client-by-client steps: [werkzeug.ee/docs](https://werkzeug.ee/docs/). Erply Books
+setup: [werkzeug.ee/docs#erply](https://werkzeug.ee/docs/#erply).
+
+Prefer to run it yourself over **stdio**? See [Prerequisites](#prerequisites) and
+[Quick start](#quick-start) below.
+
 ## Prerequisites
 
 - **Node.js 20+** (see `package.json` `engines`; native `fetch`; Vitest 4 / CI use Node 20 and 22).
