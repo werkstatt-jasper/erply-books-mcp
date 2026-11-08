@@ -14,19 +14,46 @@ import {
 } from "../validation/tool-args.js";
 import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
-const listPaymentsSchema = z.object({
-  dateFrom: ymdDateString,
-  dateTo: ymdDateString,
-  customerId: optionalPositiveInt,
-  isIncome: optionalBoolean,
-  accountId: optionalPositiveInt,
-  documentId: optionalPositiveInt,
-  paymentType: optionalString,
-  description: optionalString,
-  sort: optionalString,
-  start: optionalNonNegativeInt,
-  limit: optionalPositiveInt,
-});
+/**
+ * Public GET /payments prose says PaymentType is required. OpenAPI lists
+ * getEverything as a boolean with no description of a complete multi-type list,
+ * so a date-only call must not be forwarded as if it were the full range.
+ */
+const paymentListCompleteness =
+  "paymentType is required (one PAYMENT_TYPE dictionary code per call). " +
+  "Public GET /payments docs say PaymentType is required, and getEverything is not " +
+  "documented as a complete multi-type list, so a date-only call is rejected instead of " +
+  "returning the API's incomplete default subset. " +
+  "Look up codes with erply_get_dictionary (dictionaryCode PAYMENT_TYPE) and repeat per type. " +
+  "start and limit page within that type only; items.length below totalCount means further pages.";
+
+const listPaymentsSchema = z
+  .object({
+    dateFrom: ymdDateString,
+    dateTo: ymdDateString,
+    customerId: optionalPositiveInt,
+    isIncome: optionalBoolean,
+    accountId: optionalPositiveInt,
+    documentId: optionalPositiveInt,
+    paymentType: z.unknown().nullish(),
+    description: optionalString,
+    sort: optionalString,
+    start: optionalNonNegativeInt,
+    limit: optionalPositiveInt,
+  })
+  .superRefine((args, ctx) => {
+    if (typeof args.paymentType !== "string" || args.paymentType.trim() === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["paymentType"],
+        message: paymentListCompleteness,
+      });
+    }
+  })
+  .transform((args) => ({
+    ...args,
+    paymentType: String(args.paymentType).trim(),
+  }));
 
 const createPaymentSchema = z
   .object({
@@ -67,7 +94,9 @@ export function createPaymentTools(client: ErplyBooksClient) {
   return {
     erply_list_payments: {
       description:
-        "List confirmed Erply Books payments (GET /payments). Requires dateFrom and dateTo. " +
+        "List confirmed Erply Books payments of one payment type (GET /payments). " +
+        "Requires dateFrom, dateTo, and paymentType. " +
+        `${paymentListCompleteness} ` +
         "Does not include unmatched bank-import rows — use erply_list_pending_payments for the Bank Import feed. " +
         "Note: some Erply Books price plans return HTTP 409 (MODULE_PAID_MONEY_REPORT) for this endpoint. Returns { totalCount, items } when available.",
       inputSchema: {
@@ -79,13 +108,20 @@ export function createPaymentTools(client: ErplyBooksClient) {
           isIncome: { type: "boolean", description: "Income vs outgoing when supported" },
           accountId: { type: "number", description: "Bank/cash account id" },
           documentId: { type: "number", description: "Related document id" },
-          paymentType: { type: "string", description: "PAYMENT_TYPE dictionary code" },
+          paymentType: {
+            type: "string",
+            description:
+              "PAYMENT_TYPE dictionary code (required). One type per call. A date-only call is rejected. Look up codes with erply_get_dictionary.",
+          },
           description: { type: "string", description: "Description filter" },
           sort: { type: "string", description: "Sort expression" },
-          start: { type: "number", description: "Offset (default 0)" },
-          limit: { type: "number", description: "Page size" },
+          start: {
+            type: "number",
+            description: "Offset within this paymentType (API default when omitted, commonly 0)",
+          },
+          limit: { type: "number", description: "Page size within this paymentType" },
         },
-        required: ["dateFrom", "dateTo"],
+        required: ["dateFrom", "dateTo", "paymentType"],
       },
       handler: async (params: unknown) => {
         const args = parseToolArgs(listPaymentsSchema, params);

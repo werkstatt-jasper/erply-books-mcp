@@ -66,6 +66,7 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
       const result = await tools.erply_list_payments.handler({
         dateFrom: "2020-01-01",
         dateTo: "2026-12-31",
+        paymentType: "INVOICE_PAYMENT",
         start: 0,
         limit: 5,
       });
