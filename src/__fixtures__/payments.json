@@ -12,6 +12,32 @@
     "totalCount": 1,
     "organisation": { "id": 99, "name": "Fixture Org" }
   },
+  "date_only_looking_complete": {
+    "items": [
+      {
+        "id": 1001,
+        "date": "2025-06-02",
+        "sum": 10,
+        "customerId": 10,
+        "paymentType": "INVOICE_PAYMENT"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "typed_page": {
+    "items": [
+      {
+        "id": 2002,
+        "date": "2025-03-04",
+        "sum": 40,
+        "customerId": 11,
+        "paymentType": "PURCHASE_INVOICE_PAYMENT"
+      }
+    ],
+    "totalCount": 3,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
   "create_response": {
     "id": 77,
     "opDate": "2025-06-02",

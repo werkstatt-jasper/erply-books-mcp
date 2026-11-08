@@ -207,7 +207,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/organisation/terms` | gap: E42 #181 |
 | `POST` | `/organisation/terms` | gap: E43 #182 |
 | `PUT` | `/organisation/terms/{organisationTermId}` | gap: E43 #182 |
-| `GET` | `/payments` | covered: `erply_list_payments` |
+| `GET` | `/payments` | covered: `erply_list_payments` (requires `paymentType`; date-only calls rejected) |
 | `POST` | `/payments` | covered: `erply_create_payment` |
 | `DELETE` | `/payments/{paymentId}` | covered: `erply_delete_payment` |
 | `PUT` | `/payments/{paymentId}` | covered: `erply_update_payment` |

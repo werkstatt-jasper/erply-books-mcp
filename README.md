@@ -296,7 +296,7 @@ return a JSON array, not a list envelope.
 
 | Tool | API | Required |
 |------|-----|----------|
-| `erply_list_payments` | `GET /payments` | `dateFrom`, `dateTo` (confirmed payments only) |
+| `erply_list_payments` | `GET /payments` | `dateFrom`, `dateTo`, `paymentType` (one `PAYMENT_TYPE`; confirmed payments only) |
 | `erply_create_payment` | `POST /payments` | `opDate`, `sumPaid` |
 | `erply_update_payment` | `PUT /payments/{paymentId}` | `paymentId` |
 | `erply_delete_payment` | `DELETE /payments/{paymentId}` | `paymentId` |
@@ -308,6 +308,8 @@ return a JSON array, not a list envelope.
 | `erply_sepa_payments` | `POST /payments/sepa_payments/json_format` | — |
 | `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
 | `erply_bank_import_v2` | `POST /payments/bank_import/v2` | `fileBase64`+`fileName` or `attachmentId` |
+
+`erply_list_payments` returns confirmed payments for one `paymentType` only. `dateFrom`, `dateTo`, and `paymentType` are required. The public [payments](https://www.erplybooks.com/api/payments/) page says PaymentType is required. `getEverything` is a boolean on that page and in the OpenAPI spec with no description of a complete multi-type list, so the tool does not send it. A date-only call is rejected instead of returning the API's incomplete default subset. Codes come from `erply_get_dictionary` (`PAYMENT_TYPE`); repeat the call per type. `start` and `limit` page within that type. `items.length` below `totalCount` means further pages of the same type.
 
 `erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
 
