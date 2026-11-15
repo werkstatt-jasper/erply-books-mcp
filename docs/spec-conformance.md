@@ -69,8 +69,11 @@ does not express. Full list in appendix D.
 
 ## G-class details (docs vs reality) — verification list for #189
 
-1. `GET /payments`: prose says "PaymentType is required!"; the tool requires
-   `dateFrom`/`dateTo` instead; swagger requires nothing.
+1. `GET /payments`: prose says "PaymentType is required!"; swagger lists
+   `paymentType` as optional and `getEverything` as a boolean with no
+   description. `erply_list_payments` follows the prose: it requires
+   `paymentType` plus `dateFrom`/`dateTo` and does not default
+   `getEverything`. A date-only call is rejected. Relates to GitLab #200.
 2. `sort` vs `sortBy`: prose uses `sortBy` (`/customers`, `/payments`); swagger
    uses `sort`; tools follow swagger.
 3. `GET /customers/v2`: documented ("customers have two API versions") but
@@ -252,7 +255,7 @@ The full per-tool tables follow below.
 | `erply_create_invoice` | typeCode, date |
 | `erply_import_payment` | date, amount, typeCode |
 | `erply_save_all_payment_imports` | items |
-| `erply_list_payments` | dateFrom, dateTo |
+| `erply_list_payments` | dateFrom, dateTo, paymentType |
 | `erply_create_payment` | opDate, sumPaid |
 | `erply_create_project` | name |
 | `erply_create_project_group` | name |
