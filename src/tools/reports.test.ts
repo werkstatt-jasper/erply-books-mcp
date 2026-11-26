@@ -164,6 +164,17 @@ describe("report tools", () => {
     );
   });
 
+  it("erply_aged_receivables rejects a negative changedSinceSeconds", async () => {
+    await expect(
+      tools.erply_aged_receivables.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        changedSinceSeconds: -1,
+      }),
+    ).rejects.toThrow(/changedSinceSeconds/);
+    expect(client.get).not.toHaveBeenCalled();
+  });
+
   it("erply_general_ledger GETs /reports/general_ledger", async () => {
     vi.mocked(client.get).mockResolvedValue(reportsFixture.general_ledger);
     const result = await tools.erply_general_ledger.handler({
@@ -326,6 +337,17 @@ describe("report tools", () => {
         addLastPeriodPaymentsForLastPeriodInvoices: true,
       }),
     );
+  });
+
+  it("erply_contact_balance rejects a negative changedSinceSeconds", async () => {
+    await expect(
+      tools.erply_contact_balance.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        changedSinceSeconds: -1,
+      }),
+    ).rejects.toThrow(/changedSinceSeconds/);
+    expect(client.get).not.toHaveBeenCalled();
   });
 
   it("erply_fixed_assets GETs /reports/fixed_assets", async () => {

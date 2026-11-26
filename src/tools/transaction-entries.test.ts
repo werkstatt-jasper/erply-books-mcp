@@ -64,6 +64,23 @@ describe("erply_list_transaction_entries", () => {
       }),
     );
   });
+
+  it("rejects a non-YYYY-MM-DD transactionDateFrom or transactionDateTo", async () => {
+    const dates = { dateFrom: "2025-01-01", dateTo: "2025-12-31" };
+    await expect(
+      tools.erply_list_transaction_entries.handler({
+        ...dates,
+        transactionDateFrom: "2025-13-40",
+      }),
+    ).rejects.toThrow(/transactionDateFrom/);
+    await expect(
+      tools.erply_list_transaction_entries.handler({
+        ...dates,
+        transactionDateTo: "02/28/2025",
+      }),
+    ).rejects.toThrow(/transactionDateTo/);
+    expect(client.get).not.toHaveBeenCalled();
+  });
 });
 
 describe("erply_get_transaction_entry", () => {

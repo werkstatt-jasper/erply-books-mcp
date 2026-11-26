@@ -22,7 +22,7 @@ const listAccountEntriesSchema = z.object({
   balanceType: optionalString,
   incomeType: optionalString,
   reportType: optionalInt,
-  changedSince: optionalInt,
+  changedSince: optionalNonNegativeInt,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -46,7 +46,7 @@ export function createAccountEntryTools(client: ErplyBooksClient) {
           reportType: { type: "number", description: "Report type filter (integer per spec)" },
           changedSince: {
             type: "number",
-            description: "Incremental sync cursor (integer, per OpenAPI changedSince)",
+            description: "Incremental sync cursor (non-negative integer, per OpenAPI changedSince)",
           },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },

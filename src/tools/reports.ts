@@ -42,7 +42,7 @@ const agedSchema = dateRangeSchema.extend({
   showCustomers: optionalBoolean,
   keyword: optionalString,
   currencyCode: optionalString,
-  changedSinceSeconds: optionalInt,
+  changedSinceSeconds: optionalNonNegativeInt,
 });
 
 const generalLedgerSchema = dateRangeSchema.extend({
@@ -94,7 +94,7 @@ const contactBalanceSchema = dateRangeSchema.extend({
   showOnlyOverdue: optionalBoolean,
   currencyCode: optionalString,
   keyword: optionalString,
-  changedSinceSeconds: optionalInt,
+  changedSinceSeconds: optionalNonNegativeInt,
   addBalanceAtEndOfLastPeriod: optionalBoolean,
   addPaymentsThisPeriodForLastPeriod: optionalBoolean,
   addLastPeriodInvoicesBalanceAtEndOfLastPeriod: optionalBoolean,
@@ -204,7 +204,8 @@ export function createReportTools(client: ErplyBooksClient) {
           currencyCode: { type: "string" },
           changedSinceSeconds: {
             type: "number",
-            description: "Incremental sync cursor (seconds, per OpenAPI changedSinceSeconds)",
+            description:
+              "Incremental sync cursor (non-negative seconds, per OpenAPI changedSinceSeconds)",
           },
         },
         required: ["dateFrom", "dateTo"],
@@ -334,7 +335,8 @@ export function createReportTools(client: ErplyBooksClient) {
           keyword: { type: "string" },
           changedSinceSeconds: {
             type: "number",
-            description: "Incremental sync cursor (seconds, per OpenAPI changedSinceSeconds)",
+            description:
+              "Incremental sync cursor (non-negative seconds, per OpenAPI changedSinceSeconds)",
           },
           addBalanceAtEndOfLastPeriod: { type: "boolean" },
           addPaymentsThisPeriodForLastPeriod: { type: "boolean" },
