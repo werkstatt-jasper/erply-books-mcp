@@ -509,3 +509,68 @@ describe("erply_bank_import_v2", () => {
     );
   });
 });
+
+describe("payment import, connect, and SEPA input schemas", () => {
+  it("advertises writable payment-import fields and omits output-only ones", () => {
+    const tools = createPaymentBankTools(createMockClient());
+    const importProps = tools.erply_import_payment.inputSchema.properties;
+    const connectProps = tools.erply_connect_payment_with_documents.inputSchema.properties;
+    const sepaProps = tools.erply_sepa_payments.inputSchema.properties;
+    for (const key of [
+      "linkedInvoiceInfo",
+      "invoiceSum",
+      "transactionEntryId",
+      "taxRateId",
+      "vatPercent",
+      "attachmentId",
+    ]) {
+      expect(importProps).toHaveProperty(key);
+      expect(connectProps).toHaveProperty(key);
+    }
+    for (const key of ["errorMessage", "howConnectionWasDone", "uiType", "yellow"]) {
+      expect(importProps).not.toHaveProperty(key);
+      expect(connectProps).not.toHaveProperty(key);
+    }
+    for (const key of ["invoiceCustomers", "memos", "useBban", "paymentUrgency", "chargesBearer"]) {
+      expect(sepaProps).toHaveProperty(key);
+    }
+    expect(sepaProps).not.toHaveProperty("erplySessionKey");
+    expect(sepaProps).not.toHaveProperty("erplyClientCode");
+    expect(sepaProps).not.toHaveProperty("code2fa");
+  });
+
+  it("forwards newly advertised import and SEPA fields", async () => {
+    const client = createMockClient();
+    const tools = createPaymentBankTools(client);
+    vi.mocked(client.post).mockResolvedValue({ id: 1 });
+    await tools.erply_import_payment.handler({
+      date: "2025-06-01",
+      amount: 50,
+      typeCode: "MONEY_IN_TRANSACTION",
+      invoiceSum: 50,
+      taxRateId: 3,
+      attachmentId: 8,
+      linkedInvoiceInfo: [{ invoiceId: 55, sumPaid: 50 }],
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/payments/import",
+      expect.objectContaining({
+        id: 0,
+        invoiceSum: 50,
+        taxRateId: 3,
+        attachmentId: 8,
+        linkedInvoiceInfo: [{ invoiceId: 55, sumPaid: 50 }],
+      }),
+    );
+
+    await tools.erply_sepa_payments.handler({
+      invoiceIds: "55",
+      useBban: true,
+      paymentUrgency: "NORM",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/payments/sepa_payments/json_format",
+      expect.objectContaining({ invoiceIds: "55", useBban: true, paymentUrgency: "NORM" }),
+    );
+  });
+});

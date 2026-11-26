@@ -33,6 +33,8 @@ const createAccountSchema = z
     typeCode: optionalString,
     description: optionalString,
     currencyCode: optionalString,
+    organisationId: optionalPositiveInt,
+    partnerAccountId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -48,6 +50,8 @@ const updateAccountSchema = z
     typeCode: optionalString,
     description: optionalString,
     currencyCode: optionalString,
+    organisationId: optionalPositiveInt,
+    partnerAccountId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -99,6 +103,8 @@ export function createAccountTools(client: ErplyBooksClient) {
           typeCode: { type: "string", description: "ACCOUNT_TYPE dictionary code" },
           description: { type: "string" },
           currencyCode: { type: "string" },
+          organisationId: { type: "number", description: "Organisation id" },
+          partnerAccountId: { type: "number", description: "Partner API account id" },
         },
         required: ["number", "name"],
       },
@@ -125,6 +131,8 @@ export function createAccountTools(client: ErplyBooksClient) {
           typeCode: { type: "string" },
           description: { type: "string" },
           currencyCode: { type: "string" },
+          organisationId: { type: "number", description: "Organisation id" },
+          partnerAccountId: { type: "number", description: "Partner API account id" },
         },
         required: ["accountId"],
       },

@@ -5,13 +5,17 @@ import { ERPLY_DOCUMENT_TYPES } from "../types/invoices.js";
 import type { EmailInfo, PartnerInvoice, RecurringInvoice } from "../types/invoices-extras.js";
 import {
   optionalBoolean,
+  optionalIntArray,
   optionalNonNegativeInt,
+  optionalObject,
+  optionalObjectArray,
   optionalPositiveInt,
   optionalString,
   parseToolArgs,
   positiveInt,
   ymdDateString,
 } from "../validation/tool-args.js";
+import { invoiceWritableFields, invoiceWritableInputProperties } from "./invoices.js";
 import { jsonToolResult, mutationToolResult, unwrapListEnvelope } from "./list-response.js";
 
 const documentTypeSchema = z.enum(ERPLY_DOCUMENT_TYPES);
@@ -68,23 +72,49 @@ const listPartnerInvoicesSchema = z.object({
   limit: optionalPositiveInt,
 });
 
+const partnerInvoiceWritableFields = {
+  ...invoiceWritableFields,
+  projects: optionalIntArray,
+  payer: optionalObject,
+  payerCustomerId: optionalPositiveInt,
+  documentConnections: optionalObjectArray,
+  attributes: optionalObjectArray,
+};
+
+const partnerInvoiceWritableInputProperties = {
+  ...invoiceWritableInputProperties,
+  partnerDocumentId: {
+    type: "string",
+    description: "Partner API document id (Partner API docs recommend setting this)",
+  },
+  projects: {
+    type: "array",
+    description: "Project ids associated with the document",
+    items: { type: "number" },
+  },
+  payer: {
+    type: "object",
+    description: "Inline payer customer object (APICustomerInfoV2)",
+    additionalProperties: true,
+  },
+  payerCustomerId: { type: "number", description: "Payer customer id" },
+  documentConnections: {
+    type: "array",
+    description: "Links to related documents (APIDocumentConnectionInfo)",
+    items: { type: "object", additionalProperties: true },
+  },
+  attributes: {
+    type: "array",
+    description: "Attribute list",
+    items: { type: "object", additionalProperties: true },
+  },
+};
+
 const createPartnerInvoiceSchema = z
   .object({
     typeCode: documentTypeSchema,
     date: ymdDateString,
-    customerId: optionalPositiveInt,
-    customer: z
-      .record(z.string(), z.unknown())
-      .nullish()
-      .transform((v) => v ?? undefined),
-    number: optionalString,
-    currencyCode: optionalString,
-    projectId: optionalPositiveInt,
-    partnerDocumentId: optionalString,
-    rows: z
-      .array(z.record(z.string(), z.unknown()))
-      .nullish()
-      .transform((v) => v ?? undefined),
+    ...partnerInvoiceWritableFields,
     registrationCode: optionalString,
   })
   .passthrough()
@@ -98,34 +128,49 @@ const createPartnerInvoiceSchema = z
     }
   });
 
+const recurringInvoiceFields = {
+  copyFromDocumentId: optionalPositiveInt,
+  activeFromDate: optionalString,
+  dayOfMonth: optionalPositiveInt,
+  invoiceDayOfMonth: optionalPositiveInt,
+  enabled: optionalBoolean,
+  sendInvoiceByEmail: optionalBoolean,
+  emailAddress: optionalString,
+  sendInvoice: optionalBoolean,
+  entityId: optionalPositiveInt,
+  articles: optionalObjectArray,
+  registrationCode: optionalString,
+};
+
+const recurringInvoiceInputProperties = {
+  copyFromDocumentId: { type: "number", description: "Source document id to copy from" },
+  activeFromDate: { type: "string", description: "Date the schedule becomes active" },
+  dayOfMonth: { type: "number" },
+  invoiceDayOfMonth: { type: "number" },
+  enabled: { type: "boolean" },
+  sendInvoiceByEmail: { type: "boolean" },
+  emailAddress: { type: "string" },
+  sendInvoice: { type: "boolean" },
+  entityId: { type: "number" },
+  articles: {
+    type: "array",
+    description: "Recurring line items (APIRecurringInvoiceInfo.articles)",
+    items: { type: "object", additionalProperties: true },
+  },
+  registrationCode: { type: "string" },
+};
+
 const createRecurringInvoiceSchema = z
   .object({
+    ...recurringInvoiceFields,
     copyFromDocumentId: positiveInt,
-    activeFromDate: optionalString,
-    dayOfMonth: optionalPositiveInt,
-    invoiceDayOfMonth: optionalPositiveInt,
-    enabled: optionalBoolean,
-    sendInvoiceByEmail: optionalBoolean,
-    emailAddress: optionalString,
-    sendInvoice: optionalBoolean,
-    entityId: optionalPositiveInt,
-    registrationCode: optionalString,
   })
   .passthrough();
 
 const updateRecurringInvoiceSchema = z
   .object({
     documentId: positiveInt,
-    copyFromDocumentId: optionalPositiveInt,
-    activeFromDate: optionalString,
-    dayOfMonth: optionalPositiveInt,
-    invoiceDayOfMonth: optionalPositiveInt,
-    enabled: optionalBoolean,
-    sendInvoiceByEmail: optionalBoolean,
-    emailAddress: optionalString,
-    sendInvoice: optionalBoolean,
-    entityId: optionalPositiveInt,
-    registrationCode: optionalString,
+    ...recurringInvoiceFields,
   })
   .passthrough();
 
@@ -297,21 +342,7 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
             enum: [...ERPLY_DOCUMENT_TYPES],
           },
           date: { type: "string", description: "Document date YYYY-MM-DD (required)" },
-          customerId: { type: "number", description: "Existing customer id (or pass customer)" },
-          customer: {
-            type: "object",
-            description: "Inline customer object",
-            additionalProperties: true,
-          },
-          number: { type: "string" },
-          currencyCode: { type: "string" },
-          projectId: { type: "number" },
-          partnerDocumentId: { type: "string" },
-          rows: {
-            type: "array",
-            items: { type: "object", additionalProperties: true },
-          },
-          registrationCode: { type: "string" },
+          ...partnerInvoiceWritableInputProperties,
         },
         required: ["typeCode", "date"],
       },
@@ -329,23 +360,15 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
 
     erply_create_recurring_invoice: {
       description:
-        "Create a recurring invoice schedule (POST /invoices/recurring). Requires copyFromDocumentId. Optional activeFromDate, dayOfMonth, invoiceDayOfMonth, enabled, sendInvoiceByEmail, emailAddress, sendInvoice, entityId, registrationCode. Extra APIRecurringInvoiceInfo fields may be passed through.",
+        "Create a recurring invoice schedule (POST /invoices/recurring). Requires copyFromDocumentId. Optional schedule/email fields, articles (recurring line items), and registrationCode. Extra APIRecurringInvoiceInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {
+          ...recurringInvoiceInputProperties,
           copyFromDocumentId: {
             type: "number",
             description: "Source document id to copy from (required)",
           },
-          activeFromDate: { type: "string" },
-          dayOfMonth: { type: "number" },
-          invoiceDayOfMonth: { type: "number" },
-          enabled: { type: "boolean" },
-          sendInvoiceByEmail: { type: "boolean" },
-          emailAddress: { type: "string" },
-          sendInvoice: { type: "boolean" },
-          entityId: { type: "number" },
-          registrationCode: { type: "string" },
         },
         required: ["copyFromDocumentId"],
       },
@@ -361,7 +384,7 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
 
     erply_update_recurring_invoice: {
       description:
-        "Update a recurring invoice schedule (PUT /invoices/recurring/{documentId}). Requires documentId. Optional schedule/email fields and registrationCode. Extra APIRecurringInvoiceInfo fields may be passed through.",
+        "Update a recurring invoice schedule (PUT /invoices/recurring/{documentId}). Requires documentId. Optional schedule/email fields, articles (recurring line items), and registrationCode. Extra APIRecurringInvoiceInfo fields may be passed through.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -369,16 +392,7 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
             type: "number",
             description: "Recurring schedule / document id (required)",
           },
-          copyFromDocumentId: { type: "number" },
-          activeFromDate: { type: "string" },
-          dayOfMonth: { type: "number" },
-          invoiceDayOfMonth: { type: "number" },
-          enabled: { type: "boolean" },
-          sendInvoiceByEmail: { type: "boolean" },
-          emailAddress: { type: "string" },
-          sendInvoice: { type: "boolean" },
-          entityId: { type: "number" },
-          registrationCode: { type: "string" },
+          ...recurringInvoiceInputProperties,
         },
         required: ["documentId"],
       },

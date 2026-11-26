@@ -6,8 +6,11 @@ import {
   optionalBoolean,
   optionalNonNegativeInt,
   optionalNumber,
+  optionalObject,
+  optionalObjectArray,
   optionalPositiveInt,
   optionalString,
+  optionalYmdOrIsoDateTime,
   parseToolArgs,
   positiveInt,
   ymdDateString,
@@ -35,25 +38,100 @@ const getInvoiceSchema = z.object({
   lang: optionalString,
 });
 
+export const invoiceWritableFields = {
+  customerId: optionalPositiveInt,
+  customer: optionalObject,
+  number: optionalString,
+  currencyCode: optionalString,
+  projectId: optionalPositiveInt,
+  vatPercent: optionalNumber,
+  referenceNumber: optionalString,
+  deadlineDate: optionalString,
+  rows: optionalObjectArray,
+  discountPercent: optionalNumber,
+  languageCode: optionalString,
+  invoiceTextsInfoId: optionalPositiveInt,
+  penaltyPercent: optionalNumber,
+  currencyRate: optionalNumber,
+  code: optionalString,
+  transactionDate: optionalYmdOrIsoDateTime("T00:00:00"),
+  note: optionalString,
+  printedInfo: optionalString,
+  referringIdentifier: optionalString,
+  actionId: optionalPositiveInt,
+  partnerDocumentId: optionalString,
+  activityId: optionalPositiveInt,
+  documentStatusTypeCode: optionalString,
+  vatTotalsByTaxRate: optionalObjectArray,
+  payments: optionalObjectArray,
+  attachments: optionalObjectArray,
+};
+
+export const invoiceWritableInputProperties = {
+  customerId: { type: "number", description: "Existing customer id (or pass customer)" },
+  customer: {
+    type: "object",
+    description: "Inline customer object when creating or updating with the document",
+    additionalProperties: true,
+  },
+  number: { type: "string", description: "Document number" },
+  currencyCode: { type: "string" },
+  projectId: { type: "number" },
+  vatPercent: { type: "number", description: "VAT percent" },
+  referenceNumber: { type: "string" },
+  deadlineDate: { type: "string", description: "Payment deadline (YYYY-MM-DD or ISO datetime)" },
+  rows: {
+    type: "array",
+    description: "Invoice line rows (APIInvoiceArticleInfo-shaped objects)",
+    items: { type: "object", additionalProperties: true },
+  },
+  discountPercent: { type: "number", description: "Document-level discount percent" },
+  languageCode: { type: "string", description: "Document language code" },
+  invoiceTextsInfoId: { type: "number", description: "Invoice text/template id" },
+  penaltyPercent: { type: "number", description: "Late-payment penalty percent" },
+  currencyRate: { type: "number", description: "Currency exchange rate" },
+  code: { type: "string", description: "Document code" },
+  transactionDate: {
+    type: "string",
+    description:
+      "Transaction date. YYYY-MM-DD is coerced to T00:00:00; ISO datetime is passed through.",
+  },
+  note: { type: "string", description: "Internal note" },
+  printedInfo: { type: "string", description: "Text printed on the document" },
+  referringIdentifier: { type: "string" },
+  actionId: { type: "number" },
+  partnerDocumentId: { type: "string", description: "Partner API document id" },
+  activityId: { type: "number" },
+  documentStatusTypeCode: {
+    type: "string",
+    description: "DOCUMENT_STATUS_TYPE dictionary code",
+  },
+  vatTotalsByTaxRate: {
+    type: "array",
+    description: "VAT totals by tax rate (APIInvoiceTaxInfo)",
+    items: { type: "object", additionalProperties: true },
+  },
+  payments: {
+    type: "array",
+    description: "Payments to record with the document (APIPaymentInfo)",
+    items: { type: "object", additionalProperties: true },
+  },
+  attachments: {
+    type: "array",
+    description: "Attachments to record with the document (APIAttachmentInfo)",
+    items: { type: "object", additionalProperties: true },
+  },
+  registrationCode: {
+    type: "string",
+    description: "Optional query param for partner/queue flows",
+  },
+};
+
 const createInvoiceSchema = z
   .object({
     typeCode: documentTypeSchema,
     date: ymdDateString,
-    customerId: optionalPositiveInt,
-    customer: z
-      .record(z.string(), z.unknown())
-      .nullish()
-      .transform((v) => v ?? undefined),
-    number: optionalString,
-    currencyCode: optionalString,
-    projectId: optionalPositiveInt,
-    vatPercent: optionalNumber,
-    referenceNumber: optionalString,
-    deadlineDate: optionalString,
-    rows: z
-      .array(z.record(z.string(), z.unknown()))
-      .nullish()
-      .transform((v) => v ?? undefined),
+    ...invoiceWritableFields,
     registrationCode: optionalString,
   })
   .passthrough()
@@ -72,14 +150,7 @@ const updateInvoiceSchema = z
     documentId: positiveInt,
     typeCode: documentTypeSchema.optional(),
     date: optionalString,
-    customerId: optionalPositiveInt,
-    number: optionalString,
-    currencyCode: optionalString,
-    projectId: optionalPositiveInt,
-    rows: z
-      .array(z.record(z.string(), z.unknown()))
-      .nullish()
-      .transform((v) => v ?? undefined),
+    ...invoiceWritableFields,
     registrationCode: optionalString,
   })
   .passthrough();
@@ -154,27 +225,7 @@ export function createInvoiceTools(client: ErplyBooksClient) {
             enum: [...ERPLY_DOCUMENT_TYPES],
           },
           date: { type: "string", description: "Document date YYYY-MM-DD (required)" },
-          customerId: { type: "number", description: "Existing customer id (or pass customer)" },
-          customer: {
-            type: "object",
-            description: "Inline customer object when creating with the document",
-            additionalProperties: true,
-          },
-          number: { type: "string" },
-          currencyCode: { type: "string" },
-          projectId: { type: "number" },
-          vatPercent: { type: "number" },
-          referenceNumber: { type: "string" },
-          deadlineDate: { type: "string" },
-          rows: {
-            type: "array",
-            description: "Invoice line rows (APIInvoiceRow-shaped objects)",
-            items: { type: "object", additionalProperties: true },
-          },
-          registrationCode: {
-            type: "string",
-            description: "Optional query param for partner/queue flows",
-          },
+          ...invoiceWritableInputProperties,
         },
         required: ["typeCode", "date"],
       },
@@ -199,18 +250,11 @@ export function createInvoiceTools(client: ErplyBooksClient) {
           documentId: { type: "number", description: "Document id (required)" },
           typeCode: {
             type: "string",
+            description: "DOCUMENT_* type code",
             enum: [...ERPLY_DOCUMENT_TYPES],
           },
-          date: { type: "string" },
-          customerId: { type: "number" },
-          number: { type: "string" },
-          currencyCode: { type: "string" },
-          projectId: { type: "number" },
-          rows: {
-            type: "array",
-            items: { type: "object", additionalProperties: true },
-          },
-          registrationCode: { type: "string" },
+          date: { type: "string", description: "Document date YYYY-MM-DD" },
+          ...invoiceWritableInputProperties,
         },
         required: ["documentId"],
       },

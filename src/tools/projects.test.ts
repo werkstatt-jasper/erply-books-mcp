@@ -263,3 +263,14 @@ describe("erply_delete_project_via_post", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update project input schemas", () => {
+  it("advertises organisationId and omits projectGroupName", () => {
+    const tools = createProjectTools(createMockClient());
+    expect(tools.erply_create_project.inputSchema.properties).toHaveProperty("organisationId");
+    expect(tools.erply_update_project.inputSchema.properties).toHaveProperty("organisationId");
+    expect(tools.erply_create_project.inputSchema.properties).not.toHaveProperty(
+      "projectGroupName",
+    );
+  });
+});

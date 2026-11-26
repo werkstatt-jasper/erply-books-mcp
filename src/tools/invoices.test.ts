@@ -206,3 +206,57 @@ describe("erply_delete_invoice", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update invoice input schemas", () => {
+  it("advertises writable APIInvoiceInfo fields and omits server-managed ones", () => {
+    const tools = createInvoiceTools(createMockClient());
+    const createProps = tools.erply_create_invoice.inputSchema.properties;
+    const updateProps = tools.erply_update_invoice.inputSchema.properties;
+    for (const key of [
+      "languageCode",
+      "transactionDate",
+      "note",
+      "documentStatusTypeCode",
+      "discountPercent",
+      "payments",
+      "attachments",
+      "partnerDocumentId",
+    ]) {
+      expect(createProps).toHaveProperty(key);
+      expect(updateProps).toHaveProperty(key);
+    }
+    expect(updateProps).toHaveProperty("customer");
+    expect(updateProps).toHaveProperty("vatPercent");
+    expect(updateProps).toHaveProperty("deadlineDate");
+    for (const key of ["id", "history", "creatorName", "modifierName", "sumWithVat", "hash"]) {
+      expect(createProps).not.toHaveProperty(key);
+      expect(updateProps).not.toHaveProperty(key);
+    }
+  });
+
+  it("forwards newly advertised fields and coerces transactionDate", async () => {
+    const client = createMockClient();
+    const tools = createInvoiceTools(client);
+    vi.mocked(client.post).mockResolvedValue({ id: 55 });
+    await tools.erply_create_invoice.handler({
+      typeCode: "DOCUMENT_SELL",
+      date: "2025-06-01",
+      customerId: 10,
+      languageCode: "et",
+      note: "Rush order",
+      transactionDate: "2025-06-02",
+      payments: [{ sumPaid: 12.5 }],
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/invoices",
+      expect.objectContaining({
+        id: 0,
+        languageCode: "et",
+        note: "Rush order",
+        transactionDate: "2025-06-02T00:00:00",
+        payments: [{ sumPaid: 12.5 }],
+      }),
+      expect.anything(),
+    );
+  });
+});
