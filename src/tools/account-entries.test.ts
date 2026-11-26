@@ -72,4 +72,41 @@ describe("erply_list_account_entries", () => {
       }),
     ).rejects.toThrow(/reportType/);
   });
+
+  it("forwards integer changedSince", async () => {
+    vi.mocked(client.get).mockResolvedValue(accountEntriesFixture.list_page);
+    await tools.erply_list_account_entries.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      changedSince: 1_714_608_000,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/account_entries",
+      expect.objectContaining({ changedSince: 1_714_608_000 }),
+    );
+  });
+
+  it("coerces numeric-string changedSince to an integer", async () => {
+    vi.mocked(client.get).mockResolvedValue(accountEntriesFixture.list_page);
+    await tools.erply_list_account_entries.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      changedSince: "1714608000",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/account_entries",
+      expect.objectContaining({ changedSince: 1714608000 }),
+    );
+  });
+
+  it("rejects a negative changedSince", async () => {
+    await expect(
+      tools.erply_list_account_entries.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        changedSince: -1,
+      }),
+    ).rejects.toThrow(/changedSince/);
+    expect(client.get).not.toHaveBeenCalled();
+  });
 });

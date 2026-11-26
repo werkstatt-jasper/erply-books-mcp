@@ -37,6 +37,13 @@ const listPaymentsSchema = z
     documentId: optionalPositiveInt,
     paymentType: z.unknown().nullish(),
     description: optionalString,
+    keyword: optionalString,
+    documentType: optionalString,
+    partnerDocumentId: optionalString,
+    getOnlyThoseWithContact: optionalString,
+    showOnlyPrepayments: optionalBoolean,
+    documentStatusType: optionalString,
+    changedSince: optionalString,
     sort: optionalString,
     start: optionalNonNegativeInt,
     limit: optionalPositiveInt,
@@ -114,6 +121,23 @@ export function createPaymentTools(client: ErplyBooksClient) {
               "PAYMENT_TYPE dictionary code (required). One type per call. A date-only call is rejected. Look up codes with erply_get_dictionary.",
           },
           description: { type: "string", description: "Description filter" },
+          keyword: { type: "string", description: "Free-text search" },
+          documentType: { type: "string", description: "Related document type filter" },
+          partnerDocumentId: { type: "string", description: "Partner-system document id" },
+          getOnlyThoseWithContact: {
+            type: "string",
+            description:
+              "Restrict to payments that have a contact (OpenAPI type is string, not boolean)",
+          },
+          showOnlyPrepayments: { type: "boolean", description: "Only prepayment payments" },
+          documentStatusType: {
+            type: "string",
+            description: "DocumentStatusType dictionary code (e.g. STATUS_CONFIRMED)",
+          },
+          changedSince: {
+            type: "string",
+            description: "Incremental sync cursor (OpenAPI type is string)",
+          },
           sort: { type: "string", description: "Sort expression" },
           start: {
             type: "number",

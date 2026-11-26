@@ -140,6 +140,35 @@ describe("erply_list_payments", () => {
     expect(body.totalCount).toBe(3);
     expect(body.items.length).toBeLessThan(body.totalCount);
   });
+
+  it("forwards keyword, document, status, and changedSince filters and still drops getEverything", async () => {
+    vi.mocked(client.get).mockResolvedValue(paymentsFixture.list_page);
+    await tools.erply_list_payments.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      paymentType: "INVOICE_PAYMENT",
+      keyword: "INV-1001",
+      documentType: "DOCUMENT_SELL",
+      partnerDocumentId: "partner-doc-9",
+      getOnlyThoseWithContact: "true",
+      showOnlyPrepayments: false,
+      documentStatusType: "STATUS_CONFIRMED",
+      changedSince: "2025-06-01T00:00:00",
+      getEverything: true,
+    });
+    const query = vi.mocked(client.get).mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(query).toMatchObject({
+      paymentType: "INVOICE_PAYMENT",
+      keyword: "INV-1001",
+      documentType: "DOCUMENT_SELL",
+      partnerDocumentId: "partner-doc-9",
+      getOnlyThoseWithContact: "true",
+      showOnlyPrepayments: false,
+      documentStatusType: "STATUS_CONFIRMED",
+      changedSince: "2025-06-01T00:00:00",
+    });
+    expect(query.getEverything).toBeUndefined();
+  });
 });
 
 describe("erply_create_payment", () => {

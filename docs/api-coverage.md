@@ -10,7 +10,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 
 | Method | Path | Status |
 |--------|------|--------|
-| `GET` | `/account_entries` | covered: `erply_list_account_entries` |
+| `GET` | `/account_entries` | covered: `erply_list_account_entries` (optional `changedSince`) |
 | `GET` | `/account_entries/aggregate` | gap: E38 #177 |
 | `POST` | `/account_entries/external_system_reading_successful` | gap: E38 #177 |
 | `POST` | `/account_entries/import_trial_balance` | gap: E38 #177 |
@@ -85,7 +85,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/attributes/v2` | gap: E41 #180 |
 | `PUT` | `/attributes/v2/{activityItemId}` | gap: E41 #180 |
 | `POST` | `/bulk` | gap: E46 #185 |
-| `GET` | `/customers` | covered: `erply_list_customers` |
+| `GET` | `/customers` | covered: `erply_list_customers` (optional `partnerCustomerId`, `changedSinceDate`) |
 | `POST` | `/customers` | covered: `erply_create_customer` |
 | `DELETE` | `/customers/{customerId}` | covered: `erply_delete_customer` |
 | `PUT` | `/customers/{customerId}` | covered: `erply_update_customer` |
@@ -140,7 +140,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `DELETE` | `/inventory/supplier_priceplan/{pricePlanId}` | gap: E45 #184 |
 | `POST` | `/inventory/update_prices_with_code` | gap: E45 #184 |
 | `GET` | `/inventory/waste_report` | gap: E45 #184 |
-| `GET` | `/invoices` | covered: `erply_list_invoices` |
+| `GET` | `/invoices` | covered: `erply_list_invoices` (optional status, `getRows`/`detailed`, `changedSinceDate`) |
 | `POST` | `/invoices` | covered: `erply_create_invoice` |
 | `GET` | `/invoices/{documentId}` | covered: `erply_get_invoice` |
 | `PUT` | `/invoices/{documentId}` | covered: `erply_update_invoice` |
@@ -168,7 +168,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/invoices/override` | covered: `erply_override_invoice_fields` |
 | `GET` | `/invoices/parsed_invoice_info_validation` | covered: `erply_list_parsed_invoice_validations` |
 | `DELETE` | `/invoices/partner` | covered: `erply_delete_partner_invoice` |
-| `GET` | `/invoices/partner` | covered: `erply_list_partner_invoices` |
+| `GET` | `/invoices/partner` | covered: `erply_list_partner_invoices` (optional status, `getRows`/`detailed`, `changedSinceDate`) |
 | `POST` | `/invoices/partner` | covered: `erply_create_partner_invoice` |
 | `PUT` | `/invoices/partner/{documentId}` | covered: `erply_update_partner_invoice` |
 | `GET` | `/invoices/pdf/{documentId}` | covered: `erply_get_invoice_pdf_v1` |
@@ -207,7 +207,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/organisation/terms` | gap: E42 #181 |
 | `POST` | `/organisation/terms` | gap: E43 #182 |
 | `PUT` | `/organisation/terms/{organisationTermId}` | gap: E43 #182 |
-| `GET` | `/payments` | covered: `erply_list_payments` (requires `paymentType`; date-only calls rejected) |
+| `GET` | `/payments` | covered: `erply_list_payments` (requires `paymentType`; date-only calls rejected; `getEverything` not sent) |
 | `POST` | `/payments` | covered: `erply_create_payment` |
 | `DELETE` | `/payments/{paymentId}` | covered: `erply_delete_payment` |
 | `PUT` | `/payments/{paymentId}` | covered: `erply_update_payment` |
@@ -260,10 +260,10 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/report_generator/user_defined` | covered: `erply_list_user_defined_reports` |
 | `POST` | `/report_generator/xlsx` | covered: `erply_run_custom_report_xlsx` |
 | `GET` | `/report_generator/xml` | covered: `erply_get_custom_report_xml` |
-| `GET` | `/reports/aged` | covered: `erply_aged_receivables` |
+| `GET` | `/reports/aged` | covered: `erply_aged_receivables` (optional `changedSinceSeconds`) |
 | `GET` | `/reports/aged_report` | gap: E36 #175 |
-| `GET` | `/reports/balance_sheet` | covered: `erply_balance_sheet` |
-| `GET` | `/reports/contact_balance` | covered: `erply_contact_balance` |
+| `GET` | `/reports/balance_sheet` | covered: `erply_balance_sheet` (comparative period, budget, `isCsv`) |
+| `GET` | `/reports/contact_balance` | covered: `erply_contact_balance` (optional `changedSinceSeconds`, period-comparison flags) |
 | `POST` | `/reports/custom_printing` | gap: E36 #175 |
 | `GET` | `/reports/daybook` | covered: `erply_daybook` |
 | `GET` | `/reports/file/{fileType}/file` | gap: E36 #175 |
@@ -271,7 +271,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/reports/fixed_assets` | covered: `erply_fixed_assets` |
 | `GET` | `/reports/general_ledger` | covered: `erply_general_ledger` |
 | `GET` | `/reports/income_compare` | gap: E36 #175 |
-| `GET` | `/reports/income_sheet` | covered: `erply_income_sheet` |
+| `GET` | `/reports/income_sheet` | covered: `erply_income_sheet` (comparative period, budget, `isCsv`) |
 | `POST` | `/reports/send_report_by_email/{fileType}` | gap: E36 #175 |
 | `GET` | `/reports/tax/contacts` | gap: E36 #175 |
 | `GET` | `/reports/tax/ee/vat` | covered: `erply_vat_ee` |
@@ -352,7 +352,7 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `DELETE` | `/tax_rates/{taxRateId}` | covered: `erply_delete_tax_rate` |
 | `PUT` | `/tax_rates/{taxRateId}` | covered: `erply_update_tax_rate` |
 | `POST` | `/tax_rates/delete` | gap: E40 #179 |
-| `GET` | `/transaction_entries` | covered: `erply_list_transaction_entries` |
+| `GET` | `/transaction_entries` | covered: `erply_list_transaction_entries` (optional transaction dates, `transactionIds`, `sort`, `lang`) |
 | `POST` | `/transaction_entries` | covered: `erply_create_transaction_entry` |
 | `DELETE` | `/transaction_entries/{transactionEntryId}` | covered: `erply_delete_transaction_entry` |
 | `GET` | `/transaction_entries/{transactionEntryId}` | covered: `erply_get_transaction_entry` |

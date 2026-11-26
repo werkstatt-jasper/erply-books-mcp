@@ -27,6 +27,21 @@ describe("erply_list_customers", () => {
     });
   });
 
+  it("forwards partnerCustomerId and changedSinceDate", async () => {
+    vi.mocked(client.get).mockResolvedValue(customersFixture.list_page);
+    await tools.erply_list_customers.handler({
+      partnerCustomerId: "partner-cust-42",
+      changedSinceDate: "2025-06-01",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/customers",
+      expect.objectContaining({
+        partnerCustomerId: "partner-cust-42",
+        changedSinceDate: "2025-06-01",
+      }),
+    );
+  });
+
   it("propagates API errors", async () => {
     vi.mocked(client.get).mockRejectedValue(new Error("network"));
     await expect(tools.erply_list_customers.handler({})).rejects.toThrow("network");

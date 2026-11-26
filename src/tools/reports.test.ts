@@ -32,6 +32,61 @@ describe("report tools", () => {
     expect(JSON.parse(result.content[0].text).reportType).toBe("balance_sheet");
   });
 
+  it("erply_balance_sheet forwards comparative, budget, and format query params", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.balance_sheet);
+    await tools.erply_balance_sheet.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      comparativeDateFrom: "2024-01-01",
+      comparativeDateTo: "2024-12-31",
+      budgetName: "FY2025",
+      cashFlowReport: true,
+      currencyCode: "EUR",
+      lang: "en",
+      layout: "STANDARD",
+      addSummaries: true,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/balance_sheet",
+      expect.objectContaining({
+        comparativeDateFrom: "2024-01-01",
+        comparativeDateTo: "2024-12-31",
+        budgetName: "FY2025",
+        cashFlowReport: true,
+        currencyCode: "EUR",
+        lang: "en",
+        layout: "STANDARD",
+        addSummaries: true,
+      }),
+    );
+    expect(client.getArrayBuffer).not.toHaveBeenCalled();
+  });
+
+  it("erply_balance_sheet reads a raw body when isCsv is true", async () => {
+    const csv = "Account,Amount\nBank,10\n";
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      new Uint8Array(Buffer.from(csv, "utf8")).buffer,
+    );
+    const result = await tools.erply_balance_sheet.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      isCsv: true,
+    });
+    expect(client.getArrayBuffer).toHaveBeenCalledWith(
+      "/reports/balance_sheet",
+      expect.objectContaining({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        isCsv: true,
+      }),
+    );
+    expect(client.get).not.toHaveBeenCalled();
+    expect(JSON.parse(result.content[0].text)).toMatchObject({
+      encoding: "utf8",
+      text: csv,
+    });
+  });
+
   it("erply_income_sheet GETs /reports/income_sheet", async () => {
     vi.mocked(client.get).mockResolvedValue(reportsFixture.income_sheet);
     const result = await tools.erply_income_sheet.handler({
@@ -43,6 +98,39 @@ describe("report tools", () => {
       expect.objectContaining({ dateFrom: "2025-01-01", dateTo: "2025-12-31" }),
     );
     expect(JSON.parse(result.content[0].text).reportType).toBe("income_sheet");
+  });
+
+  it("erply_income_sheet forwards comparative params and reads CSV via getArrayBuffer", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.income_sheet);
+    await tools.erply_income_sheet.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      comparativeDateFrom: "2024-01-01",
+      comparativeDateTo: "2024-12-31",
+      addSummaries: true,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/income_sheet",
+      expect.objectContaining({
+        comparativeDateFrom: "2024-01-01",
+        comparativeDateTo: "2024-12-31",
+        addSummaries: true,
+      }),
+    );
+    const csv = "Account,Amount\nSales,20\n";
+    vi.mocked(client.getArrayBuffer).mockResolvedValue(
+      new Uint8Array(Buffer.from(csv, "utf8")).buffer,
+    );
+    const result = await tools.erply_income_sheet.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      isCsv: true,
+    });
+    expect(client.getArrayBuffer).toHaveBeenCalledWith(
+      "/reports/income_sheet",
+      expect.objectContaining({ isCsv: true }),
+    );
+    expect(JSON.parse(result.content[0].text)).toMatchObject({ encoding: "utf8", text: csv });
   });
 
   it("erply_aged_receivables GETs /reports/aged with filters", async () => {
@@ -61,6 +149,30 @@ describe("report tools", () => {
       }),
     );
     expect(JSON.parse(result.content[0].text).reportType).toBe("aged");
+  });
+
+  it("erply_aged_receivables forwards changedSinceSeconds", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.aged);
+    await tools.erply_aged_receivables.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      changedSinceSeconds: 3600,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/aged",
+      expect.objectContaining({ changedSinceSeconds: 3600 }),
+    );
+  });
+
+  it("erply_aged_receivables rejects a negative changedSinceSeconds", async () => {
+    await expect(
+      tools.erply_aged_receivables.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        changedSinceSeconds: -1,
+      }),
+    ).rejects.toThrow(/changedSinceSeconds/);
+    expect(client.get).not.toHaveBeenCalled();
   });
 
   it("erply_general_ledger GETs /reports/general_ledger", async () => {
@@ -196,6 +308,46 @@ describe("report tools", () => {
       }),
     );
     expect(JSON.parse(result.content[0].text).reportType).toBe("contact_balance");
+  });
+
+  it("erply_contact_balance forwards changedSinceSeconds and period-comparison flags", async () => {
+    vi.mocked(client.get).mockResolvedValue(reportsFixture.contact_balance);
+    await tools.erply_contact_balance.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      changedSinceSeconds: 86400,
+      addBalanceAtEndOfLastPeriod: true,
+      addPaymentsThisPeriodForLastPeriod: true,
+      addLastPeriodInvoicesBalanceAtEndOfLastPeriod: false,
+      addInvoicesFromLastPeriod: true,
+      addLastPeriodPayments: true,
+      addThisPeriodPayments: false,
+      addLastPeriodPaymentsForLastPeriodInvoices: true,
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/reports/contact_balance",
+      expect.objectContaining({
+        changedSinceSeconds: 86400,
+        addBalanceAtEndOfLastPeriod: true,
+        addPaymentsThisPeriodForLastPeriod: true,
+        addLastPeriodInvoicesBalanceAtEndOfLastPeriod: false,
+        addInvoicesFromLastPeriod: true,
+        addLastPeriodPayments: true,
+        addThisPeriodPayments: false,
+        addLastPeriodPaymentsForLastPeriodInvoices: true,
+      }),
+    );
+  });
+
+  it("erply_contact_balance rejects a negative changedSinceSeconds", async () => {
+    await expect(
+      tools.erply_contact_balance.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        changedSinceSeconds: -1,
+      }),
+    ).rejects.toThrow(/changedSinceSeconds/);
+    expect(client.get).not.toHaveBeenCalled();
   });
 
   it("erply_fixed_assets GETs /reports/fixed_assets", async () => {

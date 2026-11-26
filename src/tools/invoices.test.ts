@@ -55,6 +55,47 @@ describe("erply_list_invoices", () => {
     );
     expect(JSON.parse(result.content[0].text).items).toHaveLength(1);
   });
+
+  it("forwards status, row, and incremental-sync query params", async () => {
+    vi.mocked(client.get).mockResolvedValue(invoicesFixture.list_page);
+    await tools.erply_list_invoices.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      documentType: "DOCUMENT_SELL",
+      documentStatusType: "STATUS_CONFIRMED",
+      showOnlyPrepayments: false,
+      showOnlyNotConfirmedPayments: true,
+      isOverdueInvolved: true,
+      getRows: true,
+      detailed: true,
+      changedSinceDate: "2025-06-01",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/invoices",
+      expect.objectContaining({
+        documentType: "DOCUMENT_SELL",
+        documentStatusType: "STATUS_CONFIRMED",
+        showOnlyPrepayments: false,
+        showOnlyNotConfirmedPayments: true,
+        isOverdueInvolved: true,
+        getRows: true,
+        detailed: true,
+        changedSinceDate: "2025-06-01",
+      }),
+    );
+  });
+
+  it("rejects a non-YYYY-MM-DD changedSinceDate", async () => {
+    await expect(
+      tools.erply_list_invoices.handler({
+        dateFrom: "2025-01-01",
+        dateTo: "2025-12-31",
+        documentType: "DOCUMENT_SELL",
+        changedSinceDate: "2025-13-40",
+      }),
+    ).rejects.toThrow(/changedSinceDate/);
+    expect(client.get).not.toHaveBeenCalled();
+  });
 });
 
 describe("erply_get_invoice", () => {

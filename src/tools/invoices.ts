@@ -8,6 +8,7 @@ import {
   optionalNumber,
   optionalPositiveInt,
   optionalString,
+  optionalYmd,
   parseToolArgs,
   positiveInt,
   ymdDateString,
@@ -25,6 +26,13 @@ const listInvoicesSchema = z.object({
   number: optionalString,
   projectId: optionalPositiveInt,
   getUnpaid: optionalBoolean,
+  documentStatusType: optionalString,
+  showOnlyPrepayments: optionalBoolean,
+  showOnlyNotConfirmedPayments: optionalBoolean,
+  isOverdueInvolved: optionalBoolean,
+  getRows: optionalBoolean,
+  detailed: optionalBoolean,
+  changedSinceDate: optionalYmd,
   sort: optionalString,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
@@ -93,7 +101,7 @@ export function createInvoiceTools(client: ErplyBooksClient) {
   return {
     erply_list_invoices: {
       description:
-        "List Erply Books documents (invoices and related types). Requires dateFrom, dateTo, and documentType. Document types: DOCUMENT_SELL (sales invoice), DOCUMENT_BUY (purchase), DOCUMENT_POS_SELL (cash sales), DOCUMENT_POS_BUY, DOCUMENT_PRE_SELL, DOCUMENT_PRE_BUY, DOCUMENT_BID, DOCUMENT_SALES_ORDER, DOCUMENT_WAYBILL, DOCUMENT_PURCHASE_WAYBILL. Some types require a higher Erply Books price plan. Returns { totalCount, items }.",
+        "List Erply Books documents (invoices and related types). Requires dateFrom, dateTo, and documentType. Document types: DOCUMENT_SELL (sales invoice), DOCUMENT_BUY (purchase), DOCUMENT_POS_SELL (cash sales), DOCUMENT_POS_BUY, DOCUMENT_PRE_SELL, DOCUMENT_PRE_BUY, DOCUMENT_BID, DOCUMENT_SALES_ORDER, DOCUMENT_WAYBILL, DOCUMENT_PURCHASE_WAYBILL. Optional changedSinceDate (YYYY-MM-DD) for incremental sync; documentStatusType, showOnlyPrepayments, showOnlyNotConfirmedPayments, isOverdueInvolved for status/filtering; getRows and detailed to include line rows in the list (avoids N+1 erply_get_invoice calls). Some types require a higher Erply Books price plan. Returns { totalCount, items }.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -109,6 +117,28 @@ export function createInvoiceTools(client: ErplyBooksClient) {
           number: { type: "string", description: "Document number" },
           projectId: { type: "number", description: "Filter by project id" },
           getUnpaid: { type: "boolean", description: "Only unpaid documents when supported" },
+          documentStatusType: {
+            type: "string",
+            description: "DocumentStatusType dictionary code (e.g. STATUS_CONFIRMED)",
+          },
+          showOnlyPrepayments: { type: "boolean", description: "Only prepayment documents" },
+          showOnlyNotConfirmedPayments: {
+            type: "boolean",
+            description: "Only documents with unconfirmed payments",
+          },
+          isOverdueInvolved: { type: "boolean", description: "Only overdue documents" },
+          getRows: {
+            type: "boolean",
+            description: "Include invoice line rows in the list response",
+          },
+          detailed: {
+            type: "boolean",
+            description: "Return a detailed list payload (use with getRows for line items)",
+          },
+          changedSinceDate: {
+            type: "string",
+            description: "Only rows changed on/after this date (YYYY-MM-DD)",
+          },
           sort: { type: "string", description: "Sort expression" },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
