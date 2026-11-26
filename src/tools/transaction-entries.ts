@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ErplyBooksClient } from "../client.js";
 import { ERPLY_TRANSACTION_TYPES, type TransactionEntry } from "../types/transaction-entries.js";
 import {
+  optionalIntArray,
   optionalNonNegativeInt,
   optionalNumber,
   optionalPositiveInt,
@@ -53,6 +54,7 @@ const createTransactionEntrySchema = z
     code: optionalString,
     percent: optionalNumber,
     documentStatusTypeCode: optionalString,
+    projects: optionalIntArray,
   })
   .passthrough();
 
@@ -69,6 +71,7 @@ const updateTransactionEntrySchema = z
     code: optionalString,
     percent: optionalNumber,
     documentStatusTypeCode: optionalString,
+    projects: optionalIntArray,
   })
   .passthrough();
 
@@ -163,6 +166,11 @@ export function createTransactionEntryTools(client: ErplyBooksClient) {
           code: { type: "string" },
           percent: { type: "number" },
           documentStatusTypeCode: { type: "string" },
+          projects: {
+            type: "array",
+            description: "Project ids associated with the entry",
+            items: { type: "number" },
+          },
         },
         required: ["opDate", "typeCode", "accountEntries"],
       },
@@ -212,6 +220,11 @@ export function createTransactionEntryTools(client: ErplyBooksClient) {
           code: { type: "string" },
           percent: { type: "number" },
           documentStatusTypeCode: { type: "string" },
+          projects: {
+            type: "array",
+            description: "Project ids associated with the entry",
+            items: { type: "number" },
+          },
         },
         required: ["transactionEntryId"],
       },

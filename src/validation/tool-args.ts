@@ -68,6 +68,24 @@ export const optionalBoolean = z
   .nullish()
   .transform((v) => v ?? undefined);
 
+/** Optional open JSON object; null coerced to undefined. */
+export const optionalObject = z
+  .record(z.string(), z.unknown())
+  .nullish()
+  .transform((v) => v ?? undefined);
+
+/** Optional array of open JSON objects; null coerced to undefined. */
+export const optionalObjectArray = z
+  .array(z.record(z.string(), z.unknown()))
+  .nullish()
+  .transform((v) => v ?? undefined);
+
+/** Optional array of integers (coerced); null coerced to undefined. */
+export const optionalIntArray = z
+  .array(z.coerce.number().int())
+  .nullish()
+  .transform((v) => v ?? undefined);
+
 export function formatZodError(error: z.ZodError): string {
   return error.issues
     .map((issue) => {

@@ -24,7 +24,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | C | Tool param absent from spec | 24 | all explained (see below) |
 | D | Tool stricter than spec (tool requires, spec optional) | 66 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
-| F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
+| F | Request-body fields not advertised | writable set advertised | #187 (E48): create/update tools now advertise the writable request-body fields; remaining unexposed fields are server-managed, derived, credentials, or MCP file-transport mappings (see appendix F) |
 | G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30); items 19–20 in #171 (E32); item 21 in #172 (E33) |
 
 ## C-class details (tool params absent from spec) — all explained
@@ -277,10 +277,22 @@ The full per-tool tables follow below.
 
 ## Appendix F — Request-body field coverage
 
+Create/update tools now advertise the writable field set from each OpenAPI body
+schema. Server-managed or derived fields (`id`, computed sums, `history`,
+`creatorName` / `modifierName`, display names, lock timestamps) stay unadvertised
+and are still accepted via `.passthrough()` for forward compatibility. File-upload
+tools keep the MCP `fileBase64` / `fileName` transport instead of advertising raw
+`base64` / `filename`. `erply_bank_import_v2` keeps its mapped args
+(`getEverything` / `getMissing` / `separatorField` / `attachmentId`) instead of
+the raw `everything` / `missing` / `separator` / `apiAttachmentInfo` names.
+`erply_sepa_payments` does not advertise `erplySessionKey`, `erplyClientCode`, or
+`code2fa`. `erply_attach_inbox_item_to_document` stays a focused 3-field attach
+helper; the full confirmation body is on `erply_confirm_attachment`.
+
 | Tool | Body schema | Advertised | Unexposed fields (accepted via passthrough) |
 |------|-------------|-----------|----------------------------------------------|
-| `erply_create_account` | `APIAccountInfo` | 9/15 | id, organisationId, partnerAccountId, lockingDatetime, closingBalance, displayName |
-| `erply_update_account` | `APIAccountInfo` | 9/15 | id, organisationId, partnerAccountId, lockingDatetime, closingBalance, displayName |
+| `erply_create_account` | `APIAccountInfo` | 11/15 | id, lockingDatetime, closingBalance, displayName |
+| `erply_update_account` | `APIAccountInfo` | 11/15 | id, lockingDatetime, closingBalance, displayName |
 | `erply_create_article` | `APIArticleInfo` | 14/18 | id, debitTurnover, creditTurnover, costOfGoodsSold |
 | `erply_update_article` | `APIArticleInfo` | 14/18 | id, debitTurnover, creditTurnover, costOfGoodsSold |
 | `erply_create_digi_base64` | `APIAttachmentInfo` | 0/21 | id, documentId, attachmentId, partnerDocumentId, attributeId, folder, typeCode, filename, base64, number, contactName, expenseType, netTotal, taxSum, taxRateId, total, date, description, organisationId, exceptionInfo, attribute |
@@ -289,31 +301,31 @@ The full per-tool tables follow below.
 | `erply_confirm_attachment` | `APIDocumentConfirmationInfo` | 12/12 | — |
 | `erply_attach_inbox_item_to_document` | `APIDocumentConfirmationInfo` | 3/12 | id, activityItemId, activityItemAttachmentId, createDatetime, creatorUserId, waitingForUserId, additionalMessage, customEmail, sendEmail |
 | `erply_create_attachment` | `APIAttachmentInfo` | 12/21 | id, attachmentId, attributeId, filename, base64, number, organisationId, exceptionInfo, attribute |
-| `erply_create_customer` | `APICustomerInfo` | 10/37 | id, legalCountryCode, legalPostcode, deadlineDays, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |
-| `erply_update_customer` | `APICustomerInfo` | 11/37 | id, legalCountryCode, legalPostcode, discount, penalty, referenceNumber, supplierReferenceNumber, actualAddress, actualPostcode, actualCountryCode, phone2, fax, website, contactPersonId, contactPersonName, contactPersonEmail, contactPersonPhone, info, partnerCustomerId, partnerSupplierId, bankName, bankAccountNumber, bankIban, bankSwift, bankIdentificator, attributes |
+| `erply_create_customer` | `APICustomerInfo` | 36/37 | id |
+| `erply_update_customer` | `APICustomerInfo` | 36/37 | id |
 | `erply_send_invoice_email` | `APIEmailInfo` | 6/7 | id |
 | `erply_send_invoice_email_by_hash` | `APIEmailInfo` | 6/7 | id |
 | `erply_import_invoices_formsubmit` | `APIAttachmentInfo` | 2/21 | id, documentId, attachmentId, partnerDocumentId, attributeId, folder, typeCode, number, contactName, expenseType, netTotal, taxSum, taxRateId, total, date, description, organisationId, exceptionInfo, attribute |
 | `erply_send_erply_invoice` | `APIEmailInfo` | 6/7 | id |
 | `erply_send_erply_invoices` | `APIEmailInfo` | 6/7 | id |
-| `erply_create_partner_invoice` | `APIPartnerInvoiceInfo` | 9/50 | id, customerName, discountPercent, languageCode, vatPercent, referenceNumber, deadlineDate, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, projects, projectNames, payments, attachments, payer, payerName, payerCustomerId, documentConnections, username, attributes, history |
-| `erply_create_recurring_invoice` | `APIRecurringInvoiceInfo` | 9/11 | id, articles |
-| `erply_update_recurring_invoice` | `APIRecurringInvoiceInfo` | 9/11 | id, articles |
-| `erply_create_invoice` | `APIInvoiceInfo` | 11/42 | id, customerName, discountPercent, languageCode, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, partnerDocumentId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, payments, attachments, history |
-| `erply_update_invoice` | `APIInvoiceInfo` | 7/42 | id, customerName, discountPercent, languageCode, vatPercent, referenceNumber, deadlineDate, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, invoiceTextsInfoId, penaltyPercent, roundedSum, vatTotalRoundedSum, currencyRate, hash, code, transactionDate, note, printedInfo, referringIdentifier, actionId, partnerDocumentId, activityId, documentStatusTypeCode, vatTotalsByTaxRate, discountSum, payments, attachments, customer, history |
-| `erply_import_payment` | `APIPaymentImportInfo` | 16/51 | id, paymentId, archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, beneficiaryRemitterId, employeeId, importValidated, category, checkNumber, linkedInvoiceInfo, linkedDescription, invoiceSum, transactionEntryId, pendingChequePaymentId, projects, partnerAccountId, currencyRate, taxRateId, vatPercent, yellow, oldImportDetails, code, parentPaymentId, activityItems, reconciledItems, pendingPaymentId, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
+| `erply_create_partner_invoice` | `APIPartnerInvoiceInfo` | 33/50 | id, customerName, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, roundedSum, vatTotalRoundedSum, hash, discountSum, projectNames, payerName, username, history |
+| `erply_create_recurring_invoice` | `APIRecurringInvoiceInfo` | 10/11 | id |
+| `erply_update_recurring_invoice` | `APIRecurringInvoiceInfo` | 10/11 | id |
+| `erply_create_invoice` | `APIInvoiceInfo` | 28/42 | id, customerName, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, roundedSum, vatTotalRoundedSum, hash, discountSum, history |
+| `erply_update_invoice` | `APIInvoiceInfo` | 28/42 | id, customerName, creatorName, modifierName, sumNoVat, taxSum, sumWithVat, sumPaid, sumLeftToPay, roundedSum, vatTotalRoundedSum, hash, discountSum, history |
+| `erply_import_payment` | `APIPaymentImportInfo` | 43/51 | id, yellow, oldImportDetails, activityItems, reconciledItems, uiType, howConnectionWasDone, errorMessage |
 | `erply_save_all_payment_imports` | `APIPaymentImportListInfo` | 1/1 | — |
-| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 17/51 | archivingId, rawDateValue, beneficiaryRemitterAccount, beneficiaryRemitterName, beneficiaryRemitterBankCode, beneficiaryRemitterId, employeeId, importValidated, category, checkNumber, linkedDescription, invoiceSum, transactionEntryId, findCustomerMatch, pendingChequePaymentId, projectId, projects, partnerAccountId, currencyRate, calculateCurrencyRate, taxRateId, vatPercent, yellow, oldImportDetails, code, parentPaymentId, activityItems, reconciledItems, uiType, partnerPaymentId, attachmentId, initialCurrencyCode, howConnectionWasDone, errorMessage |
-| `erply_sepa_payments` | `APIPaymentImportFileInfo` | 11/25 | id, invoiceCustomers, memos, customerNames, addRefNrSeparately, erplyClientCode, erplySessionKey, useBban, paymentUrgency, chargesBearer, invoiceDiscounts, doNotAdd, doNotAddSameContactDocuments, code2fa |
+| `erply_connect_payment_with_documents` | `APIPaymentImportInfo` | 44/51 | yellow, oldImportDetails, activityItems, reconciledItems, uiType, howConnectionWasDone, errorMessage |
+| `erply_sepa_payments` | `APIPaymentImportFileInfo` | 21/25 | id, erplyClientCode, erplySessionKey, code2fa |
 | `erply_bank_import_v2` | `APIBankImportInfo` | 7/12 | id, apiAttachmentInfo, everything, missing, separator |
-| `erply_create_payment` | `APIPaymentInfo` | 11/29 | id, transactionIdentifier, transactionEntryId, sumWithVat, customerName, number, archivingId, code, badDebt, partnerPaymentId, partnerDocumentId, imported, documentStatusTypeCode, statusChangeDatetime, currencyRate, projects, entityName, parentPaymentId |
-| `erply_update_payment` | `APIPaymentInfo` | 9/29 | id, transactionIdentifier, transactionEntryId, sumWithVat, customerName, number, archivingId, code, badDebt, partnerPaymentId, originalSum, partnerDocumentId, imported, documentStatusTypeCode, statusChangeDatetime, currencyRate, projects, projectId, entityName, parentPaymentId |
-| `erply_create_project` | `APIProjectInfo` | 9/12 | id, organisationId, projectGroupName |
-| `erply_update_project` | `APIProjectInfo` | 9/12 | id, organisationId, projectGroupName |
+| `erply_create_payment` | `APIPaymentInfo` | 23/29 | id, sumWithVat, customerName, imported, statusChangeDatetime, entityName |
+| `erply_update_payment` | `APIPaymentInfo` | 23/29 | id, sumWithVat, customerName, imported, statusChangeDatetime, entityName |
+| `erply_create_project` | `APIProjectInfo` | 10/12 | id, projectGroupName |
+| `erply_update_project` | `APIProjectInfo` | 10/12 | id, projectGroupName |
 | `erply_create_project_group` | `APIProjectGroupInfo` | 2/3 | id |
 | `erply_update_project_group` | `APIProjectGroupInfo` | 2/3 | id |
-| `erply_create_tax_rate` | `APITaxRateInfo` | 18/20 | id, organisationId |
-| `erply_update_tax_rate` | `APITaxRateInfo` | 18/20 | id, organisationId |
-| `erply_create_transaction_entry` | `APITransactionEntryInfo` | 10/13 | id, projects, history |
-| `erply_update_transaction_entry` | `APITransactionEntryInfo` | 10/13 | id, projects, history |
+| `erply_create_tax_rate` | `APITaxRateInfo` | 19/20 | id |
+| `erply_update_tax_rate` | `APITaxRateInfo` | 19/20 | id |
+| `erply_create_transaction_entry` | `APITransactionEntryInfo` | 11/13 | id, history |
+| `erply_update_transaction_entry` | `APITransactionEntryInfo` | 11/13 | id, history |
 

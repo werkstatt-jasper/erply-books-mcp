@@ -31,6 +31,7 @@ const createProjectSchema = z
     mainProjectId: optionalPositiveInt,
     partnerProjectId: optionalPositiveInt,
     syncErplyUsers: optionalBoolean,
+    organisationId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -46,6 +47,7 @@ const updateProjectSchema = z
     mainProjectId: optionalPositiveInt,
     partnerProjectId: optionalPositiveInt,
     syncErplyUsers: optionalBoolean,
+    organisationId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -117,6 +119,7 @@ export function createProjectTools(client: ErplyBooksClient) {
           mainProjectId: { type: "number" },
           partnerProjectId: { type: "number" },
           syncErplyUsers: { type: "boolean" },
+          organisationId: { type: "number", description: "Organisation id" },
         },
         required: ["name"],
       },
@@ -143,6 +146,7 @@ export function createProjectTools(client: ErplyBooksClient) {
           mainProjectId: { type: "number" },
           partnerProjectId: { type: "number" },
           syncErplyUsers: { type: "boolean" },
+          organisationId: { type: "number", description: "Organisation id" },
         },
         required: ["projectId"],
       },

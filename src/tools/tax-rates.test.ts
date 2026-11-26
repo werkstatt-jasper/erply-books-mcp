@@ -131,3 +131,12 @@ describe("erply_delete_tax_rate", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update tax rate input schemas", () => {
+  it("advertises organisationId and omits id", () => {
+    const tools = createTaxRateTools(createMockClient());
+    expect(tools.erply_create_tax_rate.inputSchema.properties).toHaveProperty("organisationId");
+    expect(tools.erply_update_tax_rate.inputSchema.properties).toHaveProperty("organisationId");
+    expect(tools.erply_create_tax_rate.inputSchema.properties).not.toHaveProperty("id");
+  });
+});

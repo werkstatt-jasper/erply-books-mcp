@@ -122,3 +122,66 @@ describe("erply_delete_customer", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update customer input schemas", () => {
+  let tools: ReturnType<typeof createCustomerTools>;
+
+  beforeEach(() => {
+    tools = createCustomerTools(createMockClient());
+  });
+
+  it("advertises the writable APICustomerInfo fields and omits id", () => {
+    const createProps = tools.erply_create_customer.inputSchema.properties;
+    const updateProps = tools.erply_update_customer.inputSchema.properties;
+    for (const key of [
+      "bankIban",
+      "bankSwift",
+      "partnerCustomerId",
+      "partnerSupplierId",
+      "legalCountryCode",
+      "actualAddress",
+      "attributes",
+    ]) {
+      expect(createProps).toHaveProperty(key);
+      expect(updateProps).toHaveProperty(key);
+    }
+    expect(createProps).not.toHaveProperty("id");
+    expect(updateProps).not.toHaveProperty("id");
+    expect(updateProps).toHaveProperty("customerId");
+  });
+
+  it("forwards newly advertised fields on create and update", async () => {
+    const client = createMockClient();
+    const tools = createCustomerTools(client);
+    vi.mocked(client.post).mockResolvedValue({ id: 10 });
+    await tools.erply_create_customer.handler({
+      name: "Acme OÜ",
+      bankIban: "EE382200221020145685",
+      partnerCustomerId: "partner-cust-1",
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/customers",
+      expect.objectContaining({
+        id: 0,
+        name: "Acme OÜ",
+        bankIban: "EE382200221020145685",
+        partnerCustomerId: "partner-cust-1",
+      }),
+    );
+
+    vi.mocked(client.put).mockResolvedValue({ id: 10 });
+    await tools.erply_update_customer.handler({
+      customerId: 10,
+      website: "https://example.com",
+      attributes: [{ code: "NOTE" }],
+    });
+    expect(client.put).toHaveBeenCalledWith(
+      "/customers/10",
+      expect.objectContaining({
+        id: 10,
+        website: "https://example.com",
+        attributes: [{ code: "NOTE" }],
+      }),
+    );
+  });
+});

@@ -232,3 +232,56 @@ describe("erply_delete_payment", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update payment input schemas", () => {
+  it("advertises writable APIPaymentInfo fields and omits server-managed ones", () => {
+    const tools = createPaymentTools(createMockClient());
+    const createProps = tools.erply_create_payment.inputSchema.properties;
+    const updateProps = tools.erply_update_payment.inputSchema.properties;
+    for (const key of [
+      "transactionEntryId",
+      "partnerPaymentId",
+      "partnerDocumentId",
+      "badDebt",
+      "projects",
+      "projectId",
+      "originalSum",
+    ]) {
+      expect(createProps).toHaveProperty(key);
+      expect(updateProps).toHaveProperty(key);
+    }
+    for (const key of [
+      "id",
+      "customerName",
+      "imported",
+      "statusChangeDatetime",
+      "entityName",
+      "sumWithVat",
+    ]) {
+      expect(createProps).not.toHaveProperty(key);
+      expect(updateProps).not.toHaveProperty(key);
+    }
+  });
+
+  it("forwards newly advertised payment fields", async () => {
+    const client = createMockClient();
+    const tools = createPaymentTools(client);
+    vi.mocked(client.post).mockResolvedValue({ id: 9 });
+    await tools.erply_create_payment.handler({
+      opDate: "2025-06-01",
+      sumPaid: 25,
+      badDebt: false,
+      partnerPaymentId: 99,
+      projects: [1, 2],
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/payments",
+      expect.objectContaining({
+        id: 0,
+        badDebt: false,
+        partnerPaymentId: 99,
+        projects: [1, 2],
+      }),
+    );
+  });
+});

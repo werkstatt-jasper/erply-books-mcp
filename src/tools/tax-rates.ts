@@ -39,6 +39,7 @@ const createTaxRateSchema = z
     additionalPurchasesDebitAccountId: optionalPositiveInt,
     additionalPurchasesCreditAccountId: optionalPositiveInt,
     additionalPurchasesPercent: optionalNumber,
+    organisationId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -63,6 +64,7 @@ const updateTaxRateSchema = z
     additionalPurchasesDebitAccountId: optionalPositiveInt,
     additionalPurchasesCreditAccountId: optionalPositiveInt,
     additionalPurchasesPercent: optionalNumber,
+    organisationId: optionalPositiveInt,
   })
   .passthrough();
 
@@ -114,6 +116,7 @@ export function createTaxRateTools(client: ErplyBooksClient) {
           additionalPurchasesDebitAccountId: { type: "number" },
           additionalPurchasesCreditAccountId: { type: "number" },
           additionalPurchasesPercent: { type: "number" },
+          organisationId: { type: "number", description: "Organisation id" },
         },
         required: ["name", "percent"],
       },
@@ -149,6 +152,7 @@ export function createTaxRateTools(client: ErplyBooksClient) {
           additionalPurchasesDebitAccountId: { type: "number" },
           additionalPurchasesCreditAccountId: { type: "number" },
           additionalPurchasesPercent: { type: "number" },
+          organisationId: { type: "number", description: "Organisation id" },
         },
         required: ["taxRateId"],
       },

@@ -128,3 +128,17 @@ describe("erply_delete_account", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update account input schemas", () => {
+  it("advertises organisationId and partnerAccountId and omits server-managed fields", () => {
+    const tools = createAccountTools(createMockClient());
+    for (const tool of [tools.erply_create_account, tools.erply_update_account]) {
+      expect(tool.inputSchema.properties).toHaveProperty("organisationId");
+      expect(tool.inputSchema.properties).toHaveProperty("partnerAccountId");
+      expect(tool.inputSchema.properties).not.toHaveProperty("id");
+      expect(tool.inputSchema.properties).not.toHaveProperty("closingBalance");
+      expect(tool.inputSchema.properties).not.toHaveProperty("lockingDatetime");
+      expect(tool.inputSchema.properties).not.toHaveProperty("displayName");
+    }
+  });
+});

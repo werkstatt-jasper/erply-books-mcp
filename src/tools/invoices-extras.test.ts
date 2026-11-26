@@ -299,3 +299,81 @@ describe("erply_update_recurring_invoice", () => {
     );
   });
 });
+
+describe("partner and recurring invoice input schemas", () => {
+  it("advertises writable partner-invoice fields including partnerDocumentId", () => {
+    const tools = createInvoiceExtraTools(createMockClient());
+    const props = tools.erply_create_partner_invoice.inputSchema.properties;
+    for (const key of [
+      "partnerDocumentId",
+      "languageCode",
+      "note",
+      "payer",
+      "payerCustomerId",
+      "documentConnections",
+      "payments",
+      "attachments",
+      "projects",
+    ]) {
+      expect(props).toHaveProperty(key);
+    }
+    expect(props.partnerDocumentId.description).toMatch(/Partner API/);
+    for (const key of ["id", "history", "creatorName", "modifierName", "sumWithVat", "username"]) {
+      expect(props).not.toHaveProperty(key);
+    }
+  });
+
+  it("forwards partner invoice fields including partnerDocumentId", async () => {
+    const client = createMockClient();
+    const tools = createInvoiceExtraTools(client);
+    vi.mocked(client.post).mockResolvedValue({ id: 70 });
+    await tools.erply_create_partner_invoice.handler({
+      typeCode: "DOCUMENT_SELL",
+      date: "2025-06-01",
+      customerId: 10,
+      partnerDocumentId: "partner-doc-1",
+      languageCode: "et",
+      payerCustomerId: 11,
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/invoices/partner",
+      expect.objectContaining({
+        id: 0,
+        partnerDocumentId: "partner-doc-1",
+        languageCode: "et",
+        payerCustomerId: 11,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("advertises and forwards articles on recurring invoice create and update", async () => {
+    const client = createMockClient();
+    const tools = createInvoiceExtraTools(client);
+    expect(tools.erply_create_recurring_invoice.inputSchema.properties).toHaveProperty("articles");
+    expect(tools.erply_update_recurring_invoice.inputSchema.properties).toHaveProperty("articles");
+    expect(tools.erply_create_recurring_invoice.inputSchema.properties).not.toHaveProperty("id");
+
+    vi.mocked(client.post).mockResolvedValue({ id: 80 });
+    await tools.erply_create_recurring_invoice.handler({
+      copyFromDocumentId: 55,
+      articles: [{ articleId: 1, quantity: 2 }],
+    });
+    expect(client.post).toHaveBeenCalledWith(
+      "/invoices/recurring",
+      expect.objectContaining({ articles: [{ articleId: 1, quantity: 2 }] }),
+      expect.anything(),
+    );
+
+    vi.mocked(client.put).mockResolvedValue({ id: 80 });
+    await tools.erply_update_recurring_invoice.handler({
+      documentId: 80,
+      articles: [{ articleId: 3, quantity: 1 }],
+    });
+    expect(client.put).toHaveBeenCalledWith(
+      "/invoices/recurring/80",
+      expect.objectContaining({ id: 80, articles: [{ articleId: 3, quantity: 1 }] }),
+      expect.anything(),
+    );
+  });
+});

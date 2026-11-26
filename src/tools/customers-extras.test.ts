@@ -407,3 +407,16 @@ describe("erply_mark_customer_anonymous", () => {
     expect(JSON.parse(result.content[0].text).name).toBe("Anonymous");
   });
 });
+
+describe("customer v2 input schemas", () => {
+  it("advertises remaining writable APICustomerInfoV2 fields", () => {
+    const tools = createCustomerExtraTools(createMockClient());
+    const props = tools.erply_create_customer_v2.inputSchema.properties;
+    const updateProps = tools.erply_update_customer_v2.inputSchema.properties;
+    for (const key of ["fax", "contactPersonId", "partnerCustomerId", "partnerSupplierId"]) {
+      expect(props).toHaveProperty(key);
+      expect(updateProps).toHaveProperty(key);
+    }
+    expect(props).not.toHaveProperty("id");
+  });
+});

@@ -4,6 +4,7 @@ import type { ErplyBooksClient } from "../client.js";
 import type { Payment } from "../types/payments.js";
 import {
   optionalBoolean,
+  optionalIntArray,
   optionalNonNegativeInt,
   optionalNumber,
   optionalPositiveInt,
@@ -55,19 +56,66 @@ const listPaymentsSchema = z
     paymentType: String(args.paymentType).trim(),
   }));
 
+const paymentWritableFields = {
+  invoiceId: optionalPositiveInt,
+  customerId: optionalPositiveInt,
+  accountId: optionalPositiveInt,
+  typeCode: optionalString,
+  currencyCode: optionalString,
+  referenceNumber: optionalString,
+  note: optionalString,
+  projectId: optionalPositiveInt,
+  originalSum: optionalNumber,
+  transactionIdentifier: optionalString,
+  transactionEntryId: optionalPositiveInt,
+  number: optionalString,
+  archivingId: optionalString,
+  code: optionalString,
+  badDebt: optionalBoolean,
+  partnerPaymentId: optionalPositiveInt,
+  partnerDocumentId: optionalPositiveInt,
+  documentStatusTypeCode: optionalString,
+  currencyRate: optionalNumber,
+  projects: optionalIntArray,
+  parentPaymentId: optionalPositiveInt,
+};
+
+const paymentWritableInputProperties = {
+  invoiceId: { type: "number", description: "Related invoice/document id" },
+  customerId: { type: "number" },
+  accountId: { type: "number" },
+  typeCode: { type: "string", description: "PAYMENT_TYPE dictionary code" },
+  currencyCode: { type: "string" },
+  referenceNumber: { type: "string" },
+  note: { type: "string" },
+  projectId: { type: "number", description: "Project id (preferred over projects)" },
+  originalSum: { type: "number", description: "Original payment sum before adjustments" },
+  transactionIdentifier: { type: "string", description: "Bank/transaction identifier" },
+  transactionEntryId: { type: "number", description: "Linked transaction entry id" },
+  number: { type: "string", description: "Payment or document number" },
+  archivingId: { type: "string", description: "Archiving identifier" },
+  code: { type: "string", description: "Document code" },
+  badDebt: { type: "boolean", description: "Mark as bad debt" },
+  partnerPaymentId: { type: "number", description: "Partner API payment id" },
+  partnerDocumentId: { type: "number", description: "Partner API document id" },
+  documentStatusTypeCode: {
+    type: "string",
+    description: "DOCUMENT_STATUS_TYPE dictionary code",
+  },
+  currencyRate: { type: "number", description: "Currency exchange rate" },
+  projects: {
+    type: "array",
+    description: "Project ids (deprecated in the API; prefer projectId)",
+    items: { type: "number" },
+  },
+  parentPaymentId: { type: "number", description: "Parent payment id" },
+};
+
 const createPaymentSchema = z
   .object({
     opDate: ymdDateString,
     sumPaid: z.coerce.number(),
-    invoiceId: optionalPositiveInt,
-    customerId: optionalPositiveInt,
-    accountId: optionalPositiveInt,
-    typeCode: optionalString,
-    currencyCode: optionalString,
-    referenceNumber: optionalString,
-    note: optionalString,
-    projectId: optionalPositiveInt,
-    originalSum: optionalNumber,
+    ...paymentWritableFields,
   })
   .passthrough();
 
@@ -76,13 +124,7 @@ const updatePaymentSchema = z
     paymentId: positiveInt,
     opDate: optionalString,
     sumPaid: optionalNumber,
-    invoiceId: optionalPositiveInt,
-    customerId: optionalPositiveInt,
-    accountId: optionalPositiveInt,
-    typeCode: optionalString,
-    currencyCode: optionalString,
-    referenceNumber: optionalString,
-    note: optionalString,
+    ...paymentWritableFields,
   })
   .passthrough();
 
@@ -139,15 +181,7 @@ export function createPaymentTools(client: ErplyBooksClient) {
         properties: {
           opDate: { type: "string", description: "Payment date YYYY-MM-DD (required)" },
           sumPaid: { type: "number", description: "Amount paid (required)" },
-          invoiceId: { type: "number", description: "Related invoice/document id" },
-          customerId: { type: "number" },
-          accountId: { type: "number" },
-          typeCode: { type: "string", description: "PAYMENT_TYPE dictionary code" },
-          currencyCode: { type: "string" },
-          referenceNumber: { type: "string" },
-          note: { type: "string" },
-          projectId: { type: "number" },
-          originalSum: { type: "number" },
+          ...paymentWritableInputProperties,
         },
         required: ["opDate", "sumPaid"],
       },
@@ -167,15 +201,9 @@ export function createPaymentTools(client: ErplyBooksClient) {
         type: "object" as const,
         properties: {
           paymentId: { type: "number", description: "Payment id (required)" },
-          opDate: { type: "string" },
-          sumPaid: { type: "number" },
-          invoiceId: { type: "number" },
-          customerId: { type: "number" },
-          accountId: { type: "number" },
-          typeCode: { type: "string" },
-          currencyCode: { type: "string" },
-          referenceNumber: { type: "string" },
-          note: { type: "string" },
+          opDate: { type: "string", description: "Payment date YYYY-MM-DD" },
+          sumPaid: { type: "number", description: "Amount paid" },
+          ...paymentWritableInputProperties,
         },
         required: ["paymentId"],
       },

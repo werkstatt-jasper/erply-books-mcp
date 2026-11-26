@@ -200,3 +200,14 @@ describe("erply_delete_transaction_entry", () => {
     expect(JSON.parse(result.content[0].text)).toEqual({ ok: true });
   });
 });
+
+describe("create/update transaction entry input schemas", () => {
+  it("advertises projects and omits history", () => {
+    const tools = createTransactionEntryTools(createMockClient());
+    expect(tools.erply_create_transaction_entry.inputSchema.properties).toHaveProperty("projects");
+    expect(tools.erply_update_transaction_entry.inputSchema.properties).toHaveProperty("projects");
+    expect(tools.erply_create_transaction_entry.inputSchema.properties).not.toHaveProperty(
+      "history",
+    );
+  });
+});

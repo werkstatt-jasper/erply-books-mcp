@@ -4,8 +4,11 @@ import {
   formatZodError,
   optionalBoolean,
   optionalInt,
+  optionalIntArray,
   optionalNonNegativeInt,
   optionalNumber,
+  optionalObject,
+  optionalObjectArray,
   optionalString,
   optionalYmd,
   optionalYmdOrIsoDateTime,
@@ -130,5 +133,41 @@ describe("parseToolArgs", () => {
       n: 3,
       b: true,
     });
+  });
+});
+
+describe("optionalObject / optionalObjectArray / optionalIntArray", () => {
+  it("accepts objects and arrays and coerces null to undefined", () => {
+    const schema = z.object({
+      customer: optionalObject,
+      rows: optionalObjectArray,
+      projects: optionalIntArray,
+    });
+    expect(
+      parseToolArgs(schema, {
+        customer: { name: "Acme" },
+        rows: [{ quantity: 1 }],
+        projects: ["1", 2],
+      }),
+    ).toEqual({
+      customer: { name: "Acme" },
+      rows: [{ quantity: 1 }],
+      projects: [1, 2],
+    });
+    expect(parseToolArgs(schema, { customer: null, rows: null, projects: null })).toEqual({
+      customer: undefined,
+      rows: undefined,
+      projects: undefined,
+    });
+    expect(parseToolArgs(schema, {})).toEqual({
+      customer: undefined,
+      rows: undefined,
+      projects: undefined,
+    });
+  });
+
+  it("rejects non-integer project ids", () => {
+    const schema = z.object({ projects: optionalIntArray });
+    expect(() => parseToolArgs(schema, { projects: [1.5] })).toThrow(/projects/);
   });
 });
