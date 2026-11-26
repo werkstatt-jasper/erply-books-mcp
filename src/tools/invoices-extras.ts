@@ -8,6 +8,7 @@ import {
   optionalNonNegativeInt,
   optionalPositiveInt,
   optionalString,
+  optionalYmd,
   parseToolArgs,
   positiveInt,
   ymdDateString,
@@ -64,6 +65,14 @@ const listPartnerInvoicesSchema = z.object({
   documentType: documentTypeSchema.optional(),
   customerId: optionalPositiveInt,
   keyword: optionalString,
+  getUnpaid: optionalBoolean,
+  documentStatusType: optionalString,
+  showOnlyPrepayments: optionalBoolean,
+  showOnlyNotConfirmedPayments: optionalBoolean,
+  isOverdueInvolved: optionalBoolean,
+  getRows: optionalBoolean,
+  detailed: optionalBoolean,
+  changedSinceDate: optionalYmd,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -260,7 +269,7 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
 
     erply_list_partner_invoices: {
       description:
-        "List partner invoices (GET /invoices/partner). Requires dateFrom and dateTo. Optional documentType, customerId, keyword, start, limit. Returns { totalCount, items } when available.",
+        "List partner invoices (GET /invoices/partner). Requires dateFrom and dateTo. Optional documentType, customerId, keyword, start, limit. Optional changedSinceDate (YYYY-MM-DD) for incremental sync; getUnpaid, documentStatusType, showOnlyPrepayments, showOnlyNotConfirmedPayments, isOverdueInvolved for status/filtering; getRows and detailed to include line rows in the list. Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -273,6 +282,29 @@ export function createInvoiceExtraTools(client: ErplyBooksClient) {
           },
           customerId: { type: "number" },
           keyword: { type: "string" },
+          getUnpaid: { type: "boolean", description: "Only unpaid documents when supported" },
+          documentStatusType: {
+            type: "string",
+            description: "DocumentStatusType dictionary code (e.g. STATUS_CONFIRMED)",
+          },
+          showOnlyPrepayments: { type: "boolean", description: "Only prepayment documents" },
+          showOnlyNotConfirmedPayments: {
+            type: "boolean",
+            description: "Only documents with unconfirmed payments",
+          },
+          isOverdueInvolved: { type: "boolean", description: "Only overdue documents" },
+          getRows: {
+            type: "boolean",
+            description: "Include invoice line rows in the list response",
+          },
+          detailed: {
+            type: "boolean",
+            description: "Return a detailed list payload (use with getRows for line items)",
+          },
+          changedSinceDate: {
+            type: "string",
+            description: "Only rows changed on/after this date (YYYY-MM-DD)",
+          },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
         },

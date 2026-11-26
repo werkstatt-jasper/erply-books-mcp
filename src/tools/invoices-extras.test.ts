@@ -193,6 +193,35 @@ describe("erply_list_partner_invoices", () => {
     );
     expect(JSON.parse(result.content[0].text).totalCount).toBe(1);
   });
+
+  it("forwards status, row, unpaid, and incremental-sync query params", async () => {
+    vi.mocked(client.get).mockResolvedValue(extrasFixture.partner_list_page);
+    await tools.erply_list_partner_invoices.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      getUnpaid: true,
+      documentStatusType: "STATUS_CONFIRMED",
+      showOnlyPrepayments: true,
+      showOnlyNotConfirmedPayments: false,
+      isOverdueInvolved: true,
+      getRows: true,
+      detailed: true,
+      changedSinceDate: "2025-06-01",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/invoices/partner",
+      expect.objectContaining({
+        getUnpaid: true,
+        documentStatusType: "STATUS_CONFIRMED",
+        showOnlyPrepayments: true,
+        showOnlyNotConfirmedPayments: false,
+        isOverdueInvolved: true,
+        getRows: true,
+        detailed: true,
+        changedSinceDate: "2025-06-01",
+      }),
+    );
+  });
 });
 
 describe("erply_create_partner_invoice", () => {

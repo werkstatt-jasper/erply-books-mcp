@@ -7,10 +7,11 @@ import {
   optionalNonNegativeInt,
   optionalPositiveInt,
   optionalString,
+  optionalYmd,
   parseToolArgs,
   ymdDateString,
 } from "../validation/tool-args.js";
-import { jsonToolResult } from "./list-response.js";
+import { bytesToolResult, jsonToolResult } from "./list-response.js";
 
 const dateRangeSchema = z.object({
   dateFrom: ymdDateString,
@@ -23,6 +24,15 @@ const balanceIncomeSchema = dateRangeSchema.extend({
   printWithAccounts: optionalBoolean,
   removeZeroValues: optionalBoolean,
   getConsolidated: optionalBoolean,
+  comparativeDateFrom: optionalYmd,
+  comparativeDateTo: optionalYmd,
+  budgetName: optionalString,
+  cashFlowReport: optionalBoolean,
+  currencyCode: optionalString,
+  lang: optionalString,
+  layout: optionalString,
+  isCsv: optionalBoolean,
+  addSummaries: optionalBoolean,
 });
 
 const agedSchema = dateRangeSchema.extend({
@@ -32,6 +42,7 @@ const agedSchema = dateRangeSchema.extend({
   showCustomers: optionalBoolean,
   keyword: optionalString,
   currencyCode: optionalString,
+  changedSinceSeconds: optionalInt,
 });
 
 const generalLedgerSchema = dateRangeSchema.extend({
@@ -83,6 +94,14 @@ const contactBalanceSchema = dateRangeSchema.extend({
   showOnlyOverdue: optionalBoolean,
   currencyCode: optionalString,
   keyword: optionalString,
+  changedSinceSeconds: optionalInt,
+  addBalanceAtEndOfLastPeriod: optionalBoolean,
+  addPaymentsThisPeriodForLastPeriod: optionalBoolean,
+  addLastPeriodInvoicesBalanceAtEndOfLastPeriod: optionalBoolean,
+  addInvoicesFromLastPeriod: optionalBoolean,
+  addLastPeriodPayments: optionalBoolean,
+  addThisPeriodPayments: optionalBoolean,
+  addLastPeriodPaymentsForLastPeriodInvoices: optionalBoolean,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -98,57 +117,80 @@ const fixedAssetsSchema = dateRangeSchema.extend({
   limit: optionalPositiveInt,
 });
 
+const balanceIncomeQueryProperties = {
+  dateFrom: { type: "string" as const, description: "Start date YYYY-MM-DD (required)" },
+  dateTo: { type: "string" as const, description: "End date YYYY-MM-DD (required)" },
+  projectId: { type: "number" as const, description: "Optional project filter" },
+  printByCategories: { type: "boolean" as const },
+  printWithAccounts: { type: "boolean" as const },
+  removeZeroValues: { type: "boolean" as const },
+  getConsolidated: { type: "boolean" as const },
+  comparativeDateFrom: {
+    type: "string" as const,
+    description: "Comparative period start (YYYY-MM-DD)",
+  },
+  comparativeDateTo: {
+    type: "string" as const,
+    description: "Comparative period end (YYYY-MM-DD)",
+  },
+  budgetName: { type: "string" as const, description: "Budget name when comparing to a budget" },
+  cashFlowReport: { type: "boolean" as const, description: "Request the cash-flow presentation" },
+  currencyCode: { type: "string" as const },
+  lang: { type: "string" as const, description: "Optional language code" },
+  layout: { type: "string" as const, description: "Report layout identifier" },
+  isCsv: {
+    type: "boolean" as const,
+    description:
+      "Request a CSV body; when true the tool reads the raw response so CSV is not JSON-parsed",
+  },
+  addSummaries: { type: "boolean" as const, description: "Include summary rows" },
+};
+
+async function fetchBalanceIncomeReport(
+  client: ErplyBooksClient,
+  path: "/reports/balance_sheet" | "/reports/income_sheet",
+  params: unknown,
+) {
+  const args = parseToolArgs(balanceIncomeSchema, params);
+  if (args.isCsv) {
+    const bytes = await client.getArrayBuffer(path, args);
+    return bytesToolResult(bytes);
+  }
+  const report = await client.get(path, args);
+  return jsonToolResult(report);
+}
+
 export function createReportTools(client: ErplyBooksClient) {
   return {
     erply_balance_sheet: {
       description:
-        "Fetch the Erply Books balance sheet report (GET /reports/balance_sheet). Requires dateFrom and dateTo. Some orgs/plans return HTTP 500 or 409.",
+        "Fetch the Erply Books balance sheet report (GET /reports/balance_sheet). Requires dateFrom and dateTo. Optional comparativeDateFrom/To, budgetName, cashFlowReport, currencyCode, lang, layout, addSummaries, and isCsv. Some orgs/plans return HTTP 500 or 409.",
       inputSchema: {
         type: "object" as const,
-        properties: {
-          dateFrom: { type: "string", description: "Start date YYYY-MM-DD (required)" },
-          dateTo: { type: "string", description: "End date YYYY-MM-DD (required)" },
-          projectId: { type: "number", description: "Optional project filter" },
-          printByCategories: { type: "boolean" },
-          printWithAccounts: { type: "boolean" },
-          removeZeroValues: { type: "boolean" },
-          getConsolidated: { type: "boolean" },
-        },
+        properties: balanceIncomeQueryProperties,
         required: ["dateFrom", "dateTo"],
       },
       handler: async (params: unknown) => {
-        const args = parseToolArgs(balanceIncomeSchema, params);
-        const report = await client.get("/reports/balance_sheet", args);
-        return jsonToolResult(report);
+        return fetchBalanceIncomeReport(client, "/reports/balance_sheet", params);
       },
     },
 
     erply_income_sheet: {
       description:
-        "Fetch the Erply Books income statement / P&L (GET /reports/income_sheet). Requires dateFrom and dateTo. Some orgs/plans return HTTP 500 or 409.",
+        "Fetch the Erply Books income statement / P&L (GET /reports/income_sheet). Requires dateFrom and dateTo. Optional comparativeDateFrom/To, budgetName, cashFlowReport, currencyCode, lang, layout, addSummaries, and isCsv. Some orgs/plans return HTTP 500 or 409.",
       inputSchema: {
         type: "object" as const,
-        properties: {
-          dateFrom: { type: "string", description: "Start date YYYY-MM-DD (required)" },
-          dateTo: { type: "string", description: "End date YYYY-MM-DD (required)" },
-          projectId: { type: "number", description: "Optional project filter" },
-          printByCategories: { type: "boolean" },
-          printWithAccounts: { type: "boolean" },
-          removeZeroValues: { type: "boolean" },
-          getConsolidated: { type: "boolean" },
-        },
+        properties: balanceIncomeQueryProperties,
         required: ["dateFrom", "dateTo"],
       },
       handler: async (params: unknown) => {
-        const args = parseToolArgs(balanceIncomeSchema, params);
-        const report = await client.get("/reports/income_sheet", args);
-        return jsonToolResult(report);
+        return fetchBalanceIncomeReport(client, "/reports/income_sheet", params);
       },
     },
 
     erply_aged_receivables: {
       description:
-        "Fetch aged receivables/payables style report (GET /reports/aged). Requires dateFrom and dateTo. Some price plans return HTTP 409 (e.g. MODULE_SUPPLIER_REPORT).",
+        "Fetch aged receivables/payables style report (GET /reports/aged). Requires dateFrom and dateTo. Optional changedSinceSeconds for incremental sync. Some price plans return HTTP 409 (e.g. MODULE_SUPPLIER_REPORT).",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -160,6 +202,10 @@ export function createReportTools(client: ErplyBooksClient) {
           showCustomers: { type: "boolean" },
           keyword: { type: "string" },
           currencyCode: { type: "string" },
+          changedSinceSeconds: {
+            type: "number",
+            description: "Incremental sync cursor (seconds, per OpenAPI changedSinceSeconds)",
+          },
         },
         required: ["dateFrom", "dateTo"],
       },
@@ -274,7 +320,7 @@ export function createReportTools(client: ErplyBooksClient) {
 
     erply_contact_balance: {
       description:
-        "Fetch contact/customer balance report (GET /reports/contact_balance). Requires dateFrom and dateTo. Optional customerId, projectId, showCustomers, showOnlyOverdue, currencyCode, keyword, start, limit. Some orgs/plans return HTTP 500 or 409.",
+        "Fetch contact/customer balance report (GET /reports/contact_balance). Requires dateFrom and dateTo. Optional customerId, projectId, showCustomers, showOnlyOverdue, currencyCode, keyword, start, limit, changedSinceSeconds, and period-comparison flags (addBalanceAtEndOfLastPeriod, addPaymentsThisPeriodForLastPeriod, addLastPeriodInvoicesBalanceAtEndOfLastPeriod, addInvoicesFromLastPeriod, addLastPeriodPayments, addThisPeriodPayments, addLastPeriodPaymentsForLastPeriodInvoices). Some orgs/plans return HTTP 500 or 409.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -286,6 +332,17 @@ export function createReportTools(client: ErplyBooksClient) {
           showOnlyOverdue: { type: "boolean" },
           currencyCode: { type: "string" },
           keyword: { type: "string" },
+          changedSinceSeconds: {
+            type: "number",
+            description: "Incremental sync cursor (seconds, per OpenAPI changedSinceSeconds)",
+          },
+          addBalanceAtEndOfLastPeriod: { type: "boolean" },
+          addPaymentsThisPeriodForLastPeriod: { type: "boolean" },
+          addLastPeriodInvoicesBalanceAtEndOfLastPeriod: { type: "boolean" },
+          addInvoicesFromLastPeriod: { type: "boolean" },
+          addLastPeriodPayments: { type: "boolean" },
+          addThisPeriodPayments: { type: "boolean" },
+          addLastPeriodPaymentsForLastPeriodInvoices: { type: "boolean" },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
         },

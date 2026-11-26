@@ -20,6 +20,11 @@ const listTransactionEntriesSchema = z.object({
   projectId: optionalPositiveInt,
   documentId: optionalPositiveInt,
   description: optionalString,
+  transactionDateFrom: optionalString,
+  transactionDateTo: optionalString,
+  transactionIds: optionalString,
+  sort: optionalString,
+  lang: optionalString,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -80,7 +85,7 @@ export function createTransactionEntryTools(client: ErplyBooksClient) {
   return {
     erply_list_transaction_entries: {
       description:
-        "List transaction/journal entries from Erply Books (GET /transaction_entries). Requires dateFrom and dateTo. Optional typeCode uses TRANSACTION_TYPE dictionary codes (e.g. INVOICE_TRANSACTION, PAYMENT_TRANSACTION, DIRECT_TRANSACTION). Some price plans return HTTP 409 (MODULE_TRANSACTIONS). Returns { totalCount, items } when available.",
+        "List transaction/journal entries from Erply Books (GET /transaction_entries). Requires dateFrom and dateTo. Optional typeCode uses TRANSACTION_TYPE dictionary codes (e.g. INVOICE_TRANSACTION, PAYMENT_TRANSACTION, DIRECT_TRANSACTION). Optional transactionDateFrom, transactionDateTo, transactionIds (comma-separated), sort, and lang. Some price plans return HTTP 409 (MODULE_TRANSACTIONS). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -93,6 +98,14 @@ export function createTransactionEntryTools(client: ErplyBooksClient) {
           projectId: { type: "number", description: "Filter by project id" },
           documentId: { type: "number", description: "Filter by related document id" },
           description: { type: "string", description: "Description filter" },
+          transactionDateFrom: { type: "string", description: "Transaction-date range start" },
+          transactionDateTo: { type: "string", description: "Transaction-date range end" },
+          transactionIds: {
+            type: "string",
+            description: "Comma-separated transaction entry ids",
+          },
+          sort: { type: "string", description: "Sort expression" },
+          lang: { type: "string", description: "Optional language code" },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
         },

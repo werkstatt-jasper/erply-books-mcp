@@ -176,6 +176,8 @@ Note: `GET /customers/v2` returns **405** on current tokens — list uses `/cust
 `POST /customers/v2` and `PUT /customers/v2/{id}` work. `erply_delete_customers`
 is the POST-based alternate to `erply_delete_customer`.
 `erply_mark_customer_anonymous` is destructive and irreversible.
+`erply_list_customers` accepts optional `partnerCustomerId` and `changedSinceDate`
+(`YYYY-MM-DD`) for incremental sync.
 
 #### Customer bank accounts
 
@@ -227,6 +229,12 @@ a list envelope `{ items, totalCount, organisation }`.
 codes (e.g. `DOCUMENT_SELL`, `DOCUMENT_POS_SELL`). Optional query `registrationCode` on
 create/update/delete. Prefer **v2 JSON** PDF (`erply_get_invoice_pdf`); v1 returns binary
 bytes as base64. `documentIds` / `ids` accept a comma-separated string or a number array.
+
+`erply_list_invoices` and `erply_list_partner_invoices` accept incremental sync
+(`changedSinceDate`, `YYYY-MM-DD`), status filters (`documentStatusType`,
+`showOnlyPrepayments`, `showOnlyNotConfirmedPayments`, `isOverdueInvolved`;
+partner list also has `getUnpaid`), and `getRows` plus `detailed` to include
+line rows in the list response.
 
 #### Invoice sending / import
 
@@ -309,7 +317,7 @@ return a JSON array, not a list envelope.
 | `erply_bank_import` | `POST /payments/bank_import` | `fileBase64`, `fileName` |
 | `erply_bank_import_v2` | `POST /payments/bank_import/v2` | `fileBase64`+`fileName` or `attachmentId` |
 
-`erply_list_payments` returns confirmed payments for one `paymentType` only. `dateFrom`, `dateTo`, and `paymentType` are required. The public [payments](https://www.erplybooks.com/api/payments/) page says PaymentType is required. `getEverything` is a boolean on that page and in the OpenAPI spec with no description of a complete multi-type list, so the tool does not send it. A date-only call is rejected instead of returning the API's incomplete default subset. Codes come from `erply_get_dictionary` (`PAYMENT_TYPE`); repeat the call per type. `start` and `limit` page within that type. `items.length` below `totalCount` means further pages of the same type.
+`erply_list_payments` returns confirmed payments for one `paymentType` only. `dateFrom`, `dateTo`, and `paymentType` are required. The public [payments](https://www.erplybooks.com/api/payments/) page says PaymentType is required. `getEverything` is a boolean on that page and in the OpenAPI spec with no description of a complete multi-type list, so the tool does not send it. A date-only call is rejected instead of returning the API's incomplete default subset. Codes come from `erply_get_dictionary` (`PAYMENT_TYPE`); repeat the call per type. `start` and `limit` page within that type. `items.length` below `totalCount` means further pages of the same type. Optional filters include `keyword`, `documentType`, `partnerDocumentId`, `getOnlyThoseWithContact` (string, per the OpenAPI type), `showOnlyPrepayments`, `documentStatusType`, and `changedSince` (string).
 
 `erply_bank_import` uses multipart. `erply_bank_import_v2` posts JSON `APIBankImportInfo` (nested `apiAttachmentInfo`); tool args `getEverything` / `getMissing` / `separatorField` map to API `everything` / `missing` / `separator`.
 
@@ -580,6 +588,8 @@ Project create/update use body field `affirmed` (list filter remains `isAffirmed
 
 Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `accountEntries` rows (`accountId` plus `debitSum` / `creditSum`). Plans without **MODULE_TRANSACTIONS** return HTTP 409.
 
+`erply_list_account_entries` accepts optional `changedSince` (integer incremental-sync cursor). `erply_list_transaction_entries` accepts optional `transactionDateFrom` / `transactionDateTo`, `transactionIds` (comma-separated), `sort`, and `lang`.
+
 ### Reports
 
 | Tool | API | Required |
@@ -593,6 +603,8 @@ Journal creates typically use `typeCode` `DIRECT_TRANSACTION` and balanced `acco
 | `erply_vat_ee` | `GET /reports/tax/ee/vat` | `dateFrom`, `dateTo` |
 | `erply_contact_balance` | `GET /reports/contact_balance` | `dateFrom`, `dateTo` |
 | `erply_fixed_assets` | `GET /reports/fixed_assets` | `dateFrom`, `dateTo` |
+
+`erply_balance_sheet` and `erply_income_sheet` accept comparative periods (`comparativeDateFrom` / `comparativeDateTo`), `budgetName`, `cashFlowReport`, `currencyCode`, `lang`, `layout`, `addSummaries`, and `isCsv`. When `isCsv` is true the tool reads the raw body so a CSV response is not JSON-parsed. `erply_aged_receivables` and `erply_contact_balance` accept `changedSinceSeconds`. `erply_contact_balance` also accepts period-comparison flags (`addBalanceAtEndOfLastPeriod`, `addPaymentsThisPeriodForLastPeriod`, `addLastPeriodInvoicesBalanceAtEndOfLastPeriod`, `addInvoicesFromLastPeriod`, `addLastPeriodPayments`, `addThisPeriodPayments`, `addLastPeriodPaymentsForLastPeriodInvoices`).
 
 ### Custom reports (report generator)
 

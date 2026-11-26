@@ -41,6 +41,29 @@ describe("erply_list_transaction_entries", () => {
     );
     expect(JSON.parse(result.content[0].text).items).toHaveLength(1);
   });
+
+  it("forwards transaction date, id, sort, and lang filters", async () => {
+    vi.mocked(client.get).mockResolvedValue(transactionEntriesFixture.list_page);
+    await tools.erply_list_transaction_entries.handler({
+      dateFrom: "2025-01-01",
+      dateTo: "2025-12-31",
+      transactionDateFrom: "2025-02-01",
+      transactionDateTo: "2025-02-28",
+      transactionIds: "200,201",
+      sort: "opDate desc",
+      lang: "en",
+    });
+    expect(client.get).toHaveBeenCalledWith(
+      "/transaction_entries",
+      expect.objectContaining({
+        transactionDateFrom: "2025-02-01",
+        transactionDateTo: "2025-02-28",
+        transactionIds: "200,201",
+        sort: "opDate desc",
+        lang: "en",
+      }),
+    );
+  });
 });
 
 describe("erply_get_transaction_entry", () => {

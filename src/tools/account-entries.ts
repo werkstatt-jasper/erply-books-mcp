@@ -22,6 +22,7 @@ const listAccountEntriesSchema = z.object({
   balanceType: optionalString,
   incomeType: optionalString,
   reportType: optionalInt,
+  changedSince: optionalInt,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
 });
@@ -30,7 +31,7 @@ export function createAccountEntryTools(client: ErplyBooksClient) {
   return {
     erply_list_account_entries: {
       description:
-        "List account ledger entries from Erply Books (GET /account_entries). Requires dateFrom and dateTo. Some price plans return HTTP 409 (MODULE_LEDGER). Returns { totalCount, items } when available.",
+        "List account ledger entries from Erply Books (GET /account_entries). Requires dateFrom and dateTo. Optional changedSince (integer incremental-sync cursor). Some price plans return HTTP 409 (MODULE_LEDGER). Returns { totalCount, items } when available.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -43,6 +44,10 @@ export function createAccountEntryTools(client: ErplyBooksClient) {
           balanceType: { type: "string", description: "BALANCE_TYPE dictionary code" },
           incomeType: { type: "string", description: "INCOME_TYPE dictionary code" },
           reportType: { type: "number", description: "Report type filter (integer per spec)" },
+          changedSince: {
+            type: "number",
+            description: "Incremental sync cursor (integer, per OpenAPI changedSince)",
+          },
           start: { type: "number", description: "Offset (default 0)" },
           limit: { type: "number", description: "Page size" },
         },

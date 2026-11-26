@@ -22,6 +22,7 @@ const listCustomersSchema = z.object({
   noCustomers: optionalBoolean,
   includeEmployees: optionalBoolean,
   changedSinceDate: optionalYmd,
+  partnerCustomerId: optionalString,
   sort: optionalString,
   start: optionalNonNegativeInt,
   limit: optionalPositiveInt,
@@ -80,6 +81,10 @@ export function createCustomerTools(client: ErplyBooksClient) {
           changedSinceDate: {
             type: "string",
             description: "Only rows changed on/after this date (YYYY-MM-DD)",
+          },
+          partnerCustomerId: {
+            type: "string",
+            description: "Partner-system customer id",
           },
           sort: { type: "string", description: "Sort expression as supported by the API" },
           start: { type: "number", description: "Offset (default 0)" },
