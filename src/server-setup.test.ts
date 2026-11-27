@@ -140,6 +140,17 @@ describe("buildAllTools", () => {
     expect(tools.erply_create_article).toBeDefined();
     expect(tools.erply_update_article).toBeDefined();
     expect(tools.erply_delete_article).toBeDefined();
+    expect(tools.erply_list_attributes).toBeDefined();
+    expect(tools.erply_create_attribute).toBeDefined();
+    expect(tools.erply_update_attribute).toBeDefined();
+    expect(tools.erply_delete_attribute).toBeDefined();
+    expect(tools.erply_list_attributes_v2).toBeDefined();
+    expect(tools.erply_create_attribute_v2).toBeDefined();
+    expect(tools.erply_update_attribute_v2).toBeDefined();
+    expect(tools.erply_get_attribute_asset_tracker_info).toBeDefined();
+    expect(tools.erply_create_attribute_car_in).toBeDefined();
+    expect(tools.erply_create_attributes_for_all_organisations).toBeDefined();
+    expect(tools.erply_delete_attribute_for_all_organisations).toBeDefined();
     expect(tools.erply_list_projects).toBeDefined();
     expect(tools.erply_create_project).toBeDefined();
     expect(tools.erply_update_project).toBeDefined();
