@@ -33,6 +33,20 @@ describe.skipIf(!hasToken)("read tools live MVP", () => {
     expect(org).toHaveProperty("name");
   });
 
+  it("organisation and settings read tools succeed or return a structured API error", async () => {
+    const statuses = [400, 403, 404, 405, 409, 500];
+    await expectOkOrApiError(() => tools.erply_list_organisations.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_is_key_valid.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_is_token_valid.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_list_last_history_actions.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_list_organisation_terms.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_list_countries.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_get_parameters.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_get_my_user_info.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_list_api_whitelist.handler({}), statuses);
+    await expectOkOrApiError(() => tools.erply_get_translations.handler({}), statuses);
+  });
+
   it("erply_list_accounts returns { totalCount, items }", async () => {
     const result = await tools.erply_list_accounts.handler({ start: 0, limit: 5 });
     const body = JSON.parse(result.content[0].text) as { totalCount: number; items: unknown[] };

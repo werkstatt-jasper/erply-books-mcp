@@ -11,8 +11,9 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 155 tools call real spec operations with the correct HTTP
-method and path (zero class-A mismatches). The findings below are param/body
+**Headline result:** all 180 tools call real spec operations with the correct HTTP
+method and path (zero class-A mismatches). The 25 organisation and settings read
+tools added for GitLab #181 (E42) advertise every documented OpenAPI query param. The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
 ## Finding classes

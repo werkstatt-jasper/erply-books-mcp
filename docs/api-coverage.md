@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (155 tools).
+Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (180 tools).
 
-- **Covered:** 155 operations
-- **Gap (tracked as GitLab issues):** 185 operations
+- **Covered:** 180 operations
+- **Gap (tracked as GitLab issues):** 160 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -193,18 +193,18 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/messages/send_sms` | gap: E46 #185 |
 | `GET` | `/organisation` | covered: `erply_get_organisation` |
 | `PUT` | `/organisation/{organisationId}` | gap: E43 #182 |
-| `GET` | `/organisation/all` | gap: E42 #181 |
+| `GET` | `/organisation/all` | covered: `erply_list_organisations` |
 | `POST` | `/organisation/bulk` | gap: E43 #182 |
 | `POST` | `/organisation/create_apikey` | gap: E43 #182 |
 | `POST` | `/organisation/create_key` | gap: E43 #182 |
 | `POST` | `/organisation/edit` | gap: E43 #182 |
 | `PUT` | `/organisation/edit/{organisationId}` | gap: E43 #182 |
-| `GET` | `/organisation/get_goerp_token` | gap: E42 #181 |
-| `GET` | `/organisation/is_key_valid` | gap: E42 #181 |
-| `GET` | `/organisation/is_token_valid` | gap: E42 #181 |
-| `GET` | `/organisation/last_history_action` | gap: E42 #181 |
+| `GET` | `/organisation/get_goerp_token` | covered: `erply_get_goerp_token` |
+| `GET` | `/organisation/is_key_valid` | covered: `erply_is_key_valid` |
+| `GET` | `/organisation/is_token_valid` | covered: `erply_is_token_valid` |
+| `GET` | `/organisation/last_history_action` | covered: `erply_list_last_history_actions` |
 | `POST` | `/organisation/send_email` | gap: E43 #182 |
-| `GET` | `/organisation/terms` | gap: E42 #181 |
+| `GET` | `/organisation/terms` | covered: `erply_list_organisation_terms` |
 | `POST` | `/organisation/terms` | gap: E43 #182 |
 | `PUT` | `/organisation/terms/{organisationTermId}` | gap: E43 #182 |
 | `GET` | `/payments` | covered: `erply_list_payments` (requires `paymentType`; date-only calls rejected) |
@@ -282,17 +282,17 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/reports/user_specific_accounts` | gap: E36 #175 |
 | `GET` | `/reports/vat_compare` | gap: E36 #175 |
 | `GET` | `/reports/vat_report` | gap: E36 #175 |
-| `GET` | `/settings/add_attributes_to_erply_invoices` | gap: E42 #181 |
+| `GET` | `/settings/add_attributes_to_erply_invoices` | covered: `erply_add_attributes_to_erply_invoices` (GET may have side effects) |
 | `POST` | `/settings/add_integration` | gap: E43 #182 |
 | `POST` | `/settings/add_new_user` | gap: E43 #182 |
-| `GET` | `/settings/all_subscription_invoices` | gap: E42 #181 |
-| `GET` | `/settings/api_whitelist` | gap: E42 #181 |
+| `GET` | `/settings/all_subscription_invoices` | covered: `erply_list_all_subscription_invoices` |
+| `GET` | `/settings/api_whitelist` | covered: `erply_list_api_whitelist` |
 | `POST` | `/settings/api_whitelist` | gap: E43 #182 |
 | `DELETE` | `/settings/api_whitelist/{id}` | gap: E43 #182 |
 | `PUT` | `/settings/api_whitelist/{id}` | gap: E43 #182 |
-| `GET` | `/settings/api_whitelistV2` | gap: E42 #181 |
-| `GET` | `/settings/approve_sending_reminders` | gap: E42 #181 |
-| `GET` | `/settings/auth_permissions` | gap: E42 #181 |
+| `GET` | `/settings/api_whitelistV2` | covered: `erply_list_api_whitelist_v2` |
+| `GET` | `/settings/approve_sending_reminders` | covered: `erply_approve_sending_reminders` (GET may have side effects) |
+| `GET` | `/settings/auth_permissions` | covered: `erply_list_auth_permissions` |
 | `DELETE` | `/settings/auth_permissions/{username}` | gap: E43 #182 |
 | `POST` | `/settings/auth_permissions/{username}` | gap: E43 #182 |
 | `PUT` | `/settings/auth_permissions/{username}` | gap: E43 #182 |
@@ -304,23 +304,23 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `PUT` | `/settings/auth_permissions/make_admin/{username}` | gap: E43 #182 |
 | `POST` | `/settings/auth_permissions/remove_admin/{username}` | gap: E43 #182 |
 | `PUT` | `/settings/auth_permissions/remove_admin/{username}` | gap: E43 #182 |
-| `GET` | `/settings/auth_permissions/users` | gap: E42 #181 |
+| `GET` | `/settings/auth_permissions/users` | covered: `erply_list_auth_permission_users` |
 | `POST` | `/settings/change_payer_organisation` | gap: E43 #182 |
 | `POST` | `/settings/change_subscription` | gap: E43 #182 |
-| `GET` | `/settings/countries` | gap: E42 #181 |
-| `GET` | `/settings/currency_rates` | gap: E42 #181 |
+| `GET` | `/settings/countries` | covered: `erply_list_countries` |
+| `GET` | `/settings/currency_rates` | covered: `erply_get_currency_rates` |
 | `POST` | `/settings/custom_plan_request` | gap: E43 #182 |
-| `GET` | `/settings/default_priceplans` | gap: E42 #181 |
+| `GET` | `/settings/default_priceplans` | covered: `erply_list_default_priceplans` |
 | `GET` | `/settings/dictionaries/{dictionaryCode}` | covered: `erply_get_dictionary` |
-| `GET` | `/settings/ee/get_partner_code` | gap: E42 #181 |
-| `GET` | `/settings/find_valid_payer_organisations` | gap: E42 #181 |
-| `GET` | `/settings/get_payer_organisation_documents` | gap: E42 #181 |
+| `GET` | `/settings/ee/get_partner_code` | covered: `erply_list_ee_partner_codes` |
+| `GET` | `/settings/find_valid_payer_organisations` | covered: `erply_list_valid_payer_organisations` |
+| `GET` | `/settings/get_payer_organisation_documents` | covered: `erply_get_payer_organisation_documents` |
 | `POST` | `/settings/import` | gap: E43 #182 |
 | `POST` | `/settings/invalidate_external_session_key` | gap: E43 #182 |
-| `GET` | `/settings/me` | gap: E42 #181 |
-| `GET` | `/settings/parameters` | gap: E42 #181 |
+| `GET` | `/settings/me` | covered: `erply_get_my_user_info` |
+| `GET` | `/settings/parameters` | covered: `erply_get_parameters` |
 | `POST` | `/settings/parameters` | gap: E43 #182 |
-| `GET` | `/settings/parameters_encrypted` | gap: E42 #181 |
+| `GET` | `/settings/parameters_encrypted` | covered: `erply_get_parameters_encrypted` |
 | `POST` | `/settings/parameters_encrypted` | gap: E43 #182 |
 | `PUT` | `/settings/parameters_encrypted/{userId}` | gap: E43 #182 |
 | `PUT` | `/settings/parameters/{userId}` | gap: E43 #182 |
@@ -328,11 +328,11 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `POST` | `/settings/revert` | gap: E43 #182 |
 | `POST` | `/settings/send_external_session_key_request_email` | gap: E43 #182 |
 | `POST` | `/settings/setup/{type}` | gap: E43 #182 |
-| `GET` | `/settings/system_article` | gap: E42 #181 |
+| `GET` | `/settings/system_article` | covered: `erply_list_system_articles` |
 | `POST` | `/settings/system_article` | gap: E43 #182 |
 | `PUT` | `/settings/system_article/{id}` | gap: E43 #182 |
-| `GET` | `/settings/translations` | gap: E42 #181 |
-| `GET` | `/settings/unpaid_subscription_invoices` | gap: E42 #181 |
+| `GET` | `/settings/translations` | covered: `erply_get_translations` |
+| `GET` | `/settings/unpaid_subscription_invoices` | covered: `erply_list_unpaid_subscription_invoices` |
 | `POST` | `/settings/update_balances` | gap: E43 #182 |
 | `POST` | `/settings/update_token` | gap: E43 #182 |
 | `POST` | `/settings/verify_with_smart_id` | gap: E43 #182 |

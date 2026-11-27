@@ -24,6 +24,7 @@ import { createPaymentBankTools } from "./tools/payments-bank.js";
 import { createProjectTools } from "./tools/projects.js";
 import { createReportGeneratorTools } from "./tools/report-generator.js";
 import { createReportTools } from "./tools/reports.js";
+import { createSettingsTools } from "./tools/settings.js";
 import { createTaxRateTools } from "./tools/tax-rates.js";
 import { createTransactionEntryTools } from "./tools/transaction-entries.js";
 
@@ -45,6 +46,7 @@ export type ToolRecord = Record<
 export function buildAllTools(client: ErplyBooksClient): ToolRecord {
   return {
     ...createOrganisationTools(client),
+    ...createSettingsTools(client),
     ...createAccountTools(client),
     ...createTaxRateTools(client),
     ...createCustomerTools(client),

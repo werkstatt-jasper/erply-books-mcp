@@ -139,6 +139,12 @@ structured `ErplyBooksApiError`.
 | Tool | API | Required |
 |------|-----|----------|
 | `erply_get_organisation` | `GET /organisation` | — |
+| `erply_list_organisations` | `GET /organisation/all` | — |
+| `erply_get_goerp_token` | `GET /organisation/get_goerp_token` | — |
+| `erply_is_key_valid` | `GET /organisation/is_key_valid` | — |
+| `erply_is_token_valid` | `GET /organisation/is_token_valid` | — |
+| `erply_list_last_history_actions` | `GET /organisation/last_history_action` | — |
+| `erply_list_organisation_terms` | `GET /organisation/terms` | — |
 
 ### Accounts
 
@@ -622,6 +628,27 @@ Erply Books custom reports use `POST /report_generator` with a JSON query (table
 | Tool | API | Required |
 |------|-----|----------|
 | `erply_get_dictionary` | `GET /settings/dictionaries/{dictionaryCode}` | `dictionaryCode` |
+| `erply_add_attributes_to_erply_invoices` | `GET /settings/add_attributes_to_erply_invoices` | — |
+| `erply_list_all_subscription_invoices` | `GET /settings/all_subscription_invoices` | — |
+| `erply_list_api_whitelist` | `GET /settings/api_whitelist` | — |
+| `erply_list_api_whitelist_v2` | `GET /settings/api_whitelistV2` | — |
+| `erply_approve_sending_reminders` | `GET /settings/approve_sending_reminders` | — |
+| `erply_list_auth_permissions` | `GET /settings/auth_permissions` | — |
+| `erply_list_auth_permission_users` | `GET /settings/auth_permissions/users` | — |
+| `erply_list_countries` | `GET /settings/countries` | — |
+| `erply_get_currency_rates` | `GET /settings/currency_rates` | — |
+| `erply_list_default_priceplans` | `GET /settings/default_priceplans` | — |
+| `erply_list_ee_partner_codes` | `GET /settings/ee/get_partner_code` | — |
+| `erply_list_valid_payer_organisations` | `GET /settings/find_valid_payer_organisations` | — |
+| `erply_get_payer_organisation_documents` | `GET /settings/get_payer_organisation_documents` | — |
+| `erply_get_my_user_info` | `GET /settings/me` | — |
+| `erply_get_parameters` | `GET /settings/parameters` | — |
+| `erply_get_parameters_encrypted` | `GET /settings/parameters_encrypted` | — |
+| `erply_list_system_articles` | `GET /settings/system_article` | — |
+| `erply_get_translations` | `GET /settings/translations` | — |
+| `erply_list_unpaid_subscription_invoices` | `GET /settings/unpaid_subscription_invoices` | — |
+
+`erply_add_attributes_to_erply_invoices` and `erply_approve_sending_reminders` are GET operations in the OpenAPI spec, but their paths and operationIds suggest they may have side effects (adding invoice attributes or sending reminders). `erply_get_goerp_token` and `erply_get_parameters_encrypted` may return secrets; treat the responses as credentials. New organisation and settings tools return the API body as-is (they do not unwrap a list envelope).
 
 `dictionaryCode` is one of: `ACCOUNT_TYPE`, `TRANSACTION_TYPE`, `INCOME_TYPE`,
 `BALANCE_TYPE`, `ACCOUNT_FEATURE_TYPE`, `DOCUMENT_TYPE`, `ENTITY_TYPE`, `ARTICLE_TYPE`,
