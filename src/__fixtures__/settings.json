@@ -1,0 +1,117 @@
+{
+  "add_attributes": {
+    "updated": 2
+  },
+  "all_subscription_invoices": [
+    {
+      "id": 1,
+      "number": "SUB-1001",
+      "status": "PAID"
+    }
+  ],
+  "api_whitelist": [
+    {
+      "id": 1,
+      "ip": "192.0.2.10",
+      "comment": "fixture allowlist"
+    }
+  ],
+  "api_whitelist_v2": {
+    "organisations": [
+      {
+        "id": 99,
+        "name": "Fixture Org"
+      }
+    ]
+  },
+  "approve_reminders": {
+    "sent": 0
+  },
+  "auth_permissions": [
+    {
+      "username": "fixture.user",
+      "role": "ADMIN"
+    }
+  ],
+  "auth_permission_users": [
+    {
+      "id": 42,
+      "username": "fixture.user"
+    }
+  ],
+  "countries": [
+    {
+      "code": "EE",
+      "name": "Estonia"
+    },
+    {
+      "code": "FI",
+      "name": "Finland"
+    }
+  ],
+  "currency_rates": {
+    "firstCurrency": "EUR",
+    "secondCurrency": "USD",
+    "rate": 1.1,
+    "opDate": "2026-01-15"
+  },
+  "default_priceplans": [
+    {
+      "id": 1,
+      "name": "Fixture Start Plan"
+    }
+  ],
+  "ee_partner_codes": [
+    {
+      "name": "Fixture Partner O\u00dc",
+      "regCode": "12345678",
+      "country": "EE"
+    }
+  ],
+  "valid_payer_organisations": [
+    {
+      "id": 99,
+      "name": "Fixture Org"
+    }
+  ],
+  "payer_organisation_documents": [
+    {
+      "id": 7,
+      "type": "FIXTURE_DOC"
+    }
+  ],
+  "me": {
+    "id": 42,
+    "username": "fixture.user",
+    "email": "fixture.user@example.invalid"
+  },
+  "parameters": [
+    {
+      "typeCode": "FIXTURE_PARAM",
+      "value": "demo"
+    }
+  ],
+  "parameters_encrypted": [
+    {
+      "typeCode": "FIXTURE_SECRET",
+      "value": "enc:fake-not-a-secret"
+    }
+  ],
+  "system_articles": [
+    {
+      "id": 1,
+      "name": "Fixture System Article"
+    }
+  ],
+  "translations": {
+    "SAVE": "Salvesta",
+    "CANCEL": "T\u00fchista"
+  },
+  "unpaid_subscription_invoices": [
+    {
+      "id": 2,
+      "number": "SUB-1002",
+      "status": "UNPAID"
+    }
+  ]
+}

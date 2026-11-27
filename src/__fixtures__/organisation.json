@@ -6,5 +6,39 @@
     "legalCountryCode": "EE",
     "mainCurrencyCode": "EUR",
     "mainLanguageCode": "et"
-  }
+  },
+  "all": [
+    {
+      "id": 99,
+      "name": "Fixture Org"
+    },
+    {
+      "id": 100,
+      "name": "Fixture Sister Org"
+    }
+  ],
+  "goerp_token": {
+    "token": "fake-goerp-token-not-a-real-secret"
+  },
+  "is_key_valid": {
+    "valid": true
+  },
+  "is_token_valid": {
+    "valid": true
+  },
+  "last_history_action": [
+    {
+      "id": 1,
+      "userId": 42,
+      "action": "LOGIN",
+      "at": "2026-01-15T10:00:00Z"
+    }
+  ],
+  "terms": [
+    {
+      "id": 1,
+      "name": "Fixture Net 14",
+      "days": 14
+    }
+  ]
 }
