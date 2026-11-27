@@ -567,6 +567,27 @@ for this call; `Accept: application/json` yields HTTP 406.
 
 Project create/update use body field `affirmed` (list filter remains `isAffirmed`). `/projects/groups` is not shipped yet.
 
+### Attributes (custom fields)
+
+| Tool | API | Required |
+|------|-----|----------|
+| `erply_list_attributes` | `GET /attributes` | — |
+| `erply_create_attribute` | `POST /attributes` | — |
+| `erply_update_attribute` | `PUT /attributes/{activityItemId}` | `activityItemId` |
+| `erply_delete_attribute` | `DELETE /attributes/{activityItemId}` | `activityItemId` |
+| `erply_list_attributes_v2` | `GET /attributes/v2` | — |
+| `erply_create_attribute_v2` | `POST /attributes/v2` | — |
+| `erply_update_attribute_v2` | `PUT /attributes/v2/{activityItemId}` | `activityItemId` |
+| `erply_get_attribute_asset_tracker_info` | `GET /attributes/asset_tracker_info` | — |
+| `erply_create_attribute_car_in` | `POST /attributes/car_in` | — |
+| `erply_create_attributes_for_all_organisations` | `POST /attributes/items_for_all_organisation` | — |
+| `erply_delete_attribute_for_all_organisations` | `DELETE /attributes/items_for_all_organisation/{name}` | `name` |
+
+List and asset-tracker tools return the raw API body (the list envelope is unverified).
+Creates send `id: 0`. `erply_create_attribute_car_in` sends licence-plate, weight, and
+related ids as query parameters and `APIAttachmentInfo` fields as the JSON body.
+`erply_delete_attribute_for_all_organisations` URL-encodes `name` in the path.
+
 ### Ledger and transactions
 
 | Tool | API | Required |

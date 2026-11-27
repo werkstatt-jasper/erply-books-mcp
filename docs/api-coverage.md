@@ -1,9 +1,9 @@
 # API coverage matrix
 
-Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (155 tools).
+Generated 2026-08-18 by diffing the official [Erply Books OpenAPI spec](https://www.erplybooks.com/api-documentation) (301 paths / 356 operations) against the tools in `src/tools/` (166 tools).
 
-- **Covered:** 155 operations
-- **Gap (tracked as GitLab issues):** 185 operations
+- **Covered:** 166 operations
+- **Gap (tracked as GitLab issues):** 174 operations
 - **Intentionally skipped:** 16 GoERP `get_single` aliases / base attachment list
 
 Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/137)). See also [spec-conformance.md](spec-conformance.md) for the implemented-vs-spec verification report.
@@ -73,17 +73,17 @@ Gap issues live in GitLab milestone **Erply Books** ([tracker #137](https://gitl
 | `GET` | `/attachments/summary_invoice/get_single` | skipped (GoERP `get_single` alias / base list) |
 | `GET` | `/attachments/zip_file/{documentId}` | covered: `erply_get_attachments_zip` |
 | `GET` | `/attachments/zip_file/get_single` | skipped (GoERP `get_single` alias / base list) |
-| `GET` | `/attributes` | gap: E41 #180 |
-| `POST` | `/attributes` | gap: E41 #180 |
-| `DELETE` | `/attributes/{activityItemId}` | gap: E41 #180 |
-| `PUT` | `/attributes/{activityItemId}` | gap: E41 #180 |
-| `GET` | `/attributes/asset_tracker_info` | gap: E41 #180 |
-| `POST` | `/attributes/car_in` | gap: E41 #180 |
-| `POST` | `/attributes/items_for_all_organisation` | gap: E41 #180 |
-| `DELETE` | `/attributes/items_for_all_organisation/{name}` | gap: E41 #180 |
-| `GET` | `/attributes/v2` | gap: E41 #180 |
-| `POST` | `/attributes/v2` | gap: E41 #180 |
-| `PUT` | `/attributes/v2/{activityItemId}` | gap: E41 #180 |
+| `GET` | `/attributes` | covered: `erply_list_attributes` |
+| `POST` | `/attributes` | covered: `erply_create_attribute` |
+| `DELETE` | `/attributes/{activityItemId}` | covered: `erply_delete_attribute` |
+| `PUT` | `/attributes/{activityItemId}` | covered: `erply_update_attribute` |
+| `GET` | `/attributes/asset_tracker_info` | covered: `erply_get_attribute_asset_tracker_info` |
+| `POST` | `/attributes/car_in` | covered: `erply_create_attribute_car_in` |
+| `POST` | `/attributes/items_for_all_organisation` | covered: `erply_create_attributes_for_all_organisations` |
+| `DELETE` | `/attributes/items_for_all_organisation/{name}` | covered: `erply_delete_attribute_for_all_organisations` |
+| `GET` | `/attributes/v2` | covered: `erply_list_attributes_v2` |
+| `POST` | `/attributes/v2` | covered: `erply_create_attribute_v2` |
+| `PUT` | `/attributes/v2/{activityItemId}` | covered: `erply_update_attribute_v2` |
 | `POST` | `/bulk` | gap: E46 #185 |
 | `GET` | `/customers` | covered: `erply_list_customers` |
 | `POST` | `/customers` | covered: `erply_create_customer` |

@@ -1,0 +1,64 @@
+{
+  "list_page": {
+    "items": [
+      {
+        "id": 101,
+        "typeCode": "ATTRIBUTE",
+        "name": "fixture-colour",
+        "value": "blue",
+        "description": "Fake attribute for unit tests",
+        "entityId": 2001,
+        "decimalValue": 0,
+        "alternativeValue": "navy"
+      }
+    ],
+    "totalCount": 1,
+    "organisation": { "id": 99, "name": "Fixture Org" }
+  },
+  "list_raw_array": [
+    {
+      "id": 101,
+      "name": "fixture-colour",
+      "value": "blue"
+    }
+  ],
+  "create_response": {
+    "id": 101,
+    "typeCode": "ATTRIBUTE",
+    "name": "fixture-colour",
+    "value": "blue",
+    "entityId": 2001
+  },
+  "update_response": {
+    "id": 101,
+    "typeCode": "ATTRIBUTE",
+    "name": "fixture-colour",
+    "value": "green",
+    "entityId": 2001
+  },
+  "create_v2_response": {
+    "id": 202,
+    "typeCode": "ATTRIBUTE",
+    "name": "fixture-size",
+    "value": "large",
+    "entityId": 2001
+  },
+  "update_v2_response": {
+    "id": 202,
+    "typeCode": "ATTRIBUTE",
+    "name": "fixture-size",
+    "value": "medium",
+    "entityId": 2001
+  },
+  "asset_tracker_info": {
+    "urlId": 7,
+    "organisationId": 99,
+    "points": [{ "at": "2024-01-15T08:00:00", "lat": 59.437, "lng": 24.753 }]
+  },
+  "car_in_response": {
+    "id": 303,
+    "documentId": 4001,
+    "filename": "fixture-weighbridge.txt",
+    "description": "Fake car-in weighbridge record"
+  }
+}

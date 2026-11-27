@@ -11,8 +11,12 @@ query/path params, requiredness, types, request-body `$ref`). Prose pages for
 invoices, customers, payments, partner API, report generator, and custom API
 access points were cross-checked manually.
 
-**Headline result:** all 155 tools call real spec operations with the correct HTTP
-method and path (zero class-A mismatches). The findings below are param/body
+**Headline result:** all 166 tools call real spec operations with the correct HTTP
+method and path (zero class-A mismatches). The 11 attributes tools added for
+GitLab #180 (E41) advertise every documented OpenAPI query param and the writable
+request-body fields (server-managed fields such as `id`, `creatorUserId`,
+`createDatetime`, and `organisationId` stay unexposed and may still be passed
+through). The findings below are param/body
 coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints.
 
 ## Finding classes
@@ -24,7 +28,7 @@ coverage gaps, type nits, and docs-vs-reality conflicts — not broken endpoints
 | C | Tool param absent from spec | 24 | all explained (see below) |
 | D | Tool stricter than spec (tool requires, spec optional) | 66 | deliberate policy (see below) |
 | E | Type mismatch | 33 | 33 benign (`reportType` fixed in [#186 (E47)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/186)) |
-| F | Request-body fields not advertised | 30 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187) |
+| F | Request-body fields not advertised | 36 ops | umbrella issue [#187 (E48)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/187); attributes write tools leave only server-managed fields unexposed |
 | G | Prose docs vs swagger vs observed behavior | 10 | live-verification issue [#189 (E50)](https://gitlab.com/werkstatt.ee/e-financials-mcp/-/issues/189); item 8 recorded in #191 (E52); item 9 in #192 (E53); item 10 in #193 (E54); items 13–15 in #168 (E29); items 16–18 in #169 (E30); items 19–20 in #171 (E32); item 21 in #172 (E33) |
 
 ## C-class details (tool params absent from spec) — all explained
@@ -316,4 +320,10 @@ The full per-tool tables follow below.
 | `erply_update_tax_rate` | `APITaxRateInfo` | 18/20 | id, organisationId |
 | `erply_create_transaction_entry` | `APITransactionEntryInfo` | 10/13 | id, projects, history |
 | `erply_update_transaction_entry` | `APITransactionEntryInfo` | 10/13 | id, projects, history |
+| `erply_create_attribute` | `APIActivityItemInfo` | 24/28 | id, creatorUserId, createDatetime, organisationId |
+| `erply_update_attribute` | `APIActivityItemInfo` | 24/28 | id, creatorUserId, createDatetime, organisationId |
+| `erply_create_attribute_v2` | `APIActivityItemV2Info` | 22/25 | id, creatorUserId, createDatetime |
+| `erply_update_attribute_v2` | `APIActivityItemV2Info` | 22/25 | id, creatorUserId, createDatetime |
+| `erply_create_attributes_for_all_organisations` | `APIActivityItemInfo` | 24/28 | id, creatorUserId, createDatetime, organisationId |
+| `erply_create_attribute_car_in` | `APIAttachmentInfo` | 18/21 | id, organisationId, exceptionInfo |
 
